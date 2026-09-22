@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ejercicios</title>
+<style>
+  :root{
+    --nuit:#0f1613; --nuit2:#17201c; --creme:#eef1ee; --acc:#22c55e; --acc2:#16a34a;
+    --gris:#8a948e; --gris2:#c3ccc6; --rojo:#e07a6b; --amarillo:#e0b34d;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--nuit);color:var(--creme);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.5;padding:1.5rem}
+  .wrap{max-width:900px;margin:0 auto}
+  h1{color:var(--acc);text-align:center;margin-bottom:0.2rem;font-size:1.5rem}
+  .sub{text-align:center;color:var(--gris2);font-size:0.88rem;margin-bottom:1.4rem}
+  fieldset{border:1px solid rgba(34,197,94,0.3);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1.1rem;background:var(--nuit2)}
+  legend{color:var(--acc);padding:0 0.5rem;font-size:0.92rem;font-weight:600}
+  label{display:block;font-size:0.83rem;color:var(--gris2);margin-bottom:0.3rem;margin-top:0.65rem}
+  select,input[type=password],input[type=text]{
+    width:100%;padding:0.55rem 0.7rem;border-radius:8px;border:1px solid rgba(255,255,255,0.13);
+    background:#0c1210;color:var(--creme);font-family:inherit;font-size:0.92rem
+  }
+  .fila{display:flex;gap:0.7rem;flex-wrap:wrap}
+  .fila > div{flex:1;min-width:160px}
+  button{
+    background:var(--acc);color:#04120a;border:none;border-radius:9px;padding:0.65rem 1.2rem;
+    font-family:inherit;font-weight:700;cursor:pointer;font-size:0.9rem;margin-top:0.9rem
+  }
+  button:hover{opacity:0.9}
+  button.secundario{background:transparent;border:1px solid var(--acc);color:var(--acc)}
+  button.chip{background:#0c1210;border:1px solid rgba(255,255,255,0.15);color:var(--gris2);
+    padding:0.4rem 0.85rem;border-radius:999px;font-weight:500;font-size:0.82rem;margin:0.2rem 0.3rem 0.2rem 0}
+  button.chip.on{background:var(--acc);border-color:var(--acc);color:#04120a;font-weight:700}
+  .perfiles{display:flex;gap:0.7rem;margin-bottom:0.4rem}
+  .perfiles button{flex:1;margin-top:0;padding:0.7rem;background:#0c1210;border:1.5px solid rgba(255,255,255,0.15);color:var(--gris2)}
+  .perfiles button.on{background:rgba(34,197,94,0.12);border-color:var(--acc);color:var(--acc)}
+  .aviso{font-size:0.8rem;color:var(--gris2);background:var(--nuit2);border-radius:10px;padding:0.75rem 1rem;
+    margin-bottom:1.1rem;border:1px solid rgba(34,197,94,0.25)}
+  .aviso b{color:var(--acc)}
+  .diamalo{background:rgba(224,122,107,0.1);border:1px solid rgba(224,122,107,0.35);border-radius:10px;
+    padding:0.7rem 0.9rem;font-size:0.82rem;color:var(--gris2);margin-top:0.7rem;display:none}
+  .diamalo.show{display:block}
+  .diamalo b{color:var(--rojo)}
+  .resultados{margin-top:1.4rem}
+  .categoria-r{margin-bottom:1.3rem}
+  .categoria-r h3{color:var(--acc);font-size:0.98rem;margin-bottom:0.5rem;border-bottom:1px solid rgba(34,197,94,0.2);padding-bottom:0.3rem}
+  .resultado{background:var(--nuit2);border-radius:10px;padding:0.75rem 0.9rem;margin-bottom:0.55rem;display:flex;gap:0.8rem;align-items:center}
+  .resultado img{width:96px;border-radius:7px;flex-shrink:0}
+  .resultado .txt{flex:1;min-width:0}
+  .resultado a{color:var(--creme);font-weight:600;text-decoration:none;border-bottom:1px dotted var(--acc);font-size:0.92rem}
+  .resultado a:hover{color:var(--acc)}
+  .resultado p{margin:0.25rem 0 0;font-size:0.8rem;color:var(--gris)}
+  .addbtn{margin:0;flex-shrink:0;padding:0.5rem 0.8rem;font-size:0.78rem}
+  .addbtn.added{background:transparent;border:1px solid var(--acc);color:var(--acc)}
+  .loading{color:var(--acc);font-size:0.85rem}
+  .error{color:var(--rojo);font-size:0.85rem}
+  .rutina-item{display:flex;justify-content:space-between;align-items:center;background:#0c1210;
+    border-radius:8px;padding:0.55rem 0.8rem;margin-bottom:0.4rem;font-size:0.85rem}
+  .rutina-item a{color:var(--creme);text-decoration:none}
+  .rutina-item button{margin:0;background:transparent;border:1px solid var(--rojo);color:var(--rojo);
+    padding:0.25rem 0.6rem;font-size:0.75rem}
+  .empty{color:var(--gris);font-size:0.85rem;font-style:italic}
+  .pendiente{font-size:0.78rem;color:var(--gris);text-align:center;margin-top:1.6rem;line-height:1.6}
+
+  .navapp{display:flex;gap:4px;margin:0 0 14px;background:#1b2330;border:1px solid #2a3242;border-radius:10px;padding:4px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;}
+  .navapp a{flex:1;text-align:center;padding:9px 2px;border-radius:7px;color:#8a94a3;text-decoration:none;font-size:0.7rem;font-weight:800;letter-spacing:.02em;}
+  .navapp a[aria-current="page"]{background:rgba(53,194,106,0.15);color:#35c26a;}
+</style>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 512 512%22%3E%3Crect width=%22512%22 height=%22512%22 rx=%22104%22 fill=%22%2310151f%22/%3E%3Csvg x=%2214%22 y=%22150%22 width=%22240%22 height=%22240%22 viewBox=%220 0 48 48%22 xmlns=%22http://www.w3.org/2000/svg%22 aria-hidden=%22true%22%3E%3Cpolygon points=%227%2C26 8%2C9 21%2C17%22 fill=%22%23a9b1bf%22/%3E%3Cpolygon points=%2241%2C26 40%2C9 27%2C17%22 fill=%22%23a9b1bf%22/%3E%3Cpolygon points=%2210%2C23 11%2C13 18%2C18%22 fill=%22%23f2b8c6%22/%3E%3Cpolygon points=%2238%2C23 37%2C13 30%2C18%22 fill=%22%23f2b8c6%22/%3E%3Cellipse cx=%2224%22 cy=%2230%22 rx=%2217%22 ry=%2214%22 fill=%22%23a9b1bf%22/%3E%3Cellipse cx=%2218%22 cy=%2230%22 rx=%222.2%22 ry=%222.6%22 fill=%22%231b1b24%22/%3E%3Cellipse cx=%2230%22 cy=%2230%22 rx=%222.2%22 ry=%222.6%22 fill=%22%231b1b24%22/%3E%3Cpolygon points=%2222%2C34 26%2C34 24%2C36.5%22 fill=%22%23f08aa0%22/%3E%3Cpath d=%22M24 36.5v2M24 38.5q-2.5 2-4.5.5M24 38.5q2.5 2 4.5.5%22 stroke=%22%231b1b24%22 stroke-width=%221.1%22 fill=%22none%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M12 34l-7-1.5M12 37l-7 1.5M36 34l7-1.5M36 37l7 1.5%22 stroke=%22%231b1b24%22 stroke-width=%221%22 opacity=%22.55%22 stroke-linecap=%22round%22/%3E%3Cellipse cx=%2226%22 cy=%2215%22 rx=%2215%22 ry=%226.5%22 transform=%22rotate%28-9 26 15%29%22 fill=%22%23d93b3b%22/%3E%3Crect x=%2221.5%22 y=%226%22 width=%223.4%22 height=%223.8%22 rx=%221.4%22 fill=%22%23d93b3b%22 transform=%22rotate%28-9 23 8%29%22/%3E%3C/svg%3E%3Csvg x=%22258%22 y=%22150%22 width=%22240%22 height=%22240%22 viewBox=%220 0 48 48%22 xmlns=%22http://www.w3.org/2000/svg%22 aria-hidden=%22true%22%3E%3Cpolygon points=%227%2C26 8%2C9 21%2C17%22 fill=%22%23f4e8d4%22/%3E%3Cpolygon points=%2241%2C26 40%2C9 27%2C17%22 fill=%22%23f4e8d4%22/%3E%3Cpolygon points=%2210%2C23 11%2C13 18%2C18%22 fill=%22%23f2b8c6%22/%3E%3Cpolygon points=%2238%2C23 37%2C13 30%2C18%22 fill=%22%23f2b8c6%22/%3E%3Cellipse cx=%2224%22 cy=%2230%22 rx=%2217%22 ry=%2214%22 fill=%22%23f4e8d4%22/%3E%3Cellipse cx=%2218%22 cy=%2230%22 rx=%222.2%22 ry=%222.6%22 fill=%22%231b1b24%22/%3E%3Cellipse cx=%2230%22 cy=%2230%22 rx=%222.2%22 ry=%222.6%22 fill=%22%231b1b24%22/%3E%3Cpolygon points=%2222%2C34 26%2C34 24%2C36.5%22 fill=%22%23f08aa0%22/%3E%3Cpath d=%22M24 36.5v2M24 38.5q-2.5 2-4.5.5M24 38.5q2.5 2 4.5.5%22 stroke=%22%231b1b24%22 stroke-width=%221.1%22 fill=%22none%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M12 34l-7-1.5M12 37l-7 1.5M36 34l7-1.5M36 37l7 1.5%22 stroke=%22%231b1b24%22 stroke-width=%221%22 opacity=%22.55%22 stroke-linecap=%22round%22/%3E%3Cellipse cx=%2226%22 cy=%2215%22 rx=%2215%22 ry=%226.5%22 transform=%22rotate%28-9 26 15%29%22 fill=%22%238f5ae6%22/%3E%3Crect x=%2221.5%22 y=%226%22 width=%223.4%22 height=%223.8%22 rx=%221.4%22 fill=%22%238f5ae6%22 transform=%22rotate%28-9 23 8%29%22/%3E%3C/svg%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="icono.png">
+<meta name="theme-color" content="#10151f">
+<script>(function(){var o=Storage.prototype.setItem;window.__nubeRaw=function(k,v){o.call(localStorage,k,v)};window.__nubeSucias={};window.__nubeOn=false;Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localStorage&&window.__nubeOn){window.__nubeSucias[k]=1;window.dispatchEvent(new Event("nube-cambio"))}};setTimeout(function(){if(!window.__nubeVivo){var d=document.createElement("div");d.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99998;background:#7a1f1f;color:#fff;padding:10px 14px;font:14px system-ui,sans-serif;text-align:center";d.textContent="⚠️ La entrada con Google no cargó: tus datos NO se están guardando en la nube. Avísale a Claude (en el computador: F12 → Console → copia el mensaje rojo).";(document.body||document.documentElement).appendChild(d)}},6000);})();</script>
+</head>
+<body>
+<div class="wrap">
+<nav class="navapp" aria-label="Áreas de la app"><a href="nutricion.html">NUTRICIÓN</a><a href="ejercicios.html" aria-current="page">EJERCICIOS</a><a href="tareas.html">TAREAS</a><a href="calendario.html">CALENDARIO</a></nav>
+
+<h1>🏋️ Ejercicios</h1>
+<p class="sub">Busca videos reales en YouTube según zona, intensidad y equipo. Cada una arma su propia rutina.</p>
+
+<div class="aviso">
+  Esta herramienta busca <b>videos reales que ya existen en YouTube</b>, filtrados por lo que pidas. No inventa rutinas ni indica cargas — vos elegís qué mirar y qué agregar a tu rutina. Las claves se guardan solo en <b>este navegador</b>.
+</div>
+
+<fieldset>
+  <legend>1. ¿Quién busca?</legend>
+  <div class="perfiles">
+    <button id="perfil-papa" class="on" onclick="elegirPerfil('Kakin')">👨 Kakin</button>
+    <button id="perfil-hija" onclick="elegirPerfil('Hija')">👩 Hija</button>
+  </div>
+  <div id="bloque-animo" style="margin-top:0.8rem">
+    <label for="animo">¿Cómo estás hoy?</label>
+    <select id="animo" onchange="actualizarPorAnimo()">
+      <option value="bien">Bien — puedo moverme normal</option>
+      <option value="regular">Regular — prefiero ir suave</option>
+      <option value="mal">Día malo — casi no puedo</option>
+    </select>
+    <div id="diamalo-aviso" class="diamalo">
+      <b>Día malo activado.</b> La búsqueda queda fijada en intensidad leve y bajo impacto. Si hoy no podés nada, está bien no buscar nada — cerrar la app también es una opción válida.
+    </div>
+  </div>
+</fieldset>
+
+<fieldset>
+  <legend>2. Claves (una sola vez por navegador)</legend>
+  <label for="ytkey">YouTube Data API Key</label>
+  <input type="password" id="ytkey" placeholder="AIza...">
+  <button class="secundario" onclick="guardarClaves()">Guardar clave en este navegador</button>
+  <span id="claves-estado" style="font-size:0.82rem;color:var(--gris2)"></span>
+</fieldset>
+
+<fieldset>
+  <legend>📅 Tu rutina semanal (reparto equilibrado)</legend>
+  <p style="font-size:0.8rem;color:var(--gris2);margin:0 0 0.6rem">Cada día tiene una zona asignada, sin repetir ninguna en la semana, con un día de descanso. Tocá "Buscar" en el día que quieras armar.</p>
+  <div id="rotacion-semanal"></div>
+</fieldset>
+
+<fieldset>
+  <legend>3. Qué buscar</legend>
+
+  <label>Fuente</label>
+  <div class="fila" style="margin-bottom:0.4rem">
+    <button type="button" class="chip on" id="fuente-youtube" onclick="elegirFuente('youtube')" style="flex:1;text-align:center">🎥 YouTube (video real)</button>
+    <button type="button" class="chip" id="fuente-wger" onclick="elegirFuente('wger')" style="flex:1;text-align:center">📚 wger (ficha con imagen)</button>
+  </div>
+  <p style="font-size:0.76rem;color:var(--gris);margin:0 0 0.6rem">wger es una base de ejercicios de código abierto, gratis y sin clave — trae imagen, músculo trabajado y equipo, sin ser un video.</p>
+
+  <label>Zona del cuerpo (elegí una o varias)</label>
+  <div id="zonas"></div>
+
+  <div class="fila" id="fila-intensidad-duracion">
+    <div>
+      <label for="intensidad">Intensidad</label>
+      <select id="intensidad"></select>
+    </div>
+    <div id="campo-duracion">
+      <label for="duracion">Duración</label>
+      <select id="duracion">
+        <option value="corto">5–10 min</option>
+        <option value="medio" selected>10–20 min</option>
+        <option value="largo">20+ min</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="fila">
+    <div>
+      <label for="equipo">Equipamiento</label>
+      <select id="equipo">
+        <option value="sin equipo">Sin equipo</option>
+        <option value="con mancuernas">Con mancuernas / pesas</option>
+        <option value="con banda elástica">Con banda elástica</option>
+        <option value="con silla de apoyo">Con silla de apoyo</option>
+      </select>
+    </div>
+    <div>
+      <label for="tipo">Tipo</label>
+      <select id="tipo">
+        <option value="fuerza">Fuerza / tonificación</option>
+        <option value="cardio">Cardio</option>
+        <option value="movilidad">Movilidad / estiramiento</option>
+        <option value="yoga">Yoga suave</option>
+      </select>
+    </div>
+  </div>
+
+  <button onclick="buscarEjercicios()">Buscar ejercicios reales</button>
+</fieldset>
+
+<div class="resultados" id="resultados"></div>
+
+<fieldset>
+  <legend>⚖️ Peso (viene de Dieta)</legend>
+  <p style="font-size:0.78rem;color:var(--gris);margin:0 0 0.4rem">El peso vive en Dieta → "Perfil y medidas", no se carga acá para no duplicar el dato. Este sitio lo lee automáticamente si los dos están publicados en el mismo dominio.</p>
+  <div id="peso-desde-dieta" style="font-size:0.9rem"></div>
+</fieldset>
+
+<fieldset>
+  <legend>Mi rutina (<span id="perfil-actual-nombre">Kakin</span>)</legend>
+
+  <div class="fila" style="align-items:flex-end;margin-bottom:0.9rem">
+    <div>
+      <label for="actividad-tipo">+ Actividad manual</label>
+      <select id="actividad-tipo">
+        <option value="caminata">Caminata</option>
+        <option value="corrida">Corrida</option>
+        <option value="natacion">Natación</option>
+        <option value="otro">Otra</option>
+      </select>
+    </div>
+    <div id="actividad-otra-cont" style="display:none">
+      <label for="actividad-otra">¿Cuál?</label>
+      <input type="text" id="actividad-otra" placeholder="Nombre de la actividad">
+    </div>
+    <div>
+      <label for="actividad-min">Minutos</label>
+      <input type="text" id="actividad-min" placeholder="30" style="width:70px">
+    </div>
+    <button class="secundario" style="margin-top:0" onclick="agregarActividadManual()">Agregar</button>
+  </div>
+
+  <div id="balance-kcal" style="background:#0c1210;border-radius:8px;padding:10px 14px;margin-bottom:0.9rem;font-size:0.85rem"></div>
+
+  <div id="rutina-lista"></div>
+  <p class="pendiente">Acá se va a conectar más adelante con el calendario y con el módulo de dieta — por ahora, es la lista base de lo que cada una eligió.</p>
+</fieldset>
+
+</div>
+
+<script>
+const ZONAS = [
+  ['barriga','Barriga / abdomen'],
+  ['pecho','Pecho'],
+  ['piernas','Piernas / muslos'],
+  ['gluteos','Glúteos'],
+  ['espalda','Espalda'],
+  ['brazos','Brazos'],
+  ['cuerpo completo','Cuerpo completo']
+];
+
+const INTENSIDADES_TODAS = [
+  ['leve','Leve'], ['moderado','Moderado'], ['intenso','Intenso']
+];
+
+let perfil = 'Kakin';
+let fuenteActual = 'youtube'; // 'youtube' | 'wger'
+let zonasElegidas = new Set(['cuerpo completo']);
+
+function elegirFuente(f){
+  fuenteActual = f;
+  document.getElementById('fuente-youtube').classList.toggle('on', f==='youtube');
+  document.getElementById('fuente-wger').classList.toggle('on', f==='wger');
+  document.getElementById('campo-duracion').style.display = f==='youtube' ? 'block' : 'none';
+}
+
+// Mapa de zonas a términos de búsqueda en inglés, porque la base de wger es mayormente en ese idioma
+const ZONA_WGER = {
+  'barriga':'abs', 'pecho':'chest', 'piernas':'legs', 'gluteos':'glutes',
+  'espalda':'back', 'brazos':'arm', 'cuerpo completo':'full body'
+};
+
+async function buscarWger(zona, cantidad){
+  cantidad = cantidad || 4;
+  const termino = ZONA_WGER[zona] || zona;
+  const url = 'https://wger.de/api/v2/exercise/search/?term=' + encodeURIComponent(termino) + '&language=english&format=json';
+  const res = await fetch(url);
+  const data = await res.json();
+  const sugerencias = data.suggestions || [];
+  if(sugerencias.length===0) throw new Error('Sin resultados.');
+  return sugerencias.slice(0, cantidad).map(s=>{
+    const d = s.data || {};
+    let img = d.image_thumbnail || d.image || null;
+    if(img && img.startsWith('/')) img = 'https://wger.de' + img;
+    return {
+      id: 'wger-' + (d.base_id || d.id || Math.random()),
+      titulo: d.name || s.value || 'Ejercicio',
+      canal: d.category ? ('wger · ' + d.category) : 'wger',
+      link: d.base_id ? ('https://wger.de/en/exercise/'+d.base_id+'/view/') : 'https://wger.de',
+      thumb: img
+    };
+  });
+}
+
+// --- Estimación de calorías quemadas (fórmula estándar MET × peso × tiempo, no es una medición real) ---
+// Misma tabla MET y mismas claves que usa Dieta (ejercicioHistorial), para que el número no cambie según dónde se mire
+const MET = {caminata:3.5, corrida:9, natacion:6, fuerza:4, cardio:6, movilidad:2.3, yoga:2.5, otro:4};
+const DURACION_MIN = {'corto':8, 'medio':15, 'largo':20};
+
+function metDe(item){
+  return MET[item.tipoEjercicio] || MET.otro;
+}
+function kcalQuemadasDe(item, pesoKg){
+  if(!pesoKg || !item.minutos) return null;
+  return metDe(item) * pesoKg * (item.minutos/60);
+}
+
+// --- Integración con Dieta (mismo dominio, localStorage compartido) ---
+function pesoDesdeDieta(){
+  try{
+    const medidas = JSON.parse(localStorage.getItem('dietaMedidasV1_' + perfil) || '[]');
+    const conPeso = medidas.filter(m => m && m.peso > 0)
+      .sort((a,b)=> a.fecha < b.fecha ? 1 : (a.fecha > b.fecha ? -1 : 0));
+    return conPeso.length ? conPeso[0].peso : null;
+  }catch(e){ return null; }
+}
+
+function claveHistorialCompartido(){ return 'ejercicioHistorial_' + perfil; }
+
+function hoyISO(){
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+// Contrato con Dieta: array de {fecha:"AAAA-MM-DD", tipo, nombre, minutos, kcal?}
+function agregarAHistorialCompartido(item){
+  try{
+    const hist = JSON.parse(localStorage.getItem(claveHistorialCompartido()) || '[]');
+    hist.push({ fecha: hoyISO(), tipo: item.tipoEjercicio || 'otro', nombre: item.titulo, minutos: item.minutos });
+    localStorage.setItem(claveHistorialCompartido(), JSON.stringify(hist));
+  }catch(e){ /* si falla, no rompe la app; el "Hecho" local igual queda marcado */ }
+}
+
+function renderPesoDesdeDieta(){
+  const peso = pesoDesdeDieta();
+  const cont = document.getElementById('peso-desde-dieta');
+  cont.innerHTML = peso
+    ? '✅ Peso encontrado en Dieta: <b>' + peso + ' kg</b>'
+    : '⚠️ No se encontró un peso cargado en Dieta para ' + perfil + ' (o los dos sitios no están en el mismo dominio todavía). Sin este dato, los kcal quemados no se pueden estimar.';
+}
+
+function elegirPerfil(p){
+  perfil = p;
+  document.getElementById('perfil-papa').classList.toggle('on', p==='Kakin');
+  document.getElementById('perfil-hija').classList.toggle('on', p==='Hija');
+  document.getElementById('bloque-animo').style.display = p==='Kakin' ? 'block' : 'none';
+  document.getElementById('perfil-actual-nombre').textContent = p;
+  poblarIntensidad();
+  renderPesoDesdeDieta();
+  renderRutina();
+}
+
+function poblarIntensidad(){
+  const sel = document.getElementById('intensidad');
+  const animo = document.getElementById('animo').value;
+  const restringido = (perfil==='Kakin' && animo!=='bien');
+  sel.innerHTML = '';
+  const lista = restringido ? [['leve','Leve']] : INTENSIDADES_TODAS;
+  lista.forEach(o=>{
+    const opt = document.createElement('option');
+    opt.value = o[0]; opt.textContent = o[1];
+    sel.appendChild(opt);
+  });
+  sel.disabled = restringido;
+}
+
+function actualizarPorAnimo(){
+  const animo = document.getElementById('animo').value;
+  document.getElementById('diamalo-aviso').classList.toggle('show', animo==='mal');
+  poblarIntensidad();
+}
+
+// Rotación semanal por defecto: equilibrada, cubre las 6 zonas, un día de descanso
+const ROTACION_SEMANAL = [
+  {dia:'Lunes', zona:'piernas'},
+  {dia:'Martes', zona:'espalda'},
+  {dia:'Miércoles', zona:'pecho'},
+  {dia:'Jueves', zona:null}, // descanso / movilidad suave
+  {dia:'Viernes', zona:'brazos'},
+  {dia:'Sábado', zona:'gluteos'},
+  {dia:'Domingo', zona:'barriga'}
+];
+
+function renderRotacionSemanal(){
+  const cont = document.getElementById('rotacion-semanal');
+  cont.innerHTML = '';
+  ROTACION_SEMANAL.forEach(d=>{
+    const row = document.createElement('div');
+    row.className = 'resultado';
+    if(d.zona){
+      const zLabel = ZONAS.find(z=>z[0]===d.zona)[1];
+      row.innerHTML = '<div class="txt"><a style="border:none;cursor:default">'+d.dia+'</a><p>'+zLabel+'</p></div>' +
+        '<button class="addbtn" type="button">Buscar</button>';
+      row.querySelector('.addbtn').onclick = ()=>buscarParaDia(d.dia, d.zona);
+    } else {
+      row.innerHTML = '<div class="txt"><a style="border:none;cursor:default">'+d.dia+'</a><p>Descanso / movilidad suave</p></div>';
+    }
+    cont.appendChild(row);
+  });
+}
+
+function etiquetarConTipoYMinutos(resultados){
+  const tipo = document.getElementById('tipo').value;
+  const minutos = DURACION_MIN[document.getElementById('duracion').value] || 15;
+  resultados.forEach(r => { r.tipoEjercicio = tipo; r.minutos = minutos; });
+  return resultados;
+}
+
+async function buscarParaDia(dia, zona){
+  document.getElementById('resultados').innerHTML = '';
+  const zLabel = ZONAS.find(z=>z[0]===zona)[1];
+  const id = 'dia-' + dia;
+  renderCategoria(id, '📅 ' + dia + ' — ' + zLabel);
+  try{
+    const resultados = fuenteActual === 'wger'
+      ? await buscarWger(zona, 4)
+      : await buscarYouTube(construirQuery(zona), 4);
+    etiquetarConTipoYMinutos(resultados);
+    resultados.forEach(r => r.diaSemana = dia); // se etiqueta con el día para agruparlo en "Mi rutina"
+    renderResultado(id, '📅 ' + dia + ' — ' + zLabel, resultados);
+  }catch(e){
+    renderError(id, '📅 ' + dia + ' — ' + zLabel, e.message);
+  }
+}
+
+const NOMBRE_ACTIVIDAD = {caminata:'Caminata', corrida:'Corrida', natacion:'Natación', otro:'Otra'};
+
+function agregarActividadManual(){
+  const tipo = document.getElementById('actividad-tipo').value;
+  const otra = document.getElementById('actividad-otra').value.trim();
+  const min = document.getElementById('actividad-min').value.trim();
+  const nombre = tipo === 'otro' ? (otra || 'Actividad') : NOMBRE_ACTIVIDAD[tipo];
+  if(tipo === 'otro' && !otra){ alert('Escribí el nombre de la actividad.'); return; }
+  const item = {
+    id: 'manual-' + Date.now(),
+    titulo: nombre + (min ? ' — ' + min + ' min' : ''),
+    canal: 'Actividad cargada a mano',
+    link: null,
+    thumb: null,
+    tipoEjercicio: tipo,
+    minutos: parseFloat(min) || 10
+  };
+  agregarARutina(item, null);
+  document.getElementById('actividad-otra').value = '';
+  document.getElementById('actividad-min').value = '';
+}
+
+document.getElementById('actividad-tipo').addEventListener('change', e=>{
+  document.getElementById('actividad-otra-cont').style.display = e.target.value==='otro' ? 'block' : 'none';
+});
+
+function poblarZonas(){
+  const cont = document.getElementById('zonas');
+  ZONAS.forEach(z=>{
+    const b = document.createElement('button');
+    b.className = 'chip' + (zonasElegidas.has(z[0]) ? ' on' : '');
+    b.textContent = z[1];
+    b.onclick = (e)=>{ e.preventDefault();
+      if(zonasElegidas.has(z[0])) zonasElegidas.delete(z[0]); else zonasElegidas.add(z[0]);
+      b.classList.toggle('on');
+    };
+    cont.appendChild(b);
+  });
+}
+
+function guardarClaves(){
+  const yt = document.getElementById('ytkey').value.trim();
+  if(yt) localStorage.setItem('fam_ex_yt_key', yt);
+  document.getElementById('claves-estado').textContent = 'Clave guardada en este navegador.';
+}
+function cargarClaves(){
+  const yt = localStorage.getItem('fam_ex_yt_key');
+  if(yt) document.getElementById('ytkey').value = yt;
+}
+
+async function buscarYouTube(query, cantidad){
+  cantidad = cantidad || 4;
+  const ytKey = localStorage.getItem('fam_ex_yt_key');
+  if(!ytKey) throw new Error('No hay clave de YouTube cargada.');
+  const url = 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=' + cantidad
+    + '&safeSearch=strict&relevanceLanguage=es&q=' + encodeURIComponent(query)
+    + '&key=' + encodeURIComponent(ytKey);
+  const res = await fetch(url);
+  const data = await res.json();
+  if(data.error) throw new Error(data.error.message || 'Error de YouTube API');
+  if(!data.items || data.items.length===0) throw new Error('Sin resultados.');
+  return data.items.map(item => ({
+    id: item.id.videoId,
+    titulo: item.snippet.title,
+    canal: item.snippet.channelTitle,
+    link: 'https://www.youtube.com/watch?v=' + item.id.videoId,
+    thumb: item.snippet.thumbnails && item.snippet.thumbnails.medium ? item.snippet.thumbnails.medium.url : null
+  }));
+}
+
+function construirQuery(zona){
+  const animo = document.getElementById('animo').value;
+  const intensidad = document.getElementById('intensidad').value;
+  const duracion = document.getElementById('duracion').value;
+  const equipo = document.getElementById('equipo').value;
+  const tipo = document.getElementById('tipo').value;
+  const durTxt = duracion==='corto' ? '5 minutos' : duracion==='medio' ? '15 minutos' : '20 minutos';
+  let extra = '';
+  if(perfil==='Kakin' && animo!=='bien') extra = ' bajo impacto suave sin dolor articular';
+  return `ejercicio ${tipo} ${zona} ${intensidad} ${equipo} ${durTxt}${extra} en español`;
+}
+
+function renderCategoria(id, titulo){
+  const cont = document.getElementById('resultados');
+  const div = document.createElement('div');
+  div.className = 'categoria-r';
+  div.id = 'cat-' + id;
+  div.innerHTML = '<h3>' + titulo + '</h3><div class="loading">Buscando...</div>';
+  cont.appendChild(div);
+}
+
+function renderResultado(id, titulo, resultados){
+  const div = document.getElementById('cat-' + id);
+  const items = resultados.map(r => {
+    const yaAgregado = estaEnRutina(r.id);
+    return '<div class="resultado">' +
+      (r.thumb ? '<img src="'+r.thumb+'">' : '') +
+      '<div class="txt"><a href="'+r.link+'" target="_blank">'+r.titulo+'</a><p>'+r.canal+'</p></div>' +
+      '<button class="addbtn'+(yaAgregado?' added':'')+'" onclick=\'agregarARutina('+JSON.stringify(r)+', this)\'>' +
+      (yaAgregado ? '✓ En tu rutina' : '+ Agregar') + '</button>' +
+    '</div>';
+  }).join('');
+  div.innerHTML = '<h3>' + titulo + '</h3>' + items;
+}
+
+function renderError(id, titulo, msg){
+  const div = document.getElementById('cat-' + id);
+  div.innerHTML = '<h3>' + titulo + '</h3><div class="error">No se encontró nada: ' + msg + '</div>';
+}
+
+async function buscarEjercicios(){
+  document.getElementById('resultados').innerHTML = '';
+  if(zonasElegidas.size===0){ alert('Elegí al menos una zona.'); return; }
+  for(const zona of zonasElegidas){
+    const zLabel = ZONAS.find(z=>z[0]===zona)[1];
+    const id = 'z-' + zona.replace(/\s+/g,'_');
+    renderCategoria(id, '💪 ' + zLabel);
+    if(fuenteActual === 'wger'){
+      buscarWger(zona, 4)
+        .then(r => renderResultado(id, '💪 ' + zLabel, etiquetarConTipoYMinutos(r)))
+        .catch(e => renderError(id, '💪 ' + zLabel, e.message));
+    } else {
+      const q = construirQuery(zona);
+      buscarYouTube(q, 4)
+        .then(r => renderResultado(id, '💪 ' + zLabel, etiquetarConTipoYMinutos(r)))
+        .catch(e => renderError(id, '💪 ' + zLabel, e.message));
+    }
+  }
+}
+
+function claveRutina(){ return 'fam_ex_rutina_' + perfil; }
+
+function obtenerRutina(){
+  try{ return JSON.parse(localStorage.getItem(claveRutina()) || '[]'); }
+  catch(e){ return []; }
+}
+
+function estaEnRutina(id){
+  return obtenerRutina().some(x => x.id === id);
+}
+
+function agregarARutina(item, btn){
+  const lista = obtenerRutina();
+  if(lista.some(x=>x.id===item.id)) return;
+  lista.push(item);
+  localStorage.setItem(claveRutina(), JSON.stringify(lista));
+  if(btn){ btn.textContent = '✓ En tu rutina'; btn.classList.add('added'); }
+  renderRutina();
+}
+
+function quitarDeRutina(id){
+  const lista = obtenerRutina().filter(x=>x.id!==id);
+  localStorage.setItem(claveRutina(), JSON.stringify(lista));
+  renderRutina();
+  document.querySelectorAll('.resultado').forEach(div=>{
+    const link = div.querySelector('a');
+    if(link && link.href.includes(id)){
+      const b = div.querySelector('.addbtn');
+      if(b){ b.textContent = '+ Agregar'; b.classList.remove('added'); }
+    }
+  });
+}
+
+function marcarHecho(id){
+  const lista = obtenerRutina();
+  const it = lista.find(x=>x.id===id);
+  if(it){
+    it.hecho = !it.hecho;
+    if(it.hecho && !it.enHistorial){
+      agregarAHistorialCompartido(it);
+      it.enHistorial = true; // evita duplicar si se destilda y se vuelve a marcar
+    }
+  }
+  localStorage.setItem(claveRutina(), JSON.stringify(lista));
+  renderRutina();
+}
+
+function renderRutina(){
+  const cont = document.getElementById('rutina-lista');
+  const balanceDiv = document.getElementById('balance-kcal');
+  const lista = obtenerRutina();
+  const pesoKg = pesoDesdeDieta();
+
+  // Estimado local de hoy, solo para mostrar en esta pantalla — el número que manda es el de Dieta,
+  // que además suma lo consumido y calcula el balance completo.
+  const hechos = lista.filter(it=>it.hecho);
+  let kcalQuemadas = 0;
+  hechos.forEach(it=>{
+    const k = kcalQuemadasDe(it, pesoKg);
+    if(k!==null) kcalQuemadas += k;
+  });
+  kcalQuemadas = Math.round(kcalQuemadas);
+
+  if(!pesoKg){
+    balanceDiv.innerHTML = '<span style="color:var(--gris2)">Cargá tu peso en Dieta → Perfil y medidas para ver la estimación acá también.</span>';
+  } else if(hechos.length===0){
+    balanceDiv.innerHTML = 'Marcá "Hecho" en lo que ya hiciste — se suma acá y se manda solo al historial de Dieta.';
+  } else {
+    balanceDiv.innerHTML = '🔥 Estimado quemado hoy: <b>' + kcalQuemadas + ' kcal</b>' +
+      '<br><span style="color:var(--gris2);font-size:0.78rem">El balance con lo consumido ya se calcula solo en Dieta, sección Resumen.</span>';
+  }
+
+  if(lista.length===0){ cont.innerHTML = '<p class="empty">Todavía no agregaste ningún ejercicio.</p>'; return; }
+
+  function filaHtml(it){
+    const nombre = it.link ? '<a href="'+it.link+'" target="_blank">'+it.titulo+'</a>' : '<span>'+it.titulo+'</span>';
+    const k = kcalQuemadasDe(it, pesoKg);
+    const kcalTxt = k!==null ? ' <span style="color:var(--gris2);font-size:0.78rem">≈'+Math.round(k)+' kcal</span>' : '';
+    return '<div class="rutina-item">'+
+      '<span>'+nombre+kcalTxt+'</span>'+
+      '<span style="display:flex;gap:6px">'+
+        '<button onclick="marcarHecho(\''+it.id+'\')" style="'+(it.hecho?'background:var(--acc);border-color:var(--acc);color:#04120a;':'')+'">'+(it.hecho?'✓ Hecho':'Marcar hecho')+'</button>'+
+        '<button onclick="quitarDeRutina(\''+it.id+'\')">Quitar</button>'+
+      '</span></div>';
+  }
+
+  const conDia = lista.filter(it=>it.diaSemana);
+  const sinDia = lista.filter(it=>!it.diaSemana);
+  let html = '';
+  ROTACION_SEMANAL.forEach(d=>{
+    const delDia = conDia.filter(it=>it.diaSemana===d.dia);
+    if(delDia.length===0) return;
+    html += '<p style="font-size:0.78rem;color:var(--gris2);margin:0.6rem 0 0.3rem">'+d.dia+'</p>';
+    html += delDia.map(filaHtml).join('');
+  });
+  if(sinDia.length>0){
+    if(html) html += '<p style="font-size:0.78rem;color:var(--gris2);margin:0.6rem 0 0.3rem">Sin día asignado</p>';
+    html += sinDia.map(filaHtml).join('');
+  }
+  cont.innerHTML = html;
+}
+
+poblarZonas();
+poblarIntensidad();
+cargarClaves();
+renderPesoDesdeDieta();
+renderRotacionSemanal();
+renderRutina();
+</script>
+<script type="module" src="nube.js" onerror="var d=document.createElement('div');d.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99998;background:#7a1f1f;color:#fff;padding:10px 14px;font:14px system-ui,sans-serif;text-align:center';d.textContent='⚠️ El archivo nube.js no se pudo descargar (revisa que esté subido a GitHub con ese nombre exacto).';document.body.appendChild(d)"></script>
+</body>
+
+</html>

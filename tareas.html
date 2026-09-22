@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tareas</title>
+<style>
+  :root{
+    --bg: #10151f;
+    --panel: #1b2330;
+    --panel-alt: #232c3b;
+    --ink: #eef2f6;
+    --muted: #8a94a3;
+    --accent: #35c26a;
+    --accent-soft: rgba(53,194,106,0.15);
+    --warn: #e0703f;
+    --line: #2a3242;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    padding: 20px 14px 80px;
+  }
+  .wrap{max-width:520px;margin:0 auto;}
+  h1{font-size:1.3rem;margin:0 0 4px;font-weight:700;}
+  .subfecha{color:var(--muted);font-size:0.85rem;margin-bottom:16px;text-transform:capitalize;}
+
+  .tabs-lista{display:flex;gap:6px;margin-bottom:16px;}
+  .tabs-lista button{
+    flex:1;background:var(--panel);border:1px solid var(--line);color:var(--muted);
+    padding:9px;border-radius:8px;font-size:0.88rem;cursor:pointer;font-weight:600;
+  }
+  .tabs-lista button.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);}
+
+  .filtro-zona{display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+  .filtro-zona label{color:var(--muted);font-size:0.82rem;}
+  .filtro-zona select{
+    flex:1;padding:8px 10px;border:1px solid var(--line);border-radius:8px;
+    background:var(--panel);color:var(--ink);font-size:0.88rem;
+  }
+
+  .franja{margin-bottom:18px;}
+  .franja-titulo{font-size:0.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em;margin:0 0 8px 4px;}
+  .empty-franja{color:var(--muted);font-size:0.85rem;font-style:italic;padding:4px;}
+
+  .tarea{
+    background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;
+  }
+  .tarea.completada{opacity:0.55;}
+  .tarea.completada .tarea-nombre{text-decoration:line-through;}
+  .tarea-check{
+    width:24px;height:24px;border-radius:50%;border:2px solid var(--line);
+    background:none;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--accent);font-size:0.9rem;
+  }
+  .tarea-check.on{background:var(--accent);border-color:var(--accent);color:#0a1f14;}
+  .tarea-info{flex:1;min-width:0;}
+  .tarea-nombre{font-weight:600;font-size:0.95rem;}
+  .tarea-meta{color:var(--muted);font-size:0.75rem;margin-top:2px;}
+  .tarea-borrar{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.1rem;flex-shrink:0;}
+  .tarea-borrar:hover{color:var(--warn);}
+  .tarea-reloj{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.05rem;flex-shrink:0;}
+  .tarea-reloj:hover, .tarea-reloj.activo{color:var(--accent);}
+
+  .timer-row{
+    display:flex;align-items:center;gap:8px;background:var(--panel-alt);
+    border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:-2px 0 8px 0;
+  }
+  .timer-row input{
+    width:70px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;
+    background:var(--bg);color:var(--ink);text-align:center;font-size:0.9rem;
+  }
+  .timer-row button{
+    background:var(--accent);color:#0a1f14;border:none;border-radius:6px;
+    padding:6px 10px;font-size:0.82rem;font-weight:700;cursor:pointer;
+  }
+  .timer-row button.timer-cerrar{background:transparent;border:1px solid var(--line)!important;color:var(--muted);}
+  .timer-row .timer-restante{
+    font-weight:700;font-variant-numeric:tabular-nums;color:var(--accent);font-size:1.05rem;min-width:48px;
+  }
+  .timer-row .timer-label{color:var(--muted);font-size:0.8rem;}
+
+  .btn-nueva{
+    width:100%;background:var(--accent);color:#0a1f14;border:none;border-radius:10px;
+    padding:13px;font-size:0.95rem;font-weight:700;cursor:pointer;margin-top:6px;
+  }
+
+  .form-tarea{
+    background:var(--panel-alt);border:1px solid var(--line);border-radius:10px;
+    padding:16px;margin-top:10px;
+  }
+  .form-tarea label{font-size:0.8rem;color:var(--muted);display:block;margin:12px 0 6px;}
+  .form-tarea label:first-child{margin-top:0;}
+  .form-tarea input[type=text], .form-tarea select{
+    width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:8px;
+    background:var(--bg);color:var(--ink);font-size:0.92rem;
+  }
+  .grupo-radio{display:flex;gap:6px;}
+  .grupo-radio button{
+    flex:1;background:var(--bg);border:1px solid var(--line);color:var(--muted);
+    padding:8px 4px;border-radius:8px;font-size:0.82rem;cursor:pointer;
+  }
+  .grupo-radio button.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:700;}
+  .sub-opcion{display:none;}
+  .sub-opcion.show{display:block;}
+  .form-acciones{display:flex;gap:8px;margin-top:16px;}
+  .form-acciones button{flex:1;padding:10px;border-radius:8px;border:none;font-weight:700;font-size:0.9rem;cursor:pointer;}
+  .form-acciones .guardar{background:var(--accent);color:#0a1f14;}
+  .form-acciones .cancelar{background:transparent;border:1px solid var(--line)!important;color:var(--muted);}
+
+  .aviso{font-size:0.78rem;color:var(--muted);text-align:center;margin-top:26px;line-height:1.5;}
+  .timer-row{flex-wrap:wrap;}
+  .timer-row button.pos-hoy, .timer-row button.modo-opc, .timer-row button.modo-cong{background:var(--panel);color:var(--ink);border:1px solid var(--line);}
+  .tarea-posponer{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.05rem;flex-shrink:0;}
+  .tarea-posponer:hover, .tarea-posponer.activo{color:var(--warn);}
+  .franja-titulo.plegable{display:flex;justify-content:space-between;cursor:pointer;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin:0 0 8px 0;font-size:0.85rem;}
+  .filtros-fila{display:flex;gap:8px;margin-bottom:10px;}
+  .tarea.opcional{border-style:dashed;}
+  .timer-row select{padding:6px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font-size:0.82rem;}
+  .tarea.congelada{opacity:0.6;}
+  .filtros-fila select{flex:1;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font-size:0.88rem;}
+
+  .navapp{display:flex;gap:4px;margin:0 0 14px;background:#1b2330;border:1px solid #2a3242;border-radius:10px;padding:4px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;}
+  .navapp a{flex:1;text-align:center;padding:9px 2px;border-radius:7px;color:#8a94a3;text-decoration:none;font-size:0.7rem;font-weight:800;letter-spacing:.02em;}
+  .navapp a[aria-current="page"]{background:rgba(53,194,106,0.15);color:#35c26a;}
+</style>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 512 512%22%3E%3Crect width=%22512%22 height=%22512%22 rx=%22104%22 fill=%22%2310151f%22/%3E%3Csvg x=%2214%22 y=%22150%22 width=%22240%22 height=%22240%22 viewBox=%220 0 48 48%22 xmlns=%22http://www.w3.org/2000/svg%22 aria-hidden=%22true%22%3E%3Cpolygon points=%227%2C26 8%2C9 21%2C17%22 fill=%22%23a9b1bf%22/%3E%3Cpolygon points=%2241%2C26 40%2C9 27%2C17%22 fill=%22%23a9b1bf%22/%3E%3Cpolygon points=%2210%2C23 11%2C13 18%2C18%22 fill=%22%23f2b8c6%22/%3E%3Cpolygon points=%2238%2C23 37%2C13 30%2C18%22 fill=%22%23f2b8c6%22/%3E%3Cellipse cx=%2224%22 cy=%2230%22 rx=%2217%22 ry=%2214%22 fill=%22%23a9b1bf%22/%3E%3Cellipse cx=%2218%22 cy=%2230%22 rx=%222.2%22 ry=%222.6%22 fill=%22%231b1b24%22/%3E%3Cellipse cx=%2230%22 cy=%2230%22 rx=%222.2%22 ry=%222.6%22 fill=%22%231b1b24%22/%3E%3Cpolygon points=%2222%2C34 26%2C34 24%2C36.5%22 fill=%22%23f08aa0%22/%3E%3Cpath d=%22M24 36.5v2M24 38.5q-2.5 2-4.5.5M24 38.5q2.5 2 4.5.5%22 stroke=%22%231b1b24%22 stroke-width=%221.1%22 fill=%22none%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M12 34l-7-1.5M12 37l-7 1.5M36 34l7-1.5M36 37l7 1.5%22 stroke=%22%231b1b24%22 stroke-width=%221%22 opacity=%22.55%22 stroke-linecap=%22round%22/%3E%3Cellipse cx=%2226%22 cy=%2215%22 rx=%2215%22 ry=%226.5%22 transform=%22rotate%28-9 26 15%29%22 fill=%22%23d93b3b%22/%3E%3Crect x=%2221.5%22 y=%226%22 width=%223.4%22 height=%223.8%22 rx=%221.4%22 fill=%22%23d93b3b%22 transform=%22rotate%28-9 23 8%29%22/%3E%3C/svg%3E%3Csvg x=%22258%22 y=%22150%22 width=%22240%22 height=%22240%22 viewBox=%220 0 48 48%22 xmlns=%22http://www.w3.org/2000/svg%22 aria-hidden=%22true%22%3E%3Cpolygon points=%227%2C26 8%2C9 21%2C17%22 fill=%22%23f4e8d4%22/%3E%3Cpolygon points=%2241%2C26 40%2C9 27%2C17%22 fill=%22%23f4e8d4%22/%3E%3Cpolygon points=%2210%2C23 11%2C13 18%2C18%22 fill=%22%23f2b8c6%22/%3E%3Cpolygon points=%2238%2C23 37%2C13 30%2C18%22 fill=%22%23f2b8c6%22/%3E%3Cellipse cx=%2224%22 cy=%2230%22 rx=%2217%22 ry=%2214%22 fill=%22%23f4e8d4%22/%3E%3Cellipse cx=%2218%22 cy=%2230%22 rx=%222.2%22 ry=%222.6%22 fill=%22%231b1b24%22/%3E%3Cellipse cx=%2230%22 cy=%2230%22 rx=%222.2%22 ry=%222.6%22 fill=%22%231b1b24%22/%3E%3Cpolygon points=%2222%2C34 26%2C34 24%2C36.5%22 fill=%22%23f08aa0%22/%3E%3Cpath d=%22M24 36.5v2M24 38.5q-2.5 2-4.5.5M24 38.5q2.5 2 4.5.5%22 stroke=%22%231b1b24%22 stroke-width=%221.1%22 fill=%22none%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M12 34l-7-1.5M12 37l-7 1.5M36 34l7-1.5M36 37l7 1.5%22 stroke=%22%231b1b24%22 stroke-width=%221%22 opacity=%22.55%22 stroke-linecap=%22round%22/%3E%3Cellipse cx=%2226%22 cy=%2215%22 rx=%2215%22 ry=%226.5%22 transform=%22rotate%28-9 26 15%29%22 fill=%22%238f5ae6%22/%3E%3Crect x=%2221.5%22 y=%226%22 width=%223.4%22 height=%223.8%22 rx=%221.4%22 fill=%22%238f5ae6%22 transform=%22rotate%28-9 23 8%29%22/%3E%3C/svg%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="icono.png">
+<meta name="theme-color" content="#10151f">
+<script>(function(){var o=Storage.prototype.setItem;window.__nubeRaw=function(k,v){o.call(localStorage,k,v)};window.__nubeSucias={};window.__nubeOn=false;Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localStorage&&window.__nubeOn){window.__nubeSucias[k]=1;window.dispatchEvent(new Event("nube-cambio"))}};setTimeout(function(){if(!window.__nubeVivo){var d=document.createElement("div");d.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99998;background:#7a1f1f;color:#fff;padding:10px 14px;font:14px system-ui,sans-serif;text-align:center";d.textContent="⚠️ La entrada con Google no cargó: tus datos NO se están guardando en la nube. Avísale a Claude (en el computador: F12 → Console → copia el mensaje rojo).";(document.body||document.documentElement).appendChild(d)}},6000);})();</script>
+</head>
+<body>
+<div class="wrap">
+<nav class="navapp" aria-label="Áreas de la app"><a href="nutricion.html">NUTRICIÓN</a><a href="ejercicios.html">EJERCICIOS</a><a href="tareas.html" aria-current="page">TAREAS</a><a href="calendario.html">CALENDARIO</a></nav>
+
+  <h1>Tareas</h1>
+  <div class="subfecha" id="subfecha"></div>
+
+  <div class="tabs-lista" id="tabsLista">
+    <button type="button" data-lista="casa">🏠 Casa (común)</button>
+    <button type="button" data-lista="Kakin">Kakin</button>
+    <button type="button" data-lista="Hija">Hija</button>
+  </div>
+
+  <div class="filtros-fila">
+    <select id="filtroEstado">
+      <option value="pendiente">Pendientes</option>
+      <option value="pospuesta">Pospuestas</option>
+      <option value="hecha">Hechas</option>
+      <option value="congelada">Congeladas</option>
+      <option value="todas">Todas</option>
+    </select>
+    <select id="filtroFrec">
+      <option value="">Cualquier frecuencia</option>
+      <option value="diaria">Diarias</option>
+      <option value="semanal">Semanales</option>
+      <option value="quincenal">Quincenales</option>
+      <option value="mensual">Mensuales</option>
+      <option value="trimestral">Trimestrales</option>
+      <option value="semestral">Semestrales</option>
+      <option value="anual">Anuales</option>
+    </select>
+  </div>
+
+  <div class="filtros-fila">
+    <select id="accionLote">
+      <option value="">Acción para todas las que se ven…</option>
+      <option value="opcional">Marcarlas como opcionales</option>
+      <option value="congelada">Congelarlas</option>
+      <option value="normal">Devolverlas a normales</option>
+      <option value="frec:diaria">Repetirlas: cada día</option>
+      <option value="frec:semanal">Repetirlas: cada semana</option>
+      <option value="frec:quincenal">Repetirlas: cada 15 días</option>
+      <option value="frec:mensual">Repetirlas: cada mes</option>
+      <option value="frec:trimestral">Repetirlas: cada 3 meses</option>
+      <option value="frec:semestral">Repetirlas: cada 6 meses</option>
+      <option value="frec:anual">Repetirlas: cada año</option>
+    </select>
+  </div>
+
+  <div class="filtro-zona" id="filtroZonaCont" style="display:none">
+    <label for="filtroZona">Zona:</label>
+    <select id="filtroZona"></select>
+  </div>
+
+  <div id="franjas"></div>
+
+  <button class="btn-nueva" id="btnNueva">+ Nueva tarea</button>
+  <div class="form-tarea" id="formTarea" style="display:none"></div>
+
+  <button type="button" class="btn-nueva" id="btnAjuste" style="display:none;background:var(--panel);color:var(--ink);border:1px solid var(--line)">Aplicar el ajuste sugerido (reducir tareas diarias)</button>
+
+  <div class="aviso">Las tareas se guardan en este navegador. Si abrís la app en otro celular u otra compu, no las vas a ver todavía — eso depende de la sincronización (Firebase) que está anotada en el backlog.<br>El temporizador (⏱️) solo suena mientras tengas esta pestaña abierta en el celular o la compu; si cerrás la app o el navegador, se pierde.</div>
+</div>
+
+<script>
+const CLAVE = "tareasKokuk_v1";
+let listaActiva = "casa";
+
+function hoyISO(){
+  const d = new Date();
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+function diaSemana(){
+  return new Date().toLocaleDateString("es-ES",{weekday:"long", day:"numeric", month:"long"});
+}
+
+function cargarEstado(){
+  try{
+    const raw = localStorage.getItem(CLAVE);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return { tareas: [] };
+}
+function guardarEstado(){
+  localStorage.setItem(CLAVE, JSON.stringify(estado));
+}
+let estado = cargarEstado();
+
+// --- Temporizador configurable ---
+// Vive solo mientras la app está abierta en esta pestaña: si cerrás el navegador, se pierde.
+// (Igual que las tareas en sí, esto no se guarda todavía porque no hay sincronización real.)
+let timers = {};        // id de tarea -> segundos restantes
+let timerAbiertoEn = null; // id de tarea cuyo panel "elegir minutos" está abierto
+
+function sonarAlarma(){
+  try{
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.value = 880;
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start();
+    [0, 0.45, 0.9].forEach(t=>{
+      gain.gain.setValueAtTime(0.35, ctx.currentTime + t);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + t + 0.35);
+    });
+    osc.stop(ctx.currentTime + 1.3);
+  }catch(e){}
+}
+
+function iniciarTimer(id, minutos){
+  if(!minutos || minutos<=0){ alert("Escribí un número de minutos mayor que cero."); return; }
+  if("Notification" in window && Notification.permission === "default"){
+    Notification.requestPermission();
+  }
+  timers[id] = Math.round(minutos*60);
+  timerAbiertoEn = null;
+  render();
+}
+function cancelarTimer(id){
+  delete timers[id];
+  render();
+}
+
+setInterval(()=>{
+  Object.keys(timers).forEach(id=>{
+    timers[id]--;
+    if(timers[id] <= 0){
+      const t = estado.tareas.find(x=>x.id===id);
+      sonarAlarma();
+      if("Notification" in window && Notification.permission === "granted"){
+        new Notification("⏱️ ¡Tiempo cumplido!", { body: t ? t.nombre : "Temporizador" });
+      }
+      delete timers[id];
+      render();
+    } else {
+      const span = document.querySelector(`.timer-restante[data-id="${id}"]`);
+      if(span){
+        const m = Math.floor(timers[id]/60), s = timers[id]%60;
+        span.textContent = String(m).padStart(2,"0")+":"+String(s).padStart(2,"0");
+      }
+    }
+  });
+}, 1000);
+
+// Una tarea:
+// { id, nombre, lista: "casa"|"Kakin"|"Hija", tipo: "simple"|"horario"|"repetitiva",
+//   franja: "mañana"|"mediodia"|"tarde"|null,
+//   zona: string|null,  -> zona de la casa (solo se usa para agrupar/filtrar la lista "casa")
+//   frecuencia: "diaria"|"semanal"|"quincenal"|"mensual"|"trimestral"|"semestral"|"anual"|null,
+//   reseteo: "auto"|"manual"|null,
+//   completada: bool,            -> usado tal cual para simple/horario y para repetitivas con reseteo "manual"
+//   historial: ["2026-09-18", ...]  -> usado para repetitivas con reseteo "auto"
+// }
+
+function inicioSemanaISO(fISO){
+  const d = new Date(fISO+"T00:00:00");
+  const diaSemana = (d.getDay()+6)%7; // 0=lunes
+  d.setDate(d.getDate()-diaSemana);
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+// El "período" es la unidad de tiempo que hay que completar una vez.
+// Cada frecuencia define su propio período: diaria = el día; semanal = la semana (lunes a lunes);
+// quincenal = la primera o segunda mitad del mes; mensual = el mes; trimestral = cada 3 meses del año;
+// semestral = cada 6 meses del año; anual = el año.
+function periodoActual(t){
+  const hoy = hoyISO();
+  const d = new Date(hoy+"T00:00:00");
+  const anio = d.getFullYear();
+  const mes = d.getMonth()+1;
+  switch(t.frecuencia){
+    case "semanal": return inicioSemanaISO(hoy);
+    case "quincenal": return anio+"-"+String(mes).padStart(2,"0")+"-"+(d.getDate()<=15 ? "Q1" : "Q2");
+    case "mensual": return anio+"-"+String(mes).padStart(2,"0");
+    case "trimestral": return anio+"-T"+Math.ceil(mes/3);
+    case "semestral": return anio+"-S"+Math.ceil(mes/6);
+    case "anual": return String(anio);
+    default: return hoy; // diaria
+  }
+}
+
+function estaCompletadaHoy(t){
+  if(t.tipo === "repetitiva" && t.reseteo === "auto"){
+    return (t.historial||[]).includes(periodoActual(t));
+  }
+  return !!t.completada;
+}
+
+function marcarCompletada(t){
+  delete t.pospuestaHasta;
+  if(t.tipo === "repetitiva" && t.reseteo === "auto"){
+    t.historial = t.historial || [];
+    const periodo = periodoActual(t);
+    const i = t.historial.indexOf(periodo);
+    if(i>=0) t.historial.splice(i,1); else t.historial.push(periodo);
+  } else {
+    t.completada = !t.completada;
+  }
+  guardarEstado();
+  render();
+}
+
+let filtroEstado = "pendiente"; // pendiente | pospuesta | hecha | todas
+let filtroFrec = "";
+let abiertas = {};               // secciones desplegadas a mano: clave -> true/false
+let posponerAbiertoEn = null;    // id de tarea cuyo panel "posponer" está abierto
+
+function fechaMasDias(dias){
+  const d = new Date(hoyISO()+"T00:00:00");
+  d.setDate(d.getDate()+Math.round(dias));
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+// Una tarea está "pospuesta" mientras su fecha de regreso sea posterior a hoy; ese día vuelve sola a pendientes.
+function estadoTarea(t){
+  if(t.modo==="congelada") return "congelada";
+  if(t.pospuestaHasta && t.pospuestaHasta > hoyISO()) return "pospuesta";
+  return estaCompletadaHoy(t) ? "hecha" : "pendiente";
+}
+function posponer(t, dias){
+  if(!dias || dias<=0){ alert("Escribí un número de días mayor que cero."); return; }
+  t.pospuestaHasta = fechaMasDias(dias);
+  t.veces = (t.veces||0)+1;
+  posponerAbiertoEn = null;
+  guardarEstado(); render();
+}
+let visibles = []; // tareas que se ven con los filtros actuales (para las acciones en bloque)
+function cambiarModo(t, modo){
+  if(modo==="normal") delete t.modo; else t.modo = modo;
+  posponerAbiertoEn = null;
+  guardarEstado(); render();
+}
+function cambiarFrecuencia(t, f){
+  t.frecuencia = f;
+  posponerAbiertoEn = null;
+  guardarEstado(); render();
+}
+function ordenTareas(a,b){
+  return (estaCompletadaHoy(a)-estaCompletadaHoy(b)) || ((a.modo==="opcional")-(b.modo==="opcional"));
+}
+function volverAHoy(t){
+  delete t.pospuestaHasta;
+  posponerAbiertoEn = null;
+  guardarEstado(); render();
+}
+function crearSeccion(clave, titulo, tareas){
+  const k = listaActiva+"|"+clave;
+  const abierta = (k in abiertas) ? abiertas[k] : (listaActiva!=="casa" || !!zonaFiltro);
+  const sec = document.createElement("div");
+  sec.className = "franja";
+  const h = document.createElement("div");
+  h.className = "franja-titulo plegable";
+  h.innerHTML = `<span>${abierta?"▼":"▶"} ${titulo}</span><span>${tareas.length}</span>`;
+  h.onclick = ()=>{ abiertas[k] = !abierta; render(); };
+  sec.appendChild(h);
+  if(abierta) tareas.forEach(t=>pintarTareaEnSeccion(sec, t));
+  return sec;
+}
+
+function borrarTarea(id){
+  estado.tareas = estado.tareas.filter(t=>t.id!==id);
+  guardarEstado();
+  render();
+}
+
+const FRANJAS = [
+  {clave:"mañana", label:"Mañana"},
+  {clave:"mediodia", label:"Mediodía"},
+  {clave:"tarde", label:"Tarde"},
+  {clave:null, label:"Sin horario"}
+];
+
+const ZONAS = [
+  "Gatas","Salón","Habitación 1","Habitación 2","Habitación 3",
+  "Baño 1","Baño 2","Pasillo","Cocina","Solana/Lavadero",
+  "Ventanas y cristales","Suelos (general)","Basura y reciclaje","Mantenimiento del piso"
+];
+let zonaFiltro = ""; // "" = todas las zonas (solo aplica a la pestaña Casa)
+
+function iconoTipo(t){
+  if(t.tipo==="repetitiva") return t.reseteo==="auto" ? "🔁" : "↩️";
+  if(t.tipo==="horario") return "🕐";
+  return "";
+}
+const FRECUENCIA_LABEL = {
+  diaria: "Repite cada día",
+  semanal: "Repite cada semana",
+  quincenal: "Repite cada quincena",
+  mensual: "Repite cada mes",
+  trimestral: "Repite cada 3 meses",
+  semestral: "Repite cada 6 meses",
+  anual: "Repite cada año"
+};
+const FREC_OPCIONES = [["diaria","Cada día"],["semanal","Cada semana"],["quincenal","Cada 15 días"],["mensual","Cada mes"],["trimestral","Cada 3 meses"],["semestral","Cada 6 meses"],["anual","Cada año"]];
+function metaTexto(t){
+  const partes = [];
+  if(t.tipo==="repetitiva"){
+    partes.push(FRECUENCIA_LABEL[t.frecuencia] || "Se repite");
+    partes.push(t.reseteo==="auto" ? "se resetea sola" : "la desmarcás a mano");
+  }
+  if(estadoTarea(t)==="pospuesta") partes.push("⏭️ vuelve el "+t.pospuestaHasta.split("-").reverse().slice(0,2).join("/"));
+  if(t.modo==="opcional") partes.push("opcional");
+  if(t.modo==="congelada") partes.push("❄️ congelada");
+  if(t.veces>=2) partes.push("pospuesta "+t.veces+" veces");
+  if(t.zona) partes.push(t.zona);
+  return partes.join(" · ");
+}
+
+function pintarTareaEnSeccion(sec, t){
+  const done = estaCompletadaHoy(t);
+  const div = document.createElement("div");
+  div.className = "tarea" + (done ? " completada":"") + (t.modo==="opcional" ? " opcional":"") + (t.modo==="congelada" ? " congelada":"");
+  div.innerHTML = `
+    <button type="button" class="tarea-check ${done?"on":""}">${done?"✓":""}</button>
+    <div class="tarea-info">
+      <div class="tarea-nombre">${iconoTipo(t)} ${t.nombre}</div>
+      ${metaTexto(t) ? `<div class="tarea-meta">${metaTexto(t)}</div>` : ""}
+    </div>
+    <button type="button" class="tarea-posponer ${estadoTarea(t)==='pospuesta'?"activo":""}" title="Posponer">⏭️</button>
+    <button type="button" class="tarea-reloj ${timers[t.id]!==undefined?"activo":""}" title="Temporizador">⏱️</button>
+    <button type="button" class="tarea-borrar">✕</button>`;
+  div.querySelector(".tarea-check").onclick = ()=>marcarCompletada(t);
+  div.querySelector(".tarea-borrar").onclick = ()=>{
+    if(confirm(`¿Borrar "${t.nombre}"?`)) borrarTarea(t.id);
+  };
+  div.querySelector(".tarea-posponer").onclick = ()=>{
+    posponerAbiertoEn = (posponerAbiertoEn===t.id) ? null : t.id;
+    render();
+  };
+  div.querySelector(".tarea-reloj").onclick = ()=>{
+    timerAbiertoEn = (timerAbiertoEn===t.id) ? null : t.id;
+    render();
+  };
+  sec.appendChild(div);
+
+  if(posponerAbiertoEn === t.id){
+    const fila = document.createElement("div");
+    fila.className = "timer-row";
+    fila.innerHTML = `
+      <span class="timer-label">Posponer:</span>
+      <button type="button" data-d="1">Mañana</button>
+      <button type="button" data-d="3">3 días</button>
+      <button type="button" data-d="7">1 semana</button>
+      <input type="number" min="1" class="pos-dias" placeholder="días">
+      <button type="button" class="pos-ok">OK</button>
+      ${estadoTarea(t)==="pospuesta" ? '<button type="button" class="pos-hoy">Volver a hoy</button>' : ""}
+      <button type="button" class="modo-opc">${t.modo==="opcional" ? "Hacerla obligatoria" : "Opcional"}</button>
+      <button type="button" class="modo-cong">${t.modo==="congelada" ? "Descongelar" : "❄️ Congelar"}</button>
+      ${t.tipo==="repetitiva" ? '<span class="timer-label">Repetir:</span><select class="pos-frec">'+FREC_OPCIONES.map(([v,l])=>'<option value="'+v+'"'+(t.frecuencia===v?" selected":"")+'>'+l+'</option>').join("")+'</select>' : ""}
+      <button type="button" class="timer-cerrar">Cancelar</button>`;
+    fila.querySelectorAll("button[data-d]").forEach(b=>{ b.onclick = ()=>posponer(t, parseInt(b.dataset.d,10)); });
+    fila.querySelector(".pos-ok").onclick = ()=>posponer(t, parseInt(fila.querySelector(".pos-dias").value,10));
+    const hoyBtn = fila.querySelector(".pos-hoy");
+    if(hoyBtn) hoyBtn.onclick = ()=>volverAHoy(t);
+    const selF = fila.querySelector(".pos-frec");
+    if(selF) selF.onchange = ()=>cambiarFrecuencia(t, selF.value);
+    fila.querySelector(".modo-opc").onclick = ()=>cambiarModo(t, t.modo==="opcional" ? "normal" : "opcional");
+    fila.querySelector(".modo-cong").onclick = ()=>cambiarModo(t, t.modo==="congelada" ? "normal" : "congelada");
+    fila.querySelector(".timer-cerrar").onclick = ()=>{ posponerAbiertoEn = null; render(); };
+    sec.appendChild(fila);
+  }
+
+  if(timers[t.id] !== undefined){
+    const m = Math.floor(timers[t.id]/60), s = timers[t.id]%60;
+    const filaTimer = document.createElement("div");
+    filaTimer.className = "timer-row";
+    filaTimer.innerHTML = `
+      <span class="timer-label">⏱️ ${t.nombre}:</span>
+      <span class="timer-restante" data-id="${t.id}">${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}</span>
+      <button type="button" class="timer-cerrar">Cancelar</button>`;
+    filaTimer.querySelector(".timer-cerrar").onclick = ()=>cancelarTimer(t.id);
+    sec.appendChild(filaTimer);
+  } else if(timerAbiertoEn === t.id){
+    const filaTimer = document.createElement("div");
+    filaTimer.className = "timer-row";
+    filaTimer.innerHTML = `
+      <span class="timer-label">Avisame en</span>
+      <input type="number" min="1" class="timer-minutos" value="5">
+      <span class="timer-label">min</span>
+      <button type="button" class="timer-iniciar">Iniciar</button>
+      <button type="button" class="timer-cerrar">Cancelar</button>`;
+    filaTimer.querySelector(".timer-iniciar").onclick = ()=>{
+      const min = parseFloat(filaTimer.querySelector(".timer-minutos").value);
+      iniciarTimer(t.id, min);
+    };
+    filaTimer.querySelector(".timer-cerrar").onclick = ()=>{ timerAbiertoEn = null; render(); };
+    sec.appendChild(filaTimer);
+  }
+}
+
+function guardarFiltros(){
+  try{ localStorage.setItem("tareasFiltros_v1", JSON.stringify({listaActiva, filtroEstado, filtroFrec, zonaFiltro})); }catch(e){}
+}
+function render(){
+  guardarFiltros();
+  document.getElementById("subfecha").textContent = diaSemana();
+
+  document.querySelectorAll("#tabsLista button").forEach(b=>{
+    b.classList.toggle("on", b.dataset.lista === listaActiva);
+  });
+
+  const filtroZonaCont = document.getElementById("filtroZonaCont");
+  filtroZonaCont.style.display = (listaActiva === "casa") ? "flex" : "none";
+
+  const cont = document.getElementById("franjas");
+  cont.innerHTML = "";
+  let tareasLista = estado.tareas.filter(t=>t.lista===listaActiva);
+  if(filtroFrec) tareasLista = tareasLista.filter(t=>t.tipo!=="repetitiva" || t.frecuencia===filtroFrec);
+  if(filtroEstado!=="todas") tareasLista = tareasLista.filter(t=>estadoTarea(t)===filtroEstado);
+
+  if(listaActiva === "casa"){
+    // En Casa hay demasiadas tareas para agruparlas por horario (no lo usan) —
+    // se agrupan por zona de la casa, y se puede filtrar a una sola zona.
+    if(zonaFiltro){
+      tareasLista = tareasLista.filter(t => (t.zona||"Sin zona") === zonaFiltro);
+    }
+    visibles = tareasLista;
+    const orden = ZONAS.concat(["Sin zona"]);
+    const zonasPresentes = [...new Set(tareasLista.map(t=>t.zona||"Sin zona"))]
+      .sort((a,b)=> orden.indexOf(a) - orden.indexOf(b));
+
+    zonasPresentes.forEach(zona=>{
+      const tareasZona = tareasLista.filter(t => (t.zona||"Sin zona") === zona)
+        .sort(ordenTareas);
+      cont.appendChild(crearSeccion(zona, zona, tareasZona));
+    });
+
+    if(tareasLista.length===0){
+      cont.innerHTML = `<div class="empty-franja">Nada para mostrar con estos filtros.</div>`;
+    }
+  } else {
+    visibles = tareasLista;
+    FRANJAS.forEach(f=>{
+      const tareasFranja = tareasLista.filter(t=> (t.franja||null) === f.clave )
+        .sort(ordenTareas);
+      if(tareasFranja.length===0) return;
+
+      cont.appendChild(crearSeccion(f.label, f.label, tareasFranja));
+    });
+
+    if(tareasLista.length===0){
+      cont.innerHTML = `<div class="empty-franja">Nada para mostrar con estos filtros. Si la lista está vacía, agregá una tarea con el botón de abajo.</div>`;
+    }
+  }
+}
+
+document.querySelectorAll("#tabsLista button").forEach(b=>{
+  b.onclick = ()=>{ listaActiva = b.dataset.lista; render(); };
+});
+
+document.getElementById("filtroEstado").onchange = e=>{ filtroEstado = e.target.value; render(); };
+document.getElementById("filtroFrec").onchange = e=>{ filtroFrec = e.target.value; render(); };
+
+document.getElementById("accionLote").onchange = e=>{
+  const modo = e.target.value; e.target.value = "";
+  if(!modo) return;
+  const esFrec = modo.startsWith("frec:");
+  const objetivo = esFrec ? visibles.filter(t=>t.tipo==="repetitiva") : visibles;
+  if(objetivo.length===0){ alert("No hay tareas a las que aplicar esto con los filtros actuales."); return; }
+  const txt = esFrec ? "Cambiar la frecuencia a «"+modo.slice(5)+"» en" : {opcional:"Marcar como opcionales", congelada:"Congelar", normal:"Devolver a normales"}[modo];
+  if(!confirm(txt+" "+objetivo.length+" tareas (las que se ven con los filtros actuales)?")) return;
+  objetivo.forEach(t=>{ if(esFrec) t.frecuencia = modo.slice(5); else if(modo==="normal") delete t.modo; else t.modo = modo; });
+  guardarEstado(); render();
+};
+
+(function initFiltroZona(){
+  const sel = document.getElementById("filtroZona");
+  sel.innerHTML = `<option value="">Todas las zonas</option>` +
+    ZONAS.map(z=>`<option value="${z}">${z}</option>`).join("");
+  sel.onchange = ()=>{ zonaFiltro = sel.value; render(); };
+})();
+
+// ---- Formulario de nueva tarea ----
+function formularioHTML(){
+  return `
+    <label>Nombre de la tarea</label>
+    <input type="text" id="fNombre" placeholder="Ej: Lavar los platos">
+
+    <label>Lista</label>
+    <div class="grupo-radio" id="fLista">
+      <button type="button" data-v="casa" class="on">Casa (común)</button>
+      <button type="button" data-v="Kakin">Kakin</button>
+      <button type="button" data-v="Hija">Hija</button>
+    </div>
+
+    <label>Zona de la casa (opcional)</label>
+    <select id="fZona">
+      <option value="">— (no aplica)</option>
+      ${ZONAS.map(z=>`<option value="${z}">${z}</option>`).join("")}
+    </select>
+
+    <label>Tipo de tarea</label>
+    <div class="grupo-radio" id="fTipo">
+      <button type="button" data-v="simple" class="on">Simple</button>
+      <button type="button" data-v="horario">Con horario</button>
+      <button type="button" data-v="repetitiva">Repetitiva</button>
+    </div>
+
+    <div class="sub-opcion" id="subHorario">
+      <label>Franja horaria</label>
+      <select id="fFranja">
+        <option value="mañana">Mañana</option>
+        <option value="mediodia">Mediodía</option>
+        <option value="tarde">Tarde</option>
+      </select>
+    </div>
+
+    <div class="sub-opcion" id="subRepetitiva">
+      <label>¿Cada cuánto se repite?</label>
+      <select id="fFrecuencia">
+        <option value="diaria">Todos los días</option>
+        <option value="semanal">Una vez por semana</option>
+        <option value="quincenal">Una vez cada 15 días</option>
+        <option value="mensual">Una vez por mes</option>
+        <option value="trimestral">Una vez cada 3 meses</option>
+        <option value="semestral">Una vez cada 6 meses</option>
+        <option value="anual">Una vez por año</option>
+      </select>
+      <label>¿Cómo se marca de nuevo como pendiente?</label>
+      <div class="grupo-radio" id="fReseteo">
+        <button type="button" data-v="auto" class="on">Se resetea sola</button>
+        <button type="button" data-v="manual">La desmarco a mano</button>
+      </div>
+    </div>
+
+    <div class="form-acciones">
+      <button type="button" class="cancelar" id="fCancelar">Cancelar</button>
+      <button type="button" class="guardar" id="fGuardar">Guardar tarea</button>
+    </div>
+  `;
+}
+
+function grupoValor(id){
+  return document.querySelector(`#${id} button.on`).dataset.v;
+}
+function activarGrupo(id, cb){
+  document.querySelectorAll(`#${id} button`).forEach(b=>{
+    b.onclick = ()=>{
+      document.querySelectorAll(`#${id} button`).forEach(x=>x.classList.remove("on"));
+      b.classList.add("on");
+      if(cb) cb(b.dataset.v);
+    };
+  });
+}
+
+function actualizarSubOpciones(tipo){
+  document.getElementById("subHorario").classList.toggle("show", tipo==="horario");
+  document.getElementById("subRepetitiva").classList.toggle("show", tipo==="repetitiva");
+}
+
+function abrirFormulario(){
+  const form = document.getElementById("formTarea");
+  form.style.display = "block";
+  form.innerHTML = formularioHTML();
+  document.getElementById("btnNueva").style.display = "none";
+
+  activarGrupo("fLista");
+  activarGrupo("fTipo", (v)=>actualizarSubOpciones(v));
+  activarGrupo("fReseteo");
+  actualizarSubOpciones("simple");
+
+  document.getElementById("fCancelar").onclick = cerrarFormulario;
+  document.getElementById("fGuardar").onclick = guardarNuevaTarea;
+}
+function cerrarFormulario(){
+  document.getElementById("formTarea").style.display = "none";
+  document.getElementById("formTarea").innerHTML = "";
+  document.getElementById("btnNueva").style.display = "block";
+}
+function guardarNuevaTarea(){
+  const nombre = document.getElementById("fNombre").value.trim();
+  if(!nombre){ alert("Escribí un nombre para la tarea."); return; }
+  const tipo = grupoValor("fTipo");
+  const nueva = {
+    id: Date.now().toString(36),
+    nombre,
+    lista: grupoValor("fLista"),
+    zona: document.getElementById("fZona").value || null,
+    tipo,
+    franja: tipo==="horario" ? document.getElementById("fFranja").value : null,
+    frecuencia: tipo==="repetitiva" ? document.getElementById("fFrecuencia").value : null,
+    reseteo: tipo==="repetitiva" ? grupoValor("fReseteo") : null,
+    completada: false,
+    historial: []
+  };
+  estado.tareas.push(nueva);
+  guardarEstado();
+  listaActiva = nueva.lista;
+  cerrarFormulario();
+  render();
+}
+
+// --- Semilla de tareas de "Casa" (lista de limpieza y mantenimiento que pasaste) ---
+// Formato de cada fila: [nombre, frecuencia, reseteo]
+function itemsHabitacion(){
+  return [
+    ["Hacer la cama","diaria","auto"],
+    ["Ventilar","diaria","auto"],
+    ["Recoger ropa","diaria","manual"],
+    ["Quitar polvo de mesillas","semanal","auto"],
+    ["Limpiar cabecero","mensual","auto"],
+    ["Limpiar lámparas","mensual","auto"],
+    ["Limpiar espejos","semanal","auto"],
+    ["Aspirar suelo","semanal","auto"],
+    ["Fregar suelo","semanal","auto"],
+    ["Limpiar rodapiés","mensual","auto"],
+    ["Limpiar interruptores","mensual","auto"],
+    ["Limpiar puertas y tiradores","mensual","auto"],
+    ["Aspirar debajo de la cama","mensual","auto"],
+    ["Cambiar sábanas","quincenal","auto"],
+    ["Lavar fundas de almohada","quincenal","auto"],
+    ["Lavar mantas/edredón cuando corresponda","trimestral","manual"],
+    ["Aspirar colchón","trimestral","auto"],
+    ["Girar/rotar colchón según fabricante","trimestral","manual"],
+    ["Limpiar armario por dentro","trimestral","auto"],
+    ["Revisar ropa y retirar prendas que ya no se usan","semestral","manual"]
+  ];
+}
+function itemsBano(){
+  return [
+    ["Limpiar lavabo","diaria","auto"],
+    ["Limpiar grifo","diaria","auto"],
+    ["Limpiar espejo","diaria","auto"],
+    ["Limpiar inodoro","diaria","auto"],
+    ["Limpiar asiento y tapa","diaria","auto"],
+    ["Limpiar exterior del inodoro","diaria","auto"],
+    ["Limpiar ducha/bañera","diaria","auto"],
+    ["Retirar pelos","diaria","auto"],
+    ["Limpiar suelo","diaria","auto"],
+    ["Desinfectar lavabo","semanal","auto"],
+    ["Limpiar azulejos","semanal","auto"],
+    ["Limpiar mampara","semanal","auto"],
+    ["Eliminar restos de jabón","semanal","auto"],
+    ["Eliminar cal de grifos","semanal","auto"],
+    ["Limpiar alrededor del inodoro","semanal","auto"],
+    ["Fregar profundamente el suelo","semanal","auto"],
+    ["Limpiar papelera","semanal","auto"],
+    ["Cambiar toallas","semanal","auto"],
+    ["Lavar alfombrilla","semanal","auto"],
+    ["Limpiar armarios exteriores","semanal","auto"],
+    ["Limpiar interruptores y tiradores","semanal","auto"],
+    ["Desincrustar cal de ducha","mensual","auto"],
+    ["Limpiar juntas de azulejos","mensual","auto"],
+    ["Limpiar desagües","mensual","auto"],
+    ["Limpiar rejillas","mensual","auto"],
+    ["Limpiar profundamente mampara","mensual","auto"],
+    ["Limpiar interior de armarios","mensual","auto"],
+    ["Revisar posibles fugas","mensual","auto"],
+    ["Limpiar ventilador/extractor","mensual","auto"]
+  ];
+}
+
+function construirSemillaCasa(){
+  const filas = []; // {nombre, zona, frecuencia, reseteo}
+  function agregar(zona, tabla){
+    tabla.forEach(([nombre,frecuencia,reseteo])=> filas.push({nombre, zona, frecuencia, reseteo}));
+  }
+
+  agregar("Gatas", [
+    ["Retirar heces y orina de los areneros","diaria","auto"],
+    ["Remover los grumos y restos de arena","diaria","auto"],
+    ["Añadir arena si es necesario","diaria","auto"],
+    ["Barrer/aspirar alrededor de los areneros","diaria","auto"],
+    ["Limpiar salpicaduras de arena","diaria","auto"],
+    ["Lavar los cuencos de comida","diaria","auto"],
+    ["Cambiar el agua","diaria","auto"],
+    ["Retirar restos de comida","diaria","auto"],
+    ["Limpiar la zona donde comen","diaria","auto"],
+    ["Recoger pelos visibles de sofás, camas y textiles","diaria","auto"],
+    ["Revisar vómitos, bolas de pelo u otros accidentes y limpiarlos","diaria","auto"],
+    ["Aspirar especialmente las zonas donde duermen","semanal","manual"],
+    ["Lavar mantas/camas de las gatas","semanal","manual"],
+    ["Limpiar juguetes","semanal","manual"],
+    ["Limpiar rascadores si acumulan pelo","semanal","manual"],
+    ["Limpiar la zona exterior de los areneros","semanal","manual"],
+    ["Vaciar completamente los areneros","semanal","auto"],
+    ["Lavar y desinfectar los areneros","semanal","auto"],
+    ["Secarlos completamente y poner arena limpia","semanal","auto"],
+    ["Lavar camas y mantas","semanal","auto"],
+    ["Limpiar transportines si se han utilizado","semanal","auto"],
+    ["Limpiar comederos y bebederos a fondo","semanal","auto"],
+    ["Revisar y limpiar profundamente rascadores","mensual","auto"],
+    ["Lavar juguetes que lo permitan","mensual","auto"],
+    ["Limpiar debajo y detrás de los muebles donde suelen esconderse","mensual","auto"],
+    ["Revisar mosquiteras, ventanas y zonas de acceso","mensual","auto"],
+    ["Limpiar acumulación de pelo en rincones y debajo de muebles","mensual","auto"]
+  ]);
+
+  agregar("Salón", [
+    ["Recoger objetos","diaria","manual"],
+    ["Ordenar cojines y mantas","diaria","manual"],
+    ["Retirar pelos de las gatas (salón)","diaria","manual"],
+    ["Limpiar manchas puntuales","diaria","manual"],
+    ["Ventilar (salón)","diaria","manual"],
+    ["Quitar polvo de muebles","semanal","auto"],
+    ["Limpiar mesa de centro","semanal","auto"],
+    ["Limpiar muebles auxiliares","semanal","auto"],
+    ["Aspirar sofá","semanal","auto"],
+    ["Aspirar debajo de los cojines","semanal","auto"],
+    ["Aspirar alfombras","semanal","auto"],
+    ["Aspirar suelo (salón)","semanal","auto"],
+    ["Fregar suelo (salón)","semanal","auto"],
+    ["Limpiar rodapiés visibles","semanal","auto"],
+    ["Limpiar lámparas accesibles","semanal","auto"],
+    ["Limpiar mandos a distancia","semanal","auto"],
+    ["Limpiar interruptores (salón)","semanal","auto"],
+    ["Limpiar puertas y tiradores (salón)","semanal","auto"],
+    ["Aspirar profundamente debajo del sofá","mensual","auto"],
+    ["Limpiar detrás de muebles (salón)","mensual","auto"],
+    ["Lavar fundas de cojines","mensual","auto"],
+    ["Limpiar cortinas/persianas (salón)","mensual","auto"],
+    ["Limpiar cristales y marcos (salón)","mensual","auto"],
+    ["Limpiar paredes/manchas (salón)","mensual","auto"],
+    ["Limpiar rejillas de ventilación","mensual","auto"],
+    ["Mover muebles y limpiar debajo (salón)","mensual","auto"]
+  ]);
+
+  agregar("Habitación 1", itemsHabitacion());
+  agregar("Habitación 2", itemsHabitacion());
+  agregar("Habitación 3", itemsHabitacion());
+
+  agregar("Pasillo", [
+    ["Recoger objetos (pasillo)","diaria","manual"],
+    ["Retirar pelos de las gatas (pasillo)","diaria","auto"],
+    ["Quitar polvo (pasillo)","semanal","auto"],
+    ["Aspirar (pasillo)","semanal","auto"],
+    ["Fregar (pasillo)","semanal","auto"],
+    ["Limpiar espejos/cuadros","semanal","auto"],
+    ["Limpiar esquinas (pasillo)","semanal","auto"],
+    ["Limpiar rodapiés (pasillo)","mensual","auto"],
+    ["Limpiar puertas (pasillo)","mensual","auto"],
+    ["Limpiar marcos (pasillo)","mensual","auto"],
+    ["Limpiar interruptores (pasillo)","mensual","auto"],
+    ["Aspirar debajo de muebles o consolas","mensual","auto"]
+  ]);
+
+  agregar("Cocina", [
+    ["Limpiar encimera","diaria","auto"],
+    ["Limpiar placa de cocina","diaria","auto"],
+    ["Limpiar fregadero","diaria","auto"],
+    ["Lavar platos / cargar lavavajillas","diaria","auto"],
+    ["Limpiar grifo (cocina)","diaria","auto"],
+    ["Limpiar mesa (cocina)","diaria","auto"],
+    ["Limpiar manchas de aceite/comida","diaria","auto"],
+    ["Barrer o aspirar (cocina)","diaria","auto"],
+    ["Fregar (cocina)","diaria","auto"],
+    ["Sacar la basura","diaria","manual"],
+    ["Limpiar puertas de armarios","semanal","auto"],
+    ["Limpiar tiradores (cocina)","semanal","auto"],
+    ["Limpiar frontal de electrodomésticos","semanal","auto"],
+    ["Limpiar microondas","semanal","auto"],
+    ["Limpiar exterior del horno","semanal","auto"],
+    ["Limpiar frigorífico por fuera","semanal","auto"],
+    ["Limpiar cubo de basura (cocina)","semanal","auto"],
+    ["Limpiar zócalos (cocina)","semanal","auto"],
+    ["Limpiar paredes/azulejos de la zona de cocción","semanal","auto"],
+    ["Limpiar debajo de pequeños electrodomésticos","semanal","auto"],
+    ["Fregar profundamente el suelo (cocina)","semanal","auto"],
+    ["Limpiar frigorífico por dentro","mensual","auto"],
+    ["Revisar alimentos caducados","mensual","auto"],
+    ["Limpiar horno por dentro","mensual","auto"],
+    ["Limpiar campana extractora","mensual","auto"],
+    ["Limpiar filtros de campana","mensual","auto"],
+    ["Limpiar tostadora","mensual","auto"],
+    ["Limpiar cafetera","mensual","auto"],
+    ["Limpiar hervidor","mensual","auto"],
+    ["Limpiar lavavajillas","mensual","auto"],
+    ["Limpiar detrás de electrodomésticos accesibles","mensual","auto"]
+  ]);
+
+  agregar("Baño 1", itemsBano());
+  agregar("Baño 2", itemsBano());
+
+  agregar("Solana/Lavadero", [
+    ["Barrer (solana)","semanal","auto"],
+    ["Fregar (solana)","semanal","auto"],
+    ["Quitar polvo (solana)","semanal","auto"],
+    ["Limpiar lavadora por fuera","semanal","auto"],
+    ["Limpiar cubos de basura/reciclaje (solana)","semanal","auto"],
+    ["Retirar polvo y pelos acumulados (solana)","semanal","auto"],
+    ["Limpiar goma de la lavadora","mensual","auto"],
+    ["Limpiar cajetín del detergente","mensual","auto"],
+    ["Limpiar tendedero","mensual","auto"],
+    ["Limpiar puertas (solana)","mensual","auto"],
+    ["Limpiar estanterías (solana)","mensual","auto"],
+    ["Ordenar productos de limpieza","mensual","manual"],
+    ["Revisar productos caducados o vacíos","mensual","auto"],
+    ["Limpiar desagüe (solana)","mensual","auto"],
+    ["Limpiar filtro de lavadora","trimestral","auto"],
+    ["Limpiar ventanas (solana)","trimestral","auto"],
+    ["Limpiar persianas (solana)","trimestral","auto"]
+  ]);
+
+  agregar("Ventanas y cristales", [
+    ["Limpiar cristales interiores","trimestral","auto"],
+    ["Limpiar cristales exteriores cuando sea seguro","trimestral","auto"],
+    ["Limpiar marcos (ventanas)","trimestral","auto"],
+    ["Limpiar carriles","trimestral","auto"],
+    ["Limpiar persianas (ventanas)","trimestral","auto"],
+    ["Limpiar mosquiteras","trimestral","auto"],
+    ["Retirar pelos/polvo de esquinas (ventanas)","trimestral","auto"],
+    ["Revisar cierres (ventanas)","trimestral","auto"],
+    ["Revisar juntas (ventanas)","trimestral","auto"]
+  ]);
+
+  agregar("Suelos (general)", [
+    ["Aspirar toda la casa (varias veces por semana)","semanal","manual"],
+    ["Prestar especial atención a pelos y arena de gato","semanal","manual"],
+    ["Aspirar debajo de camas y sofás cuando sea posible","semanal","manual"],
+    ["Aspirar toda la vivienda","semanal","auto"],
+    ["Fregar toda la vivienda","semanal","auto"],
+    ["Limpiar esquinas (suelos)","semanal","auto"],
+    ["Limpiar rodapiés (suelos)","semanal","auto"],
+    ["Mover muebles (suelos)","mensual","auto"],
+    ["Limpiar debajo de muebles (suelos)","mensual","auto"],
+    ["Limpiar manchas difíciles (suelos)","mensual","auto"],
+    ["Limpiar juntas del suelo si corresponde","mensual","auto"]
+  ]);
+
+  agregar("Basura y reciclaje", [
+    ["Vaciar papeleras","diaria","manual"],
+    ["Limpiar y desinfectar cubos de basura","mensual","auto"],
+    ["Limpiar la zona donde están los cubos","semanal","auto"]
+  ]);
+
+  agregar("Mantenimiento del piso", [
+    ["Revisar bombillas","mensual","auto"],
+    ["Revisar grifos","mensual","auto"],
+    ["Revisar posibles fugas de agua","mensual","auto"],
+    ["Revisar desagües (mantenimiento)","mensual","auto"],
+    ["Revisar juntas de baño/cocina","mensual","auto"],
+    ["Revisar humedad o moho","mensual","auto"],
+    ["Limpiar filtros de aire acondicionado si corresponde","mensual","auto"],
+    ["Revisar detectores de humo si existen","mensual","auto"],
+    ["Revisar enchufes/cables visibles","mensual","auto"],
+    ["Revisar ventanas y cierres (mantenimiento)","mensual","auto"],
+    ["Revisar puertas y bisagras","mensual","auto"],
+    ["Revisar electrodomésticos","mensual","auto"],
+    ["Limpieza profunda de horno","trimestral","auto"],
+    ["Limpieza profunda de frigorífico","trimestral","auto"],
+    ["Limpieza de campana","trimestral","auto"],
+    ["Limpieza de persianas (mantenimiento)","trimestral","auto"],
+    ["Limpieza de ventanas (mantenimiento)","trimestral","auto"],
+    ["Limpieza profunda de colchones","trimestral","auto"],
+    ["Limpieza de sofás","trimestral","auto"],
+    ["Lavado de cortinas","trimestral","auto"],
+    ["Limpieza detrás de muebles (mantenimiento)","trimestral","auto"],
+    ["Limpieza detrás de electrodomésticos (mantenimiento)","trimestral","auto"],
+    ["Revisión de humedad (trimestral)","trimestral","auto"],
+    ["Revisión de juntas de silicona","trimestral","auto"],
+    ["Limpieza profunda general","anual","auto"],
+    ["Revisar pintura y paredes","anual","auto"],
+    ["Revisar humedades (anual)","anual","auto"],
+    ["Revisar sellados","anual","auto"],
+    ["Revisar persianas (anual)","anual","auto"],
+    ["Revisar instalaciones visibles","anual","auto"],
+    ["Limpieza profunda de todos los textiles","anual","auto"],
+    ["Revisar y reorganizar armarios","anual","auto"],
+    ["Revisar productos de limpieza y reponerlos","anual","auto"]
+  ]);
+
+  return filas;
+}
+
+function sembrarTareasCasaSiHaceFalta(){
+  const YA_SEMBRADO = "tareasCasaSembradas_v1";
+  if(localStorage.getItem(YA_SEMBRADO)) return;
+  const filas = construirSemillaCasa();
+  filas.forEach((f,i)=>{
+    estado.tareas.push({
+      id: "casa_seed_"+i+"_"+Date.now().toString(36),
+      nombre: f.nombre,
+      lista: "casa",
+      zona: f.zona,
+      tipo: "repetitiva",
+      franja: null,
+      frecuencia: f.frecuencia,
+      reseteo: f.reseteo,
+      completada: false,
+      historial: []
+    });
+  });
+  guardarEstado();
+  localStorage.setItem(YA_SEMBRADO, "1");
+}
+
+document.getElementById("btnNueva").onclick = abrirFormulario;
+
+const AJUSTE_FLAG = "tareasAjuste_v1";
+const BANO_DIARIAS = ["Limpiar inodoro","Limpiar lavabo"];
+const HAB_DIARIAS = ["Hacer la cama","Ventilar"];
+const DIARIAS_QUE_QUEDAN = {
+  "Gatas":["Retirar heces y orina de los areneros","Lavar los cuencos de comida","Cambiar el agua","Revisar vómitos, bolas de pelo u otros accidentes y limpiarlos"],
+  "Cocina":["Lavar platos / cargar lavavajillas","Limpiar encimera","Limpiar placa de cocina","Sacar la basura"],
+  "Baño 1":BANO_DIARIAS, "Baño 2":BANO_DIARIAS,
+  "Habitación 1":HAB_DIARIAS, "Habitación 2":HAB_DIARIAS, "Habitación 3":HAB_DIARIAS,
+  "Basura y reciclaje":["Vaciar papeleras"]
+};
+const ZONAS_A_CONGELAR = ["Suelos (general)","Mantenimiento del piso"];
+function aplicarAjuste(){
+  // Solo toca las tareas que la app creó al principio, nunca las que agregaste tú.
+  const base = estado.tareas.filter(t=>String(t.id).startsWith("casa_seed_") && t.tipo==="repetitiva");
+  const congelar = base.filter(t=>ZONAS_A_CONGELAR.includes(t.zona));
+  const resto = base.filter(t=>!ZONAS_A_CONGELAR.includes(t.zona) && t.frecuencia==="diaria");
+  const quedan = resto.filter(t=>(DIARIAS_QUE_QUEDAN[t.zona]||[]).includes(t.nombre));
+  const bajan = resto.filter(t=>!quedan.includes(t));
+  if(!confirm("Esto va a:\n• congelar "+congelar.length+" tareas de «Suelos (general)» y «Mantenimiento del piso»\n• pasar "+bajan.length+" tareas diarias a semanales\nTe quedarán "+quedan.length+" tareas diarias. Se puede deshacer con las acciones en bloque. ¿Aplicar?")) return;
+  congelar.forEach(t=>{ t.modo = "congelada"; });
+  bajan.forEach(t=>{ t.frecuencia = "semanal"; });
+  guardarEstado();
+  localStorage.setItem(AJUSTE_FLAG, "1");
+  document.getElementById("btnAjuste").style.display = "none";
+  render();
+}
+document.getElementById("btnAjuste").onclick = aplicarAjuste;
+
+try{
+  const f = JSON.parse(localStorage.getItem("tareasFiltros_v1") || "null");
+  if(f){ listaActiva = f.listaActiva || "casa"; filtroEstado = f.filtroEstado || "pendiente"; filtroFrec = f.filtroFrec || ""; zonaFiltro = f.zonaFiltro || ""; }
+}catch(e){}
+document.getElementById("filtroEstado").value = filtroEstado;
+document.getElementById("filtroFrec").value = filtroFrec;
+document.getElementById("filtroZona").value = zonaFiltro;
+
+sembrarTareasCasaSiHaceFalta();
+if(!localStorage.getItem(AJUSTE_FLAG) && estado.tareas.some(t=>String(t.id).startsWith("casa_seed_"))){
+  document.getElementById("btnAjuste").style.display = "block";
+}
+render();
+</script>
+<script type="module" src="nube.js" onerror="var d=document.createElement('div');d.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99998;background:#7a1f1f;color:#fff;padding:10px 14px;font:14px system-ui,sans-serif;text-align:center';d.textContent='⚠️ El archivo nube.js no se pudo descargar (revisa que esté subido a GitHub con ese nombre exacto).';document.body.appendChild(d)"></script>
+</body>
+</html>
