@@ -1,8 +1,8 @@
 // nube.js — entrada con Google + copia en la nube (Firebase). Fase 1: Nutrición y Ejercicios.
-let initializeApp, getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut, getFirestore, doc, getDoc, setDoc, getDocs, collection;
+let initializeApp, getAuth, GoogleAuthProvider, signInWithCredential, onAuthStateChanged, signOut, getFirestore, doc, getDoc, setDoc, getDocs, collection;
 try{
   ({ initializeApp } = await import("https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js"));
-  ({ getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } = await import("https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js"));
+  ({ getAuth, GoogleAuthProvider, signInWithCredential, onAuthStateChanged, signOut } = await import("https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js"));
   ({ getFirestore, doc, getDoc, setDoc, getDocs, collection } = await import("https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js"));
 }catch(e){
   const d = document.createElement("div");
@@ -11,6 +11,7 @@ try{
   (document.body || document.documentElement).appendChild(d);
   throw e;
 }
+const GIS_CLIENT_ID = "235893987189-hkdej19871r8qkbkgke2dm6n971tb1q1.apps.googleusercontent.com";
 window.__nubeVivo = true;
 const app = initializeApp({ apiKey:"AIzaSyDYK1EoCKWyX_zvNk0XCu8KKxawgk4v598", authDomain:"gatslife0470.firebaseapp.com", projectId:"gatslife0470", storageBucket:"gatslife0470.firebasestorage.app", messagingSenderId:"235893987189", appId:"1:235893987189:web:733eeb67e6ad46f2aca53c" });
 const auth = getAuth(app), db = getFirestore(app);
@@ -47,9 +48,40 @@ function traducir(e){
     "auth/network-request-failed":"No hay conexión a internet." };
   return m[e.code] || ("Error: " + (e.code || e.message));
 }
-function mostrarLogin(msg){
-  const d = pantalla(`${dosGatos}<h1>Nuestra App</h1><p style="color:#8a94a3">Entra con tu cuenta de Google.</p><button id="nube-go" style="${BTN}">Entrar con Google</button><p id="nube-msg" style="color:#ff9b6b">${msg || ""}</p>`);
-  d.querySelector("#nube-go").onclick = async () => { try{ sessionStorage.setItem("nubeYendo","1"); await signInWithRedirect(auth, new GoogleAuthProvider()); }catch(e){ sessionStorage.removeItem("nubeYendo"); d.querySelector("#nube-msg").textContent = traducir(e); } };
+function traducirGis(motivo){
+  const m = { "credential_returned_moved":"Un momento raro del navegador. Toca Recargar.",
+    "unregistered_origin":"Esta dirección no está registrada en Google Cloud (Credenciales → tu Cliente OAuth → Orígenes autorizados de JavaScript)." };
+  return m[motivo] || null;
+}
+let entrando = false;
+async function onCredGoogle(resp){
+  if(entrando) return; entrando = true;
+  try{
+    await signInWithCredential(auth, GoogleAuthProvider.credential(resp.credential));
+  }catch(e){
+    entrando = false;
+    const d = document.getElementById("nube-capa");
+    if(d) d.querySelector("p:last-child").textContent = traducir(e);
+  }
+}
+function cargarGIS(){
+  return new Promise((res, rej) => {
+    if(window.google && window.google.accounts && window.google.accounts.id) return res();
+    const s = document.createElement("script");
+    s.src = "https://accounts.google.com/gsi/client"; s.async = true;
+    s.onload = res; s.onerror = () => rej(new Error("No se pudo cargar el botón de Google."));
+    document.head.appendChild(s);
+  });
+}
+async function mostrarLogin(msg){
+  const d = pantalla(`${dosGatos}<h1>Nuestra App</h1><p style="color:#8a94a3">Entra con tu cuenta de Google.</p><div id="nube-btn" style="display:flex;justify-content:center;margin:14px 0"></div><p style="color:#ff9b6b">${msg || ""}</p>`);
+  try{
+    await cargarGIS();
+    window.google.accounts.id.initialize({ client_id: GIS_CLIENT_ID, callback: onCredGoogle, itp_support: true, use_fedcm_for_prompt: true });
+    window.google.accounts.id.renderButton(document.getElementById("nube-btn"), { theme: "filled_black", size: "large", text: "continue_with", shape: "pill", width: 260 });
+  }catch(e){
+    d.querySelector("p:last-child").textContent = "No se pudo mostrar el botón de Google: " + e.message;
+  }
 }
 async function elegirPerfil(user, ref, aviso=""){
   const d = pantalla(`<h1>¿Quién eres?</h1><p style="color:#8a94a3">Se elige una sola vez para esta cuenta.</p>
@@ -124,35 +156,4 @@ function escuchar(){
 
 // ---------- pastilla y ajustes de pantalla ----------
 let pill;
-function estado(ico, txt){ if(pill){ pill.querySelector("span").textContent = ico; pill.title = txt; } }
-function ui(){
-  const st = document.createElement("style"); st.textContent = ".tabs-perfil,.perfiles{display:none!important;}"; document.head.appendChild(st);
-  if(window.elegirPerfil) window.elegirPerfil(perfil);
-  const fs = document.querySelector(".perfiles")?.closest("fieldset");
-  if(fs){ if(perfil === "Hija") fs.style.display = "none"; else { const lg = fs.querySelector("legend"); if(lg) lg.textContent = "1. ¿Cómo estás hoy?"; } }
-  pill = document.createElement("button"); pill.type = "button";
-  pill.style.cssText = "position:fixed;left:10px;bottom:10px;z-index:9999;display:flex;align-items:center;gap:4px;padding:3px 10px 3px 4px;border-radius:20px;border:1px solid #2a3242;background:#1b2330;color:#e8ecf2;font-size:.85rem;cursor:pointer;";
-  pill.innerHTML = gato(perfil,26) + `<b>${LETRA[perfil]}</b><span>☁️</span>`; document.body.appendChild(pill);
-  pill.onclick = () => {
-    const d = pantalla(`<div style="display:flex;justify-content:center">${gato(perfil,72)}</div><h2>${LETRA[perfil]} · ${auth.currentUser?.email || ""}</h2>
-      <button data-a="sync" style="${BTN}">Sincronizar ahora</button><button data-a="salir" style="${BTN}">Salir de la cuenta</button><button data-a="cerrar" style="${BTN}">Volver</button>`);
-    d.querySelectorAll("button").forEach(b => b.onclick = async () => {
-      if(b.dataset.a === "cerrar") quitar();
-      else if(b.dataset.a === "sync"){ await enviar(); raw("nubeVinc_"+uid, "1"); location.reload(); }
-      else { await enviar(); await signOut(auth); location.reload(); }
-    });
-  };
-}
-
-pantalla("<p>Cargando…</p>");
-let resuelto = false;
-const feo = "No se pudo confirmar la entrada con Google (se quedó esperando una respuesta que nunca llegó). Puede ser que el navegador esté bloqueando cookies entre sitios. Prueba: 1) recargar, 2) si sigue igual, permite las cookies para este sitio, o prueba en otro navegador (Chrome normal, sin modo incógnito).";
-const vigia = setTimeout(() => { if(!resuelto){ sessionStorage.removeItem("nubeYendo"); mostrarLogin(feo); } }, 8000);
-getRedirectResult(auth).catch(e => { sessionStorage.removeItem("nubeYendo"); window.__nubeErrRedirect = traducir(e); });
-onAuthStateChanged(auth, u => {
-  resuelto = true; clearTimeout(vigia);
-  if(u) return iniciar(u);
-  if(sessionStorage.getItem("nubeYendo") === "1" && !window.__nubeErrRedirect){ resuelto = false; setTimeout(() => { if(!resuelto){ sessionStorage.removeItem("nubeYendo"); mostrarLogin(feo); } }, 6000); return; } // volviendo de Google, esperar un poco más
-  sessionStorage.removeItem("nubeYendo");
-  mostrarLogin(window.__nubeErrRedirect);
-});
+function estado(ico, txt){ if(pill){ pill.querySelector("span").textCo
