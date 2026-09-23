@@ -156,4 +156,25 @@ function escuchar(){
 
 // ---------- pastilla y ajustes de pantalla ----------
 let pill;
-function estado(ico, txt){ if(pill){ pill.querySelector("span").textCo
+function estado(ico, txt){ if(pill){ pill.querySelector("span").textContent = ico; pill.title = txt; } }
+function ui(){
+  const st = document.createElement("style"); st.textContent = ".tabs-perfil,.perfiles{display:none!important;}"; document.head.appendChild(st);
+  if(window.elegirPerfil) window.elegirPerfil(perfil);
+  const fs = document.querySelector(".perfiles")?.closest("fieldset");
+  if(fs){ if(perfil === "Hija") fs.style.display = "none"; else { const lg = fs.querySelector("legend"); if(lg) lg.textContent = "1. ¿Cómo estás hoy?"; } }
+  pill = document.createElement("button"); pill.type = "button";
+  pill.style.cssText = "position:fixed;left:10px;bottom:10px;z-index:9999;display:flex;align-items:center;gap:4px;padding:3px 10px 3px 4px;border-radius:20px;border:1px solid #2a3242;background:#1b2330;color:#e8ecf2;font-size:.85rem;cursor:pointer;";
+  pill.innerHTML = gato(perfil,26) + `<b>${LETRA[perfil]}</b><span>☁️</span>`; document.body.appendChild(pill);
+  pill.onclick = () => {
+    const d = pantalla(`<div style="display:flex;justify-content:center">${gato(perfil,72)}</div><h2>${LETRA[perfil]} · ${auth.currentUser?.email || ""}</h2>
+      <button data-a="sync" style="${BTN}">Sincronizar ahora</button><button data-a="salir" style="${BTN}">Salir de la cuenta</button><button data-a="cerrar" style="${BTN}">Volver</button>`);
+    d.querySelectorAll("button").forEach(b => b.onclick = async () => {
+      if(b.dataset.a === "cerrar") quitar();
+      else if(b.dataset.a === "sync"){ await enviar(); raw("nubeVinc_"+uid, "1"); location.reload(); }
+      else { await enviar(); await signOut(auth); location.reload(); }
+    });
+  };
+}
+
+pantalla("<p>Cargando…</p>");
+onAuthStateChanged(auth, u => u ? iniciar(u) : mostrarLogin());
