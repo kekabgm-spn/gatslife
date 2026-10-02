@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="manifest" href="manifest.json">
+<script src="migracion.js"></script>
+<script src="tema.js"></script>
+<title>Nuestra App</title>
+<link rel="icon" type="image/png" href="icono.png">
+<link rel="apple-touch-icon" href="icono.png">
+<meta name="theme-color" content="#10151f">
+<style>
+  :root{
+    --bg:#10151f; --card:#1b2330; --line:#2a3242; --ink:#e8ecf2; --accent:#35c26a;
+    color-scheme:dark;
+  }
+  :root[data-theme="light"]{
+    --bg:#f4f6f8; --card:#ffffff; --line:#d7dce3; --ink:#1b2330; --accent:#1f9d52;
+    color-scheme:light;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;display:flex;align-items:center;justify-content:center;padding:24px;}
+  main{width:100%;max-width:420px;text-align:center;}
+  img{width:120px;height:120px;border-radius:26px;}
+  h1{margin:14px 0 24px;font-size:1.5rem;}
+  a.area{display:block;margin:0 0 12px;padding:18px;border-radius:14px;background:var(--card);border:1px solid var(--line);color:var(--ink);text-decoration:none;font-weight:800;letter-spacing:.03em;font-size:1rem;}
+  a.area:active,a.area:hover{border-color:var(--accent);color:var(--accent);}
+  #btnTema{position:fixed;top:14px;right:14px;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:1.1rem;cursor:pointer;}
+</style>
+</head>
+<body>
+<button id="btnTema" onclick="alternarTema()" title="Cambiar tema" aria-label="Cambiar entre tema claro y oscuro">☀️</button>
+<a href="ajustes.html" id="btnAjustes" title="Ajustes y claves" aria-label="Ajustes y claves" style="position:fixed;top:14px;left:14px;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--card);display:flex;align-items:center;justify-content:center;text-decoration:none;font-size:1.1rem">⚙️</a>
+<main>
+  <img src="icono.png" alt="Dos gatas, una dorada y una violeta">
+  <h1>Nuestra App</h1>
+  <a class="area" href="nutricion.html">🍽️ NUTRICIÓN</a>
+  <a class="area" href="ejercicios.html">🏃 FITNESS</a>
+  <a class="area" href="tareas.html">✅ TAREAS</a>
+  <a class="area" href="calendario.html">📅 CALENDARIO</a>
+  <a class="area" href="salud.html">🩺 SALUD</a>
+</main>
+</body>
+</html>

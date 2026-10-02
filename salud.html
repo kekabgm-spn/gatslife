@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.json">
+<script src="migracion.js"></script>
+<script src="tema.js"></script>
+<title>Salud</title>
+<link rel="icon" type="image/png" href="icono.png">
+<link rel="apple-touch-icon" href="icono.png">
+<meta name="theme-color" content="#10151f">
+<style>
+  :root{
+    --bg: #10151f;
+    --panel: #1b2330;
+    --panel-alt: #232c3b;
+    --ink: #eef2f6;
+    --muted: #8a94a3;
+    --accent: #35c26a;
+    --accent-soft: rgba(53,194,106,0.15);
+    --warn: #e0703f;
+    --line: #2a3242;
+  }
+  :root[data-theme="light"]{
+    --bg: #f4f6f8;
+    --panel: #ffffff;
+    --panel-alt: #eef1f5;
+    --ink: #1b2330;
+    --muted: #667085;
+    --accent: #1f9d52;
+    --accent-soft: rgba(31,157,82,0.12);
+    --warn: #c8562e;
+    --line: #d7dce3;
+    color-scheme: light;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    padding: 20px 14px 80px;
+  }
+  .wrap{max-width:900px;margin:0 auto;}
+  h1{font-size:1.3rem;margin:0 0 14px;font-weight:700;}
+  h2{font-size:1.02rem;margin:0 0 10px;font-weight:700;}
+
+  .navapp{display:flex;gap:4px;margin:0 0 14px;background:#1b2330;border:1px solid #2a3242;border-radius:10px;padding:4px;}
+  .navapp a{flex:1;text-align:center;padding:9px 2px;border-radius:7px;color:#8a94a3;text-decoration:none;font-size:0.68rem;font-weight:800;letter-spacing:.02em;}
+  .navapp a[aria-current="page"]{background:rgba(53,194,106,0.15);color:#35c26a;}
+
+  .tabs-perfil{display:flex;gap:6px;margin-bottom:14px;}
+  .tabs-perfil button{
+    flex:1;background:var(--panel);border:1px solid var(--line);color:var(--muted);
+    padding:9px;border-radius:8px;font-size:0.88rem;cursor:pointer;font-weight:600;
+  }
+  .tabs-perfil button.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);}
+
+  .tabs-sec{display:flex;gap:6px;margin-bottom:16px;overflow-x:auto;padding-bottom:2px;}
+  .tabs-sec button{
+    flex:0 0 auto;background:var(--panel);border:1px solid var(--line);color:var(--muted);
+    padding:8px 12px;border-radius:8px;font-size:0.82rem;cursor:pointer;font-weight:600;white-space:nowrap;
+  }
+  .tabs-sec button.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);}
+
+  section.panel{display:none;}
+  section.panel.on{display:block;}
+
+  .tarjeta{
+    background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    padding:12px 14px;margin-bottom:8px;
+  }
+  .tarjeta-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+  .tarjeta-nombre{font-weight:700;font-size:0.95rem;}
+  .tarjeta-meta{color:var(--muted);font-size:0.78rem;margin-top:2px;}
+  .tarjeta-notas{font-size:0.85rem;margin-top:6px;white-space:pre-wrap;}
+  .tarjeta-btns{display:flex;gap:6px;flex-shrink:0;}
+  .tarjeta-btns button{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;}
+  .tarjeta-btns button:hover{color:var(--accent);}
+  .tarjeta-btns button.del:hover{color:var(--warn);}
+  .archivo-link{display:inline-block;margin-top:6px;color:var(--accent);font-size:0.82rem;text-decoration:none;}
+
+  .empty{color:var(--muted);font-size:0.88rem;font-style:italic;padding:6px 2px 14px;}
+
+  .form-add{
+    background:var(--panel-alt);border:1px solid var(--line);border-radius:10px;
+    padding:12px;margin-bottom:16px;display:flex;flex-direction:column;gap:8px;
+  }
+  .form-add .fila{display:flex;gap:8px;}
+  .form-add .fila > *{flex:1;}
+  .form-add label{color:var(--muted);font-size:0.78rem;display:block;margin-bottom:3px;}
+  .form-add input, .form-add select, .form-add textarea{
+    width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:8px;
+    background:var(--bg);color:var(--ink);font-size:0.9rem;font-family:inherit;
+  }
+  .form-add textarea{resize:vertical;min-height:50px;}
+  .form-add .check{display:flex;align-items:center;gap:6px;font-size:0.85rem;color:var(--ink);}
+  .btn-guardar{
+    background:var(--accent);color:#0a1f14;border:none;border-radius:8px;
+    padding:10px;font-size:0.9rem;font-weight:700;cursor:pointer;
+  }
+  .btn-cancelar{
+    background:none;border:1px solid var(--line);color:var(--muted);border-radius:8px;
+    padding:10px;font-size:0.85rem;cursor:pointer;
+  }
+  .btn-nueva{
+    width:100%;background:var(--accent);color:#0a1f14;border:none;border-radius:10px;
+    padding:12px;font-size:0.9rem;font-weight:700;cursor:pointer;margin-bottom:16px;
+  }
+
+  .navfecha{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .navfecha button{background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:6px 12px;font-size:1rem;cursor:pointer;}
+  .navfecha .fecha{color:var(--ink);font-size:0.9rem;font-weight:600;text-transform:capitalize;}
+
+  .toma{
+    background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    padding:11px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;
+  }
+  .toma.hecha{opacity:0.55;}
+  .toma.hecha .toma-nombre{text-decoration:line-through;}
+  .toma-check{
+    width:24px;height:24px;border-radius:50%;border:2px solid var(--line);
+    background:none;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--accent);font-size:0.9rem;
+  }
+  .toma-check.on{background:var(--accent);border-color:var(--accent);color:#0a1f14;}
+  .toma-info{flex:1;min-width:0;}
+  .toma-nombre{font-weight:600;font-size:0.92rem;}
+  .toma-meta{color:var(--muted);font-size:0.75rem;margin-top:2px;}
+
+  .filtro-zona{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+  .filtro-zona select{flex:1;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font-size:0.86rem;}
+
+  .aviso{color:var(--muted);font-size:0.78rem;margin-top:10px;line-height:1.4;}
+  .cita-grupo-titulo{font-size:0.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin:14px 0 8px 2px;}
+  .link-calendario{display:block;text-align:center;color:var(--accent);text-decoration:none;font-size:0.85rem;font-weight:700;margin-top:10px;}
+
+  /* Historial de tomas */
+  .ht-nav{display:flex;align-items:center;justify-content:space-between;margin:6px 0 8px;}
+  .ht-nav button{background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:4px 12px;font-size:1rem;cursor:pointer;}
+  .ht-filtros{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
+  .ht-filtros button{background:var(--panel);border:1px solid var(--line);color:var(--muted);border-radius:999px;padding:4px 12px;font-size:0.8rem;cursor:pointer;}
+  .ht-filtros button.on{border-color:var(--accent);color:var(--accent);font-weight:700;}
+  .ht-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+  .ht-dow{font-size:0.68rem;color:var(--muted);text-align:center;}
+  .ht-dia{aspect-ratio:1/1;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-size:0.8rem;cursor:pointer;padding:0;opacity:0.45;}
+  .ht-dia.completo{opacity:1;background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:700;}
+  .ht-dia.parcial{opacity:1;border-color:#d4a017;color:var(--ink);}
+  .ht-dia.falta{opacity:1;border-color:var(--warn);color:var(--warn);}
+  .ht-dia.hoy{outline:2px solid var(--accent);}
+  .ht-dia.sel{box-shadow:0 0 0 2px var(--ink);}
+  .ht-dia.tenue{opacity:0.15;}
+  .ht-vacio{visibility:hidden;}
+  .ht-resumen{font-size:0.85rem;color:var(--muted);margin:8px 0 2px;}
+  .ht-detalle{font-size:0.85rem;margin-top:6px;}
+  .ht-detalle ul{margin:4px 0 0 18px;padding:0;}
+  .tabs-sec{flex-wrap:wrap !important;overflow:visible !important;}
+  #si-form > div, #panel-articulaciones .form-add > div{margin-bottom:12px;}
+  #si-form label{margin-top:2px;}
+</style>
+<script>(function(){var o=Storage.prototype.setItem;window.__nubeRaw=function(k,v){o.call(localStorage,k,v)};window.__nubeSucias={};window.__nubeOn=false;Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localStorage&&window.__nubeOn){window.__nubeSucias[k]=1;window.dispatchEvent(new Event("nube-cambio"))}};setTimeout(function(){if(!window.__nubeVivo){var d=document.createElement("div");d.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99998;background:#7a1f1f;color:#fff;padding:10px 14px;font:14px system-ui,sans-serif;text-align:center";d.textContent="⚠️ La entrada con Google no cargó: tus datos NO se están guardando en la nube.";(document.body||document.documentElement).appendChild(d)}},6000);})();</script>
+</head>
+<body>
+<button id="btnTema" onclick="alternarTema()" title="Cambiar tema" aria-label="Cambiar entre tema claro y oscuro" style="position:fixed;top:12px;right:12px;z-index:500;width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-size:1rem;cursor:pointer">☀️</button>
+<div class="wrap">
+<nav class="navapp" aria-label="Áreas de la app">
+  <a href="nutricion.html">NUTRICIÓN</a>
+  <a href="ejercicios.html">FITNESS</a>
+  <a href="tareas.html">TAREAS</a>
+  <a href="calendario.html">CALENDARIO</a>
+  <a href="salud.html" aria-current="page">SALUD</a>
+</nav>
+
+<h1>Salud</h1>
+
+<div class="tabs-perfil" id="tabsPerfil">
+  <button type="button" data-perfil="Mamy">Mamy</button>
+  <button type="button" data-perfil="Filha">Filha</button>
+</div>
+
+<div class="tabs-sec" id="tabsSec">
+  <button type="button" data-sec="condiciones">Condiciones</button>
+  <button type="button" data-sec="cirugias">Cirugías</button>
+  <button type="button" data-sec="medicacion">Medicación</button>
+  <button type="button" data-sec="pruebas">Pruebas</button>
+  <button type="button" data-sec="citas">Citas médicas</button>
+  <button type="button" data-sec="articulaciones">Articulaciones</button>
+  <button type="button" data-sec="sintomas">Síntomas</button>
+</div>
+
+<!-- ARTICULACIONES -->
+<section class="panel" id="panel-articulaciones">
+  <div class="fila" style="align-items:center;gap:8px;margin-bottom:10px">
+    <button type="button" class="btn-cancelar" id="ar-ant" aria-label="Día anterior">◀</button>
+    <input type="date" id="ar-fecha" style="flex:1">
+    <button type="button" class="btn-cancelar" id="ar-sig" aria-label="Día siguiente">▶</button>
+    <button type="button" class="btn-guardar" id="ar-hoy">Hoy</button>
+  </div>
+  <div class="tabs-perfil"><button type="button" id="ar-v-ant" class="on">Vista anterior</button><button type="button" id="ar-v-pos">Vista posterior</button></div>
+  <p class="aviso" style="margin:0 0 8px">Toca una articulación del cuerpo. Se enciende en rojo lo que tenga algún valor. Toca de nuevo un punto ya marcado para quitarlo. Lo que marques se guarda en el día elegido.</p>
+  <svg id="ar-svg" viewBox="0 0 200 410" style="width:100%;max-width:340px;display:block;margin:0 auto"></svg>
+  <div id="ar-resumen"></div>
+  <div id="ar-ficha"></div>
+  <h2 style="margin-top:22px">Funcionalidad del día</h2>
+  <p class="aviso" style="margin:0 0 8px">Dificultad: 0 ninguna · 1 leve · 2 moderada · 3 grave · 4 extrema. Es una lista propia, no el cuestionario oficial WHODAS.</p>
+  <div id="ar-func"></div>
+  <h2 style="margin-top:22px">Días registrados</h2>
+  <div id="ar-hist"></div>
+</section>
+
+<!-- SÍNTOMAS -->
+<section class="panel" id="panel-sintomas">
+  <button class="btn-nueva" id="si-abrir" type="button">+ Añadir síntoma</button>
+  <div class="form-add" id="si-form" style="display:none;margin-top:12px">
+    <input type="hidden" id="si-id">
+    <div><label>Síntoma</label><input type="text" id="si-nombre" list="si-lista" placeholder="Ej. Migraña, dolor de estómago" autocomplete="off"><datalist id="si-lista"></datalist></div>
+    <div class="fila"><div><label>Fecha</label><input type="date" id="si-fecha"></div><div><label>Hora (opcional)</label><input type="time" id="si-hora"></div></div>
+    <div><label>Nivel (0 = nada, 10 = máximo)</label><div id="si-nivel" style="display:flex;flex-wrap:wrap;gap:4px"></div></div>
+    <div><label>Notas (opcional)</label><textarea id="si-nota" placeholder="Qué lo provocó, qué tomaste, cuánto duró..."></textarea></div>
+    <div class="fila"><button type="button" class="btn-guardar" id="si-guardar">Guardar</button><button type="button" class="btn-cancelar" id="si-cancelar">Cancelar</button></div>
+  </div>
+  <div class="fila" style="margin:12px 0 4px"><select id="si-filtro" style="flex:1"><option value="">Todos los síntomas</option></select></div>
+  <div id="si-historial"></div>
+</section>
+
+<!-- CONDICIONES -->
+<section class="panel" id="panel-condiciones">
+  <button class="btn-nueva" data-abrir="condiciones">+ Añadir condición</button>
+  <form class="form-add" id="form-condiciones" style="display:none">
+    <input type="hidden" id="cond-id">
+    <div><label>Nombre</label><input type="text" id="cond-nombre" placeholder="Ej. Enfisema"></div>
+    <div class="fila">
+      <div><label>Desde (opcional)</label><input type="date" id="cond-desde"></div>
+    </div>
+    <div><label>Notas</label><textarea id="cond-notas" placeholder="Estado, tratamiento, lo que convenga recordar"></textarea></div>
+    <div class="fila">
+      <button type="button" class="btn-guardar" onclick="guardarCondicion()">Guardar</button>
+      <button type="button" class="btn-cancelar" onclick="cerrarForm('condiciones')">Cancelar</button>
+    </div>
+  </form>
+  <div id="lista-condiciones"></div>
+</section>
+
+<!-- CIRUGÍAS -->
+<section class="panel" id="panel-cirugias">
+  <button class="btn-nueva" data-abrir="cirugias">+ Añadir cirugía / intervención</button>
+  <form class="form-add" id="form-cirugias" style="display:none">
+    <input type="hidden" id="cir-id">
+    <div><label>Fecha</label><input type="date" id="cir-fecha"></div>
+    <div><label>Qué se hizo</label><input type="text" id="cir-desc" placeholder="Ej. Artroscopia de rodilla"></div>
+    <div><label>Notas / recuperación</label><textarea id="cir-notas"></textarea></div>
+    <div><label>Adjuntar informe o foto (opcional)</label><input type="file" id="cir-archivo" accept="image/*,application/pdf"></div>
+    <div class="fila">
+      <button type="button" class="btn-guardar" onclick="guardarCirugia()">Guardar</button>
+      <button type="button" class="btn-cancelar" onclick="cerrarForm('cirugias')">Cancelar</button>
+    </div>
+  </form>
+  <div id="lista-cirugias"></div>
+</section>
+
+<!-- MEDICACIÓN -->
+<section class="panel" id="panel-medicacion">
+  <h2>Toma de hoy</h2>
+  <div class="navfecha">
+    <button id="medDiaAnterior">◀</button>
+    <div class="fecha" id="medFechaLabel"></div>
+    <button id="medDiaSiguiente">▶</button>
+  </div>
+  <div id="lista-tomas"></div>
+
+  <h2 style="margin-top:22px">Historial de tomas</h2>
+  <div class="ht-nav">
+    <button type="button" id="ht-prev" aria-label="Mes anterior">◀</button>
+    <b id="ht-titulo"></b>
+    <button type="button" id="ht-next" aria-label="Mes siguiente">▶</button>
+  </div>
+  <div class="ht-filtros" id="ht-filtros">
+    <button type="button" data-f="todos" class="on">Todos</button>
+    <button type="button" data-f="completos">Completos</button>
+    <button type="button" data-f="faltas">Con faltas</button>
+  </div>
+  <div class="ht-grid" id="ht-grid"></div>
+  <div class="ht-resumen" id="ht-resumen"></div>
+  <div class="ht-detalle" id="ht-detalle"></div>
+
+  <h2 style="margin-top:22px">Pastillas y dosis</h2>
+  <button class="btn-nueva" data-abrir="medicacion">+ Añadir pastilla</button>
+  <form class="form-add" id="form-medicacion" style="display:none">
+    <input type="hidden" id="med-id">
+    <div><label>Nombre</label><input type="text" id="med-nombre" list="med-banco" autocomplete="off" placeholder="Ej. Paracetamol"><datalist id="med-banco"></datalist></div>
+    <div class="fila">
+      <div><label>Cantidad</label><input type="number" id="med-cantidad" step="any" min="0" placeholder="Ej. 500"></div>
+      <div><label>Unidad</label>
+        <select id="med-unidad">
+          <option value="mg">mg</option>
+          <option value="comprimidos">comprimido(s)</option>
+          <option value="ml">ml</option>
+          <option value="gotas">gotas</option>
+          <option value="otro">otra</option>
+        </select>
+      </div>
+    </div>
+    <div><label>Horario</label><input type="text" id="med-horario" placeholder="Ej. 8:00, 20:00"></div>
+    <div><label>Notas</label><textarea id="med-notas" placeholder="Para qué es, indicaciones..."></textarea></div>
+    <label class="check"><input type="checkbox" id="med-activa" checked> Activa (aparece en la toma diaria)</label>
+    <div class="fila">
+      <button type="button" class="btn-guardar" onclick="guardarMedicacion()">Guardar</button>
+      <button type="button" class="btn-cancelar" onclick="cerrarForm('medicacion')">Cancelar</button>
+    </div>
+  </form>
+  <div id="lista-medicacion"></div>
+
+  <details style="margin-top:14px">
+    <summary style="cursor:pointer;color:var(--muted);font-size:0.85rem">📚 Mi banco de nombres (para autocompletar)</summary>
+    <p class="aviso">Escribí un nombre por línea. Al añadir una pastilla, empezás a escribir y te sugiere el nombre. Los nombres que uses también se suman solos. Se guarda en tu cuenta.</p>
+    <textarea id="banco-med-texto" rows="6" style="width:100%" placeholder="Un nombre por línea"></textarea>
+    <button type="button" class="btn-guardar" id="banco-med-guardar" style="margin-top:8px">Guardar banco</button>
+  </details>
+</section>
+
+<!-- PRUEBAS -->
+<section class="panel" id="panel-pruebas">
+  <div class="filtro-zona">
+    <select id="filtroTipoPrueba">
+      <option value="">Todos los tipos</option>
+      <option value="analitica">Analítica</option>
+      <option value="radiografia">Radiografía / imagen</option>
+      <option value="ecografia">Ecografía</option>
+      <option value="otro">Otro</option>
+    </select>
+  </div>
+  <button class="btn-nueva" data-abrir="pruebas">+ Añadir resultado de prueba</button>
+  <form class="form-add" id="form-pruebas" style="display:none">
+    <input type="hidden" id="prb-id">
+    <div class="fila">
+      <div><label>Fecha</label><input type="date" id="prb-fecha"></div>
+      <div><label>Tipo</label>
+        <select id="prb-tipo">
+          <option value="analitica">Analítica</option>
+          <option value="radiografia">Radiografía / imagen</option>
+          <option value="ecografia">Ecografía</option>
+          <option value="otro">Otro</option>
+        </select>
+      </div>
+    </div>
+    <div><label>Resumen / valores</label><textarea id="prb-notas" placeholder="Lo relevante del resultado"></textarea></div>
+    <div><label>Adjuntar resultado (opcional)</label><input type="file" id="prb-archivo" accept="image/*,application/pdf"></div>
+    <div class="fila">
+      <button type="button" class="btn-guardar" onclick="guardarPrueba()">Guardar</button>
+      <button type="button" class="btn-cancelar" onclick="cerrarForm('pruebas')">Cancelar</button>
+    </div>
+  </form>
+  <div id="lista-pruebas"></div>
+</section>
+
+<!-- CITAS (lectura desde Calendario) -->
+<section class="panel" id="panel-citas">
+  <p class="aviso" style="margin-top:0">Esto es solo una lectura de las citas médicas que ya están en el Calendario — para crear o editar una cita, hacelo ahí.</p>
+  <div id="lista-citas"></div>
+  <a class="link-calendario" href="calendario.html">Ir al Calendario →</a>
+</section>
+
+<p class="aviso">Las condiciones, cirugías, medicación y pruebas se guardan por perfil y se sincronizan entre dispositivos, igual que Dieta y Fitness. Los archivos adjuntos muy grandes puede que no se sincronicen a la nube.</p>
+
+</div>
+
+<script type="module" src="nube.js" onerror="var d=document.createElement('div');d.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99998;background:#7a1f1f;color:#fff;padding:10px 14px;font:14px system-ui,sans-serif;text-align:center';d.textContent='⚠️ El archivo nube.js no se pudo descargar.';document.body.appendChild(d)"></script>
+<script>
+const PERFILES = ["Mamy","Filha"];
+const CLAVE_PERFIL_ACTIVO = "dietaPerfilActivo";
+function cargarPerfilActivo(){ const p = localStorage.getItem(CLAVE_PERFIL_ACTIVO); return PERFILES.includes(p) ? p : PERFILES[0]; }
+function guardarPerfilActivo(p){ localStorage.setItem(CLAVE_PERFIL_ACTIVO, p); }
+let perfilActivo = cargarPerfilActivo();
+
+function claveCond(){ return "saludCondicionesV1_"+perfilActivo; }
+function claveCirugias(){ return "saludCirugiasV1_"+perfilActivo; }
+function claveMed(){ return "saludMedicacionV1_"+perfilActivo; }
+function claveTomas(){ return "saludMedTomasV1_"+perfilActivo; }
+function claveBancoMed(){ return "saludBancoMedV1_"+perfilActivo; }
+function clavePruebas(){ return "saludPruebasV1_"+perfilActivo; }
+
+function leerJSON(clave, defecto){ try{ const v = JSON.parse(localStorage.getItem(clave)); return v==null ? defecto : v; }catch(e){ return defecto; } }
+function guardarJSON(clave, valor){ localStorage.setItem(clave, JSON.stringify(valor)); }
+function nuevoId(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function hoyISO(d){ d = d || new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function fechaLegible(iso){ if(!iso) return "sin fecha"; const [y,m,d]=iso.split("-"); return d+"/"+m+"/"+y; }
+const UNIDAD_ETQ = {mg:"mg", comprimidos:"comp.", ml:"ml", gotas:"gotas", otro:""};
+function dosisTexto(m){ return (m.cantidad!=null && m.cantidad!=="") ? (m.cantidad+" "+(UNIDAD_ETQ[m.unidad]||"")).trim() : ""; }
+
+let condiciones = leerJSON(claveCond(), []);
+let cirugias = leerJSON(claveCirugias(), []);
+let medicacion = leerJSON(claveMed(), []);
+let tomas = leerJSON(claveTomas(), {});
+let bancoMed = leerJSON(claveBancoMed(), []);
+let pruebas = leerJSON(clavePruebas(), []);
+let medFechaActual = hoyISO();
+let seccionActiva = "condiciones";
+
+function cambiarPerfil(p){
+  if(p === perfilActivo) return;
+  perfilActivo = p; guardarPerfilActivo(p);
+  condiciones = leerJSON(claveCond(), []);
+  cirugias = leerJSON(claveCirugias(), []);
+  medicacion = leerJSON(claveMed(), []);
+  tomas = leerJSON(claveTomas(), {});
+  bancoMed = leerJSON(claveBancoMed(), []);
+  pruebas = leerJSON(clavePruebas(), []);
+  pintarTabsPerfil();
+  renderTodo();
+}
+function pintarTabsPerfil(){
+  document.querySelectorAll("#tabsPerfil button").forEach(b=>{
+    b.classList.toggle("on", b.dataset.perfil === perfilActivo);
+  });
+}
+document.querySelectorAll("#tabsPerfil button").forEach(b=> b.onclick = () => cambiarPerfil(b.dataset.perfil));
+
+document.querySelectorAll("#tabsSec button").forEach(b=> b.onclick = () => cambiarSeccion(b.dataset.sec));
+function cambiarSeccion(s){
+  seccionActiva = s;
+  document.querySelectorAll("#tabsSec button").forEach(b=> b.classList.toggle("on", b.dataset.sec === s));
+  document.querySelectorAll("section.panel").forEach(p=> p.classList.toggle("on", p.id === "panel-"+s));
+}
+
+document.querySelectorAll("[data-abrir]").forEach(b=> b.onclick = () => abrirForm(b.dataset.abrir));
+function abrirForm(sec, item){
+  cerrarTodosLosForms();
+  document.getElementById("form-"+sec).style.display = "flex";
+  if(sec === "condiciones"){
+    document.getElementById("cond-id").value = item ? item.id : "";
+    document.getElementById("cond-nombre").value = item ? item.nombre : "";
+    document.getElementById("cond-desde").value = item ? (item.desde||"") : "";
+    document.getElementById("cond-notas").value = item ? (item.notas||"") : "";
+  } else if(sec === "cirugias"){
+    document.getElementById("cir-id").value = item ? item.id : "";
+    document.getElementById("cir-fecha").value = item ? (item.fecha||"") : hoyISO();
+    document.getElementById("cir-desc").value = item ? item.desc : "";
+    document.getElementById("cir-notas").value = item ? (item.notas||"") : "";
+  } else if(sec === "medicacion"){
+    document.getElementById("med-id").value = item ? item.id : "";
+    document.getElementById("med-nombre").value = item ? item.nombre : "";
+    document.getElementById("med-cantidad").value = item ? (item.cantidad!=null ? item.cantidad : "") : "";
+    document.getElementById("med-unidad").value = item ? (item.unidad||"mg") : "mg";
+    document.getElementById("med-horario").value = item ? (item.horario||"") : "";
+    document.getElementById("med-notas").value = item ? (item.notas||"") : "";
+    document.getElementById("med-activa").checked = item ? !!item.activa : true;
+  } else if(sec === "pruebas"){
+    document.getElementById("prb-id").value = item ? item.id : "";
+    document.getElementById("prb-fecha").value = item ? (item.fecha||"") : hoyISO();
+    document.getElementById("prb-tipo").value = item ? item.tipo : "analitica";
+    document.getElementById("prb-notas").value = item ? (item.notas||"") : "";
+  }
+}
+function cerrarForm(sec){ document.getElementById("form-"+sec).style.display = "none"; }
+function cerrarTodosLosForms(){ ["condiciones","cirugias","medicacion","pruebas"].forEach(cerrarForm); }
+
+function leerArchivo(input){
+  return new Promise((resolve)=>{
+    const f = input.files && input.files[0];
+    if(!f){ resolve(null); return; }
+    const r = new FileReader();
+    r.onload = () => resolve({nombre:f.name, datos:r.result});
+    r.onerror = () => resolve(null);
+    r.readAsDataURL(f);
+  });
+}
+
+function guardarCondicion(){
+  const nombre = document.getElementById("cond-nombre").value.trim();
+  if(!nombre) return alert("Poné un nombre para la condición.");
+  const id = document.getElementById("cond-id").value || nuevoId();
+  const item = { id, nombre, desde: document.getElementById("cond-desde").value || "", notas: document.getElementById("cond-notas").value.trim() };
+  const i = condiciones.findIndex(x=>x.id===id);
+  if(i>-1) condiciones[i] = item; else condiciones.push(item);
+  guardarJSON(claveCond(), condiciones);
+  cerrarForm("condiciones"); renderCondiciones();
+}
+function borrarCondicion(id){ if(!confirm("¿Borrar esta condición?")) return; condiciones = condiciones.filter(x=>x.id!==id); guardarJSON(claveCond(), condiciones); renderCondiciones(); }
+function renderCondiciones(){
+  const cont = document.getElementById("lista-condiciones");
+  if(!condiciones.length){ cont.innerHTML = '<p class="empty">Sin condiciones registradas todavía.</p>'; return; }
+  cont.innerHTML = condiciones.map(c => `
+    <div class="tarjeta">
+      <div class="tarjeta-top">
+        <div><div class="tarjeta-nombre">${escapar(c.nombre)}</div>
+        ${c.desde ? `<div class="tarjeta-meta">Desde ${fechaLegible(c.desde)}</div>` : ""}</div>
+        <div class="tarjeta-btns">
+          <button onclick='abrirForm("condiciones", ${JSON.stringify(c)})'>✏️</button>
+          <button class="del" onclick="borrarCondicion('${c.id}')">🗑️</button>
+        </div>
+      </div>
+      ${c.notas ? `<div class="tarjeta-notas">${escapar(c.notas)}</div>` : ""}
+    </div>`).join("");
+}
+
+function guardarCirugia(){
+  const desc = document.getElementById("cir-desc").value.trim();
+  if(!desc) return alert("Contá qué se hizo.");
+  const id = document.getElementById("cir-id").value || nuevoId();
+  const previo = cirugias.find(x=>x.id===id);
+  const item = { id, fecha: document.getElementById("cir-fecha").value || "", desc, notas: document.getElementById("cir-notas").value.trim(), archivo: previo?.archivo || null, archivoNombre: previo?.archivoNombre || null };
+  leerArchivo(document.getElementById("cir-archivo")).then(a=>{
+    if(a){ item.archivo = a.datos; item.archivoNombre = a.nombre; }
+    const i = cirugias.findIndex(x=>x.id===id);
+    if(i>-1) cirugias[i] = item; else cirugias.push(item);
+    guardarJSON(claveCirugias(), cirugias);
+    cerrarForm("cirugias"); renderCirugias();
+  });
+}
+function borrarCirugia(id){ if(!confirm("¿Borrar esta cirugía?")) return; cirugias = cirugias.filter(x=>x.id!==id); guardarJSON(claveCirugias(), cirugias); renderCirugias(); }
+function renderCirugias(){
+  const cont = document.getElementById("lista-cirugias");
+  const orden = cirugias.slice().sort((a,b)=> (b.fecha||"").localeCompare(a.fecha||""));
+  if(!orden.length){ cont.innerHTML = '<p class="empty">Sin cirugías registradas todavía.</p>'; return; }
+  cont.innerHTML = orden.map(c => `
+    <div class="tarjeta">
+      <div class="tarjeta-top">
+        <div><div class="tarjeta-nombre">${escapar(c.desc)}</div>
+        <div class="tarjeta-meta">${fechaLegible(c.fecha)}</div></div>
+        <div class="tarjeta-btns">
+          <button onclick='abrirForm("cirugias", ${JSON.stringify({id:c.id,fecha:c.fecha,desc:c.desc,notas:c.notas})})'>✏️</button>
+          <button class="del" onclick="borrarCirugia('${c.id}')">🗑️</button>
+        </div>
+      </div>
+      ${c.notas ? `<div class="tarjeta-notas">${escapar(c.notas)}</div>` : ""}
+      ${c.archivo ? `<a class="archivo-link" href="${c.archivo}" download="${escapar(c.archivoNombre||"archivo")}">📎 ${escapar(c.archivoNombre||"archivo adjunto")}</a>` : ""}
+    </div>`).join("");
+}
+
+function guardarMedicacion(){
+  const nombre = document.getElementById("med-nombre").value.trim();
+  if(!nombre) return alert("Poné el nombre de la pastilla.");
+  const id = document.getElementById("med-id").value || nuevoId();
+  const cantidad = document.getElementById("med-cantidad").value;
+  const item = { id, nombre, cantidad: cantidad !== "" ? Number(cantidad) : null, unidad: document.getElementById("med-unidad").value, horario: document.getElementById("med-horario").value.trim(), notas: document.getElementById("med-notas").value.trim(), activa: document.getElementById("med-activa").checked };
+  const i = medicacion.findIndex(x=>x.id===id);
+  if(i>-1) medicacion[i] = item; else medicacion.push(item);
+  guardarJSON(claveMed(), medicacion);
+  aprenderNombreMed(nombre);
+  cerrarForm("medicacion"); renderMedicacion(); renderTomas();
+}
+function borrarMedicacion(id){ if(!confirm("¿Borrar esta pastilla?")) return; medicacion = medicacion.filter(x=>x.id!==id); guardarJSON(claveMed(), medicacion); renderMedicacion(); renderTomas(); }
+function renderMedicacion(){
+  renderBancoMed();
+  const cont = document.getElementById("lista-medicacion");
+  if(!medicacion.length){ cont.innerHTML = '<p class="empty">Sin pastillas registradas todavía.</p>'; return; }
+  cont.innerHTML = medicacion.map(m => `
+    <div class="tarjeta">
+      <div class="tarjeta-top">
+        <div><div class="tarjeta-nombre">${escapar(m.nombre)}${m.activa ? "" : " (inactiva)"}</div>
+        <div class="tarjeta-meta">${[dosisTexto(m), m.horario].filter(Boolean).map(escapar).join(" · ")}</div></div>
+        <div class="tarjeta-btns">
+          <button onclick='abrirForm("medicacion", ${JSON.stringify(m)})'>✏️</button>
+          <button class="del" onclick="borrarMedicacion('${m.id}')">🗑️</button>
+        </div>
+      </div>
+      ${m.notas ? `<div class="tarjeta-notas">${escapar(m.notas)}</div>` : ""}
+    </div>`).join("");
+}
+
+function renderTomas(){
+  renderHistorialTomas();
+  document.getElementById("medFechaLabel").textContent = fechaLegible(medFechaActual) + (medFechaActual===hoyISO() ? " · hoy" : "");
+  const cont = document.getElementById("lista-tomas");
+  const activas = medicacion.filter(m=>m.activa);
+  if(!activas.length){ cont.innerHTML = '<p class="empty">No hay pastillas activas configuradas.</p>'; return; }
+  const hechas = tomas[medFechaActual] || [];
+  cont.innerHTML = activas.map(m => `
+    <div class="toma ${hechas.includes(m.id)?"hecha":""}">
+      <button class="toma-check ${hechas.includes(m.id)?"on":""}" onclick="marcarToma('${m.id}')">${hechas.includes(m.id)?"✓":""}</button>
+      <div class="toma-info">
+        <div class="toma-nombre">${escapar(m.nombre)}</div>
+        <div class="toma-meta">${[dosisTexto(m), m.horario].filter(Boolean).map(escapar).join(" · ")}</div>
+      </div>
+    </div>`).join("");
+}
+function marcarToma(id){
+  const arr = tomas[medFechaActual] || [];
+  tomas[medFechaActual] = arr.includes(id) ? arr.filter(x=>x!==id) : [...arr, id];
+  guardarJSON(claveTomas(), tomas);
+  renderTomas();
+}
+document.getElementById("medDiaAnterior").onclick = () => { const d=new Date(medFechaActual+"T00:00:00"); d.setDate(d.getDate()-1); medFechaActual = hoyISO(d); renderTomas(); };
+document.getElementById("medDiaSiguiente").onclick = () => { const d=new Date(medFechaActual+"T00:00:00"); d.setDate(d.getDate()+1); medFechaActual = hoyISO(d); renderTomas(); };
+
+function guardarPrueba(){
+  const id = document.getElementById("prb-id").value || nuevoId();
+  const previo = pruebas.find(x=>x.id===id);
+  const item = { id, fecha: document.getElementById("prb-fecha").value || hoyISO(), tipo: document.getElementById("prb-tipo").value, notas: document.getElementById("prb-notas").value.trim(), archivo: previo?.archivo || null, archivoNombre: previo?.archivoNombre || null };
+  leerArchivo(document.getElementById("prb-archivo")).then(a=>{
+    if(a){ item.archivo = a.datos; item.archivoNombre = a.nombre; }
+    const i = pruebas.findIndex(x=>x.id===id);
+    if(i>-1) pruebas[i] = item; else pruebas.push(item);
+    guardarJSON(clavePruebas(), pruebas);
+    cerrarForm("pruebas"); renderPruebas();
+  });
+}
+function borrarPrueba(id){ if(!confirm("¿Borrar este resultado?")) return; pruebas = pruebas.filter(x=>x.id!==id); guardarJSON(clavePruebas(), pruebas); renderPruebas(); }
+const TIPO_ETQ = {analitica:"Analítica", radiografia:"Radiografía / imagen", ecografia:"Ecografía", otro:"Otro"};
+document.getElementById("filtroTipoPrueba").onchange = renderPruebas;
+function renderPruebas(){
+  const cont = document.getElementById("lista-pruebas");
+  const filtro = document.getElementById("filtroTipoPrueba").value;
+  const orden = pruebas.slice().filter(p=> !filtro || p.tipo===filtro).sort((a,b)=> (b.fecha||"").localeCompare(a.fecha||""));
+  if(!orden.length){ cont.innerHTML = '<p class="empty">Sin resultados registrados todavía.</p>'; return; }
+  cont.innerHTML = orden.map(p => `
+    <div class="tarjeta">
+      <div class="tarjeta-top">
+        <div><div class="tarjeta-nombre">${TIPO_ETQ[p.tipo]||"Otro"}</div>
+        <div class="tarjeta-meta">${fechaLegible(p.fecha)}</div></div>
+        <div class="tarjeta-btns">
+          <button onclick='abrirForm("pruebas", ${JSON.stringify({id:p.id,fecha:p.fecha,tipo:p.tipo,notas:p.notas})})'>✏️</button>
+          <button class="del" onclick="borrarPrueba('${p.id}')">🗑️</button>
+        </div>
+      </div>
+      ${p.notas ? `<div class="tarjeta-notas">${escapar(p.notas)}</div>` : ""}
+      ${p.archivo ? `<a class="archivo-link" href="${p.archivo}" download="${escapar(p.archivoNombre||"archivo")}">📎 ${escapar(p.archivoNombre||"archivo adjunto")}</a>` : ""}
+    </div>`).join("");
+}
+
+// Lectura de citas médicas desde el Calendario (calEventosV1, categoría "medico")
+function renderCitas(){
+  const cont = document.getElementById("lista-citas");
+  const datos = leerJSON("calEventosV1", null);
+  const eventos = (datos && Array.isArray(datos.eventos)) ? datos.eventos : [];
+  const propias = eventos.filter(e => e.cat === "medico" && (e.para === perfilActivo || e.para === "Ambas"));
+  if(!propias.length){ cont.innerHTML = '<p class="empty">No hay citas médicas en el Calendario todavía.</p>'; return; }
+  const hoy = hoyISO();
+  const futuras = propias.filter(e => e.fecha >= hoy).sort((a,b)=> a.fecha.localeCompare(b.fecha));
+  const pasadas = propias.filter(e => e.fecha < hoy).sort((a,b)=> b.fecha.localeCompare(a.fecha));
+  const fila = e => `
+    <div class="tarjeta">
+      <div class="tarjeta-nombre">${escapar(e.espTxt || e.titulo)}</div>
+      <div class="tarjeta-meta">${fechaLegible(e.fecha)}${e.hora ? " · "+e.hora : ""}</div>
+      ${e.notas ? `<div class="tarjeta-notas">${escapar(e.notas)}</div>` : ""}
+    </div>`;
+  cont.innerHTML =
+    (futuras.length ? `<div class="cita-grupo-titulo">Próximas</div>${futuras.map(fila).join("")}` : "") +
+    (pasadas.length ? `<div class="cita-grupo-titulo">Anteriores</div>${pasadas.map(fila).join("")}` : "");
+}
+
+function escapar(s){ const d = document.createElement("div"); d.textContent = s==null?"":String(s); return d.innerHTML; }
+
+
+// ---------- Banco de nombres para autocompletar ----------
+function nombresBancoMed(){
+  const vistos = new Set(), lista = [];
+  bancoMed.concat(medicacion.map(m=>m.nombre)).forEach(n=>{
+    const t = String(n||"").trim(); if(!t) return;
+    const k = t.toLowerCase(); if(vistos.has(k)) return;
+    vistos.add(k); lista.push(t);
+  });
+  return lista.sort((a,b)=>a.localeCompare(b,"es"));
+}
+function renderBancoMed(){
+  const dl = document.getElementById("med-banco");
+  if(dl) dl.innerHTML = nombresBancoMed().map(n=>'<option value="'+escapar(n).replace(/"/g,"&quot;")+'"></option>').join("");
+  const ta = document.getElementById("banco-med-texto");
+  if(ta && document.activeElement !== ta) ta.value = bancoMed.join("\n");
+}
+function aprenderNombreMed(nombre){
+  const k = nombre.trim().toLowerCase();
+  if(!k || bancoMed.some(n=>n.trim().toLowerCase()===k)) return;
+  bancoMed.push(nombre.trim());
+  guardarJSON(claveBancoMed(), bancoMed);
+}
+document.getElementById("banco-med-guardar").onclick = () => {
+  const vistos = new Set(), lista = [];
+  document.getElementById("banco-med-texto").value.split("\n").forEach(l=>{
+    const t = l.trim(); if(!t) return;
+    const k = t.toLowerCase(); if(vistos.has(k)) return;
+    vistos.add(k); lista.push(t);
+  });
+  bancoMed = lista;
+  guardarJSON(claveBancoMed(), bancoMed);
+  renderBancoMed();
+  alert("Banco guardado: " + lista.length + " nombre(s).");
+};
+// Si eliges un nombre que ya usaste, completa dosis y horario si están vacíos
+document.getElementById("med-nombre").addEventListener("change", () => {
+  if(document.getElementById("med-id").value) return;
+  const k = document.getElementById("med-nombre").value.trim().toLowerCase();
+  const previa = medicacion.find(m=>String(m.nombre||"").trim().toLowerCase()===k);
+  if(!previa) return;
+  const c = document.getElementById("med-cantidad"), h = document.getElementById("med-horario");
+  if(c.value === "" && previa.cantidad!=null) { c.value = previa.cantidad; document.getElementById("med-unidad").value = previa.unidad || "mg"; }
+  if(h.value === "" && previa.horario) h.value = previa.horario;
+});
+
+// ---------- Historial de tomas: calendario de días completos / con faltas ----------
+let htMes = null, htFiltro = "todos", htDiaSel = null;
+const HT_MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+function htISO(y, m, d){ return y+"-"+String(m+1).padStart(2,"0")+"-"+String(d).padStart(2,"0"); }
+function renderHistorialTomas(){
+  const grid = document.getElementById("ht-grid"); if(!grid) return;
+  const activas = medicacion.filter(m=>m.activa);
+  const idsActivas = new Set(activas.map(m=>m.id));
+  const tomadasEn = f => (tomas[f]||[]).filter(id=>idsActivas.has(id)).length;
+  const fechas = Object.keys(tomas).filter(f=>(tomas[f]||[]).length).sort();
+  const primera = fechas.length ? fechas[0] : null;
+  const hoy = hoyISO();
+  if(!htMes){ const d=new Date(); htMes = {y:d.getFullYear(), m:d.getMonth()}; }
+  document.getElementById("ht-titulo").textContent = HT_MESES[htMes.m]+" "+htMes.y;
+  const primerDow = (new Date(htMes.y, htMes.m, 1).getDay()+6)%7;
+  const diasMes = new Date(htMes.y, htMes.m+1, 0).getDate();
+  let h = ["L","M","X","J","V","S","D"].map(x=>'<div class="ht-dow">'+x+'</div>').join("");
+  for(let i=0;i<primerDow;i++) h += '<div class="ht-vacio"></div>';
+  let completos = 0, contables = 0;
+  for(let d=1; d<=diasMes; d++){
+    const iso = htISO(htMes.y, htMes.m, d);
+    const n = tomadasEn(iso), total = activas.length;
+    const contable = !!primera && !!total && iso >= primera && iso <= hoy;
+    let estado = "";   // completo | parcial | falta | ""
+    if(total && n >= total) estado = "completo";
+    else if(contable && iso < hoy) estado = n > 0 ? "parcial" : "falta";
+    else if(n > 0) estado = "parcial";
+    if(estado === "completo") { completos++; contables++; }
+    else if(estado === "parcial" || estado === "falta") contables++;
+    let cls = "ht-dia" + (estado ? " "+estado : "") + (iso===hoy ? " hoy" : "") + (iso===htDiaSel ? " sel" : "");
+    const esFalta = estado === "parcial" || estado === "falta";
+    if((htFiltro==="completos" && estado!=="completo") || (htFiltro==="faltas" && !esFalta)) cls += " tenue";
+    h += '<button type="button" class="'+cls+'" data-f="'+iso+'">'+d+'</button>';
+  }
+  grid.innerHTML = h;
+  grid.querySelectorAll(".ht-dia").forEach(b=>{ b.onclick = ()=>{ htDiaSel = (htDiaSel===b.dataset.f) ? null : b.dataset.f; renderHistorialTomas(); }; });
+  document.getElementById("ht-resumen").textContent = (primera && activas.length)
+    ? (completos+" de "+contables+" días con todas las pastillas tomadas este mes")
+    : "Cuando marques tomas en \"Toma de hoy\", aparecen acá.";
+  const det = document.getElementById("ht-detalle");
+  if(htDiaSel){
+    const tomadas = new Set(tomas[htDiaSel]||[]);
+    det.innerHTML = "<b>"+fechaLegible(htDiaSel)+"</b>" + (activas.length
+      ? "<ul>"+activas.map(m=>"<li>"+(tomadas.has(m.id)?"✓ ":"✗ ")+escapar(m.nombre)+"</li>").join("")+"</ul>"
+      : "");
+  } else det.innerHTML = "";
+  document.querySelectorAll("#ht-filtros button").forEach(b=>b.classList.toggle("on", b.dataset.f===htFiltro));
+}
+document.getElementById("ht-prev").onclick = () => { if(!htMes) renderHistorialTomas(); htMes.m--; if(htMes.m<0){ htMes.m=11; htMes.y--; } htDiaSel=null; renderHistorialTomas(); };
+document.getElementById("ht-next").onclick = () => { if(!htMes) renderHistorialTomas(); htMes.m++; if(htMes.m>11){ htMes.m=0; htMes.y++; } htDiaSel=null; renderHistorialTomas(); };
+document.querySelectorAll("#ht-filtros button").forEach(b=>{ b.onclick = () => { htFiltro = b.dataset.f; renderHistorialTomas(); }; });
+
+function renderTodo(){
+  renderCondiciones(); renderCirugias(); renderMedicacion(); renderTomas(); renderPruebas(); renderCitas(); if(typeof renderArtic==="function") renderArtic(); if(typeof renderSintomas==="function") renderSintomas();
+}
+// ---------- ARTICULACIONES: mapa corporal por fecha ----------
+const AR_ZONAS = {cabeza:"Cabeza / cuello", hombro:"Hombro", codo:"Codo", muneca:"Muñeca", mano:"Mano y dedos", columna:"Columna", cadera:"Cadera", rodilla:"Rodilla", tobillo:"Tobillo", pie:"Pie y dedos"};
+const AR_PUNTOS = [ // [zona, x, y, lleva lado?, solo atrás?]
+  ["cabeza",100,44,0],["columna",100,130,0,1],["hombro",62,84,1],["codo",46,150,1],["muneca",34,212,1],["mano",28,242,1],
+  ["cadera",84,200,1],["rodilla",80,290,1],["tobillo",78,366,1],["pie",74,392,1]];
+const AR_ESCALAS = [["dolor","Dolor",10],["infl","Inflamación",3],["rig","Rigidez",3],["mov","Movilidad limitada",3],["sens","Sensibilidad",3]];
+const AR_FUNC = ["Caminar","Subir escaleras","Vestirse / desvestirse","Aseo personal","Abrir / cerrar objetos","Usar las manos","Tareas domésticas","Trabajo / estudio","Participación social","Relación con otras personas","Concentración / memoria","Sueño / descanso"];
+let arFecha = new Date().toLocaleDateString("sv-SE"), arVista = "ant", arSel = null;
+function claveArtic(){ return "saludArticV1_"+perfilActivo; }
+function arDatos(){ const d = leerJSON(claveArtic(), null); return (d && d.dias) ? d : {v:1, dias:{}}; }
+function arDia(d){ return d.dias[arFecha] || (d.dias[arFecha] = {z:{}, f:{}}); }
+function arGuardar(d){
+  const dia = d.dias[arFecha];
+  if(dia) Object.keys(dia.z).forEach(k=>{ if(!arTiene(dia.z[k])) delete dia.z[k]; });
+  if(dia && !Object.keys(dia.z).length && !Object.keys(dia.f).length) delete d.dias[arFecha];
+  guardarJSON(claveArtic(), d);
+}
+function arNombre(zona, lado){ return AR_ZONAS[zona] + (lado==="D" ? " derecha" : lado==="I" ? " izquierda" : ""); }
+const AR_FOTO_POS = [["cabeza","C",437,120],["columna","C",437,560],["hombro","I",285,355],["hombro","D",598,355],["codo","I",213,607],["codo","D",660,607],["muneca","I",140,795],["muneca","D",742,797],["mano","I",100,880],["mano","D",785,880],["cadera","I",330,835],["cadera","D",545,835],["rodilla","I",338,1197],["rodilla","D",525,1197],["tobillo","I",315,1600],["tobillo","D",560,1600],["pie","I",280,1695],["pie","D",595,1695]];
+function arTiene(r){ return !!r && (r.dolor>0 || r.infl>0 || r.rig>0 || r.mov>0 || r.sens>0 || !!r.nota); }
+const AR_FOTO = [ // [zona, lado, x, y] sobre la imagen de 887 x 1774 (D = derecha de la persona = izquierda de la imagen)
+  ["cabeza","C",437,140],["columna","C",437,560],
+  ["hombro","D",285,355],["hombro","I",582,355],["codo","D",213,607],["codo","I",660,607],
+  ["muneca","D",140,795],["muneca","I",742,797],["mano","D",100,880],["mano","I",785,880],
+  ["cadera","D",325,830],["cadera","I",545,830],["rodilla","D",338,1197],["rodilla","I",525,1197],
+  ["tobillo","D",310,1610],["tobillo","I",562,1610],["pie","D",275,1690],["pie","I",595,1690]];
+function arSVGFoto(dia, vista){
+  const svg = document.getElementById("ar-svg");
+  svg.setAttribute("viewBox","0 0 887 1774");
+  let s = `<defs><radialGradient id="led2"><stop offset="0" stop-color="#ff2b2b" stop-opacity=".95"/><stop offset=".45" stop-color="#ff3b3b" stop-opacity=".45"/><stop offset="1" stop-color="#ff3b3b" stop-opacity="0"/></radialGradient></defs>
+  <image href="${vista==='pos'?'cuerpo-posterior.jpg':'cuerpo-anterior.jpg'}" x="0" y="0" width="887" height="1774"/>`;
+  (vista==='pos' ? AR_FOTO_POS : AR_FOTO).forEach(([zona,l,x,y])=>{
+    const k = zona+"_"+l, r = dia.z[k], on = arSel===k;
+    if(arTiene(r)){ const o = Math.min(1, .55+.045*(r.dolor||0)); s += `<circle cx="${x}" cy="${y}" r="62" style="fill:url(#led2);opacity:${o}"/><circle cx="${x}" cy="${y}" r="17" style="fill:#ff2b2b;stroke:#fff;stroke-width:3"/>`; }
+    else s += `<circle cx="${x}" cy="${y}" r="13" style="fill:#fff;fill-opacity:.5;stroke:#9cc4e8;stroke-width:3"/>`;
+    if(on) s += `<circle cx="${x}" cy="${y}" r="44" style="fill:none;stroke:#35c26a;stroke-width:6;stroke-dasharray:12 8"/>`;
+    s += `<circle cx="${x}" cy="${y}" r="46" data-k="${k}" style="fill:transparent;cursor:pointer"><title>${arNombre(zona,l)}</title></circle>`;
+  });
+  svg.innerHTML = s;
+  document.querySelectorAll("#ar-svg circle[data-k]").forEach(c=> c.onclick = ()=>{
+    const k = c.dataset.k;
+    if(arSel===k){
+      const dd = arDatos(), z = (dd.dias[arFecha]||{z:{}}).z;
+      if(arTiene(z[k]) && confirm("¿Quitar esta zona del día?")){ delete z[k]; arGuardar(dd); }
+      arSel = null;
+    } else arSel = k;
+    renderArtic();
+  });
+}
+function arSVG(){
+  const d = arDatos(), dia = d.dias[arFecha] || {z:{}};
+  arSVGFoto(dia, arVista); return;
+  document.getElementById("ar-svg").setAttribute("viewBox","0 0 200 410");
+  const hueso = "fill:none;stroke:#dfe8f2;stroke-linecap:round;stroke-linejoin:round";
+  let s = `<defs><linearGradient id="cuerpo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3f79ab" stop-opacity=".55"/><stop offset="1" stop-color="#1d4468" stop-opacity=".35"/></linearGradient>
+  <radialGradient id="led"><stop offset="0" stop-color="#ff2b2b" stop-opacity=".95"/><stop offset=".45" stop-color="#ff3b3b" stop-opacity=".45"/><stop offset="1" stop-color="#ff3b3b" stop-opacity="0"/></radialGradient></defs>
+  <g style="fill:url(#cuerpo);stroke:#7fb2dd;stroke-width:1.5;stroke-opacity:.7"><circle cx="100" cy="34" r="25"/><path d="M66 78 Q100 66 134 78 L130 196 Q100 208 70 196Z"/>
+  <path d="M62 86 L46 150 L34 212 L28 240 M138 86 L154 150 L166 212 L172 240" style="fill:none;stroke:url(#cuerpo);stroke-width:18;stroke-linecap:round;stroke-linejoin:round"/>
+  <path d="M84 200 L80 290 L78 370 L74 392 M116 200 L120 290 L122 370 L126 392" style="fill:none;stroke:url(#cuerpo);stroke-width:28;stroke-linecap:round;stroke-linejoin:round"/></g>
+  <ellipse cx="100" cy="30" rx="14" ry="18" style="fill:#e9eef5"/><path d="M92 46 Q100 56 108 46" style="${hueso};stroke-width:3"/>
+  <path d="M100 58 L100 192" style="${hueso};stroke-width:5;stroke-dasharray:6 3"/><path d="M64 84 Q100 74 136 84" style="${hueso};stroke-width:3"/>`;
+  for(let i=0;i<5;i++){ const y=96+i*14; s += `<path d="M100 ${y} Q80 ${y+4} 76 ${y+20} M100 ${y} Q120 ${y+4} 124 ${y+20}" style="${hueso};stroke-width:2.5"/>`; }
+  s += `<path d="M76 194 Q100 178 124 194 Q128 216 112 220 L100 206 L88 220 Q72 216 76 194Z" style="${hueso};stroke-width:3;fill:#dfe8f2;fill-opacity:.25"/>
+  <path d="M62 88 L46 150 L34 212 M138 88 L154 150 L166 212 M84 200 L80 290 L78 370 M116 200 L120 290 L122 370" style="${hueso};stroke-width:5"/>
+  <path d="M34 214 L26 240 M34 214 L32 242 M166 214 L174 240 M166 214 L168 242 M78 372 L72 392 M122 372 L128 392" style="${hueso};stroke-width:3"/>`;
+  if(arVista==="pos") s += `<text x="100" y="404" text-anchor="middle" style="font:10px sans-serif;fill:var(--muted)">vista posterior</text>`;
+  AR_PUNTOS.forEach(([zona,x,y,lado,soloAtras])=>{
+    if(soloAtras && arVista!=="pos") return;
+    const lados = lado ? [[x,arVista==="ant"?"D":"I"],[200-x,arVista==="ant"?"I":"D"]] : [[x,"C"]];
+    lados.forEach(([cx,l])=>{
+      const k = zona+"_"+l, r = dia.z[k], on = arSel===k;
+      if(r){ const o = Math.min(1, .55+.045*(r.dolor||0)); s += `<circle cx="${cx}" cy="${y}" r="17" style="fill:url(#led);opacity:${o}"/><circle cx="${cx}" cy="${y}" r="5.5" style="fill:#ff2b2b;stroke:#fff;stroke-width:1"/>`; }
+      else s += `<circle cx="${cx}" cy="${y}" r="5" style="fill:#fff;fill-opacity:.55;stroke:#9cc4e8;stroke-width:1.2"/>`;
+      if(on) s += `<circle cx="${cx}" cy="${y}" r="14" style="fill:none;stroke:#35c26a;stroke-width:2.5;stroke-dasharray:4 3"/>`;
+      s += `<circle cx="${cx}" cy="${y}" r="15" data-k="${k}" style="fill:transparent;cursor:pointer"><title>${arNombre(zona,l)}</title></circle>`;
+    });
+  });
+  document.getElementById("ar-svg").innerHTML = s;
+  document.querySelectorAll("#ar-svg circle[data-k]").forEach(c=> c.onclick = ()=>{
+    arSel = c.dataset.k; const dd = arDatos(), z = arDia(dd).z; if(!z[arSel]) z[arSel] = {dolor:0}; arGuardar(dd); renderArtic();
+  });
+}
+function arBotones(k, campo, max, valor){
+  let h = `<div style="display:flex;flex-wrap:wrap;gap:4px;margin:4px 0 10px">`;
+  for(let i=0;i<=max;i++) h += `<button type="button" data-ar="${k}|${campo}|${i}" class="${valor===i?"btn-guardar":"btn-cancelar"}" style="min-width:36px;padding:8px 0">${i}</button>`;
+  return h + "</div>";
+}
+function arResumen(){
+  const z = Object.entries((arDatos().dias[arFecha]||{z:{}}).z).filter(([k,r])=>arTiene(r));
+  document.getElementById("ar-resumen").innerHTML = z.length ? '<div class="form-add" style="display:block;margin-top:10px"><b>Zonas marcadas este día</b>' + z.map(([k,r])=>{
+    const [a,b]=k.split("_"), t=[["dolor","dolor"],["infl","inflamación"],["rig","rigidez"],["mov","movilidad"],["sens","sensibilidad"]].filter(([c])=>r[c]>0).map(([c,n])=>n+" "+r[c]).join(" · ");
+    return `<div data-r="${k}" style="padding:6px 0;border-top:1px solid var(--line);cursor:pointer">${arNombre(a,b)} — ${t||"solo nota"}</div>`; }).join("") + '</div>' : "";
+  document.querySelectorAll("#ar-resumen [data-r]").forEach(e=> e.onclick = ()=>{ arSel = e.dataset.r; arVista = ["hombro","codo","muneca","mano","cadera","rodilla","tobillo","pie"].includes(e.dataset.r.split("_")[0]) ? arVista : arVista; renderArtic(); });
+}
+function arFicha(){
+  const box = document.getElementById("ar-ficha");
+  if(!arSel){ box.innerHTML = ""; return; }
+  const [zona,lado] = arSel.split("_"), r = (arDatos().dias[arFecha]||{z:{}}).z[arSel] || {};
+  let h = `<div class="form-add" style="display:block;margin-top:12px"><b>${arNombre(zona,lado)}</b>`;
+  AR_ESCALAS.forEach(([c,t,m])=> h += `<div style="margin-top:8px;font-size:.85rem;color:var(--muted)">${t} (0–${m})</div>` + arBotones(arSel,c,m,r[c]));
+  h += `<textarea id="ar-nota" placeholder="Nota (opcional)">${(r.nota||"").replace(/</g,"&lt;")}</textarea>
+  <div class="fila"><button type="button" class="btn-cancelar" id="ar-quitar">Quitar esta zona</button><button type="button" class="btn-guardar" id="ar-cerrar">Cerrar</button></div></div>`;
+  box.innerHTML = h;
+  box.querySelectorAll("[data-ar]").forEach(b=> b.onclick = ()=>{
+    const [k,c,v] = b.dataset.ar.split("|"), d = arDatos(), z = arDia(d).z;
+    z[k] = z[k] || {}; z[k][c] = z[k][c]===+v ? undefined : +v; z[k].dolor = z[k].dolor||0;
+    arGuardar(d); renderArtic();
+  });
+  document.getElementById("ar-nota").onchange = e=>{ const d = arDatos(), z = arDia(d).z; z[arSel] = z[arSel]||{dolor:0}; z[arSel].nota = e.target.value.trim(); arGuardar(d); arHist(); };
+  document.getElementById("ar-quitar").onclick = ()=>{ const d = arDatos(); if(d.dias[arFecha]){ delete d.dias[arFecha].z[arSel]; arGuardar(d); } arSel = null; renderArtic(); };
+  document.getElementById("ar-cerrar").onclick = ()=>{ const d = arDatos(), z = (d.dias[arFecha]||{z:{}}).z, r = z[arSel]; if(r && !r.nota && !AR_ESCALAS.some(([c])=> r[c]>0)){ delete z[arSel]; arGuardar(d); } arSel = null; renderArtic(); };
+}
+function arFunc(){
+  const dia = arDatos().dias[arFecha] || {f:{}};
+  document.getElementById("ar-func").innerHTML = AR_FUNC.map((t,i)=> `<div style="font-size:.88rem">${t}</div>` + arBotones("f"+i,"f",4,dia.f[i])).join("");
+  document.querySelectorAll("#ar-func [data-ar]").forEach(b=> b.onclick = ()=>{
+    const [k,,v] = b.dataset.ar.split("|"), i = k.slice(1), d = arDatos(), f = arDia(d).f;
+    if(f[i]===+v) delete f[i]; else f[i] = +v;
+    arGuardar(d); arFunc();
+  });
+}
+function arHist(){
+  const d = arDatos(), fechas = Object.keys(d.dias).sort().reverse();
+  document.getElementById("ar-hist").innerHTML = fechas.length ? fechas.map(f=>{
+    const z = Object.entries(d.dias[f].z), pico = z.reduce((m,[k,r])=> Math.max(m,r.dolor||0),0);
+    const peor = z.filter(([k,r])=>(r.dolor||0)===pico && pico>0).map(([k])=>{const [a,b]=k.split("_");return arNombre(a,b);}).slice(0,2).join(", ");
+    return `<div class="form-add" style="display:block;margin:6px 0;cursor:pointer" data-f="${f}"><b>${f}</b> — ${z.length} zona(s)${pico?`, dolor máx. ${pico}`:""}${peor?` (${peor})`:""}</div>`;
+  }).join("") : `<p class="aviso">Aún no hay días registrados.</p>`;
+  document.querySelectorAll("#ar-hist [data-f]").forEach(e=> e.onclick = ()=>{ arFecha = e.dataset.f; arSel = null; renderArtic(); window.scrollTo(0,0); });
+}
+function arMover(n){ const t = new Date(arFecha+"T12:00:00"); t.setDate(t.getDate()+n); arFecha = t.toLocaleDateString("sv-SE"); arSel = null; renderArtic(); }
+function arVisibilidad(){
+  const solo = perfilActivo === "Mamy";
+  document.querySelector('[data-sec="articulaciones"]').style.display = solo ? "" : "none";
+  if(!solo && document.getElementById("panel-articulaciones").classList.contains("on")) cambiarSeccion("condiciones");
+}
+function renderArtic(){
+  arVisibilidad();
+  document.getElementById("ar-fecha").value = arFecha;
+  document.getElementById("ar-v-ant").classList.toggle("on", arVista==="ant");
+  document.getElementById("ar-v-pos").classList.toggle("on", arVista==="pos");
+  arSVG(); arResumen(); arFicha(); arFunc(); arHist();
+}
+document.getElementById("ar-fecha").onchange = e=>{ if(e.target.value){ arFecha = e.target.value; arSel = null; renderArtic(); } };
+document.getElementById("ar-ant").onclick = ()=> arMover(-1);
+document.getElementById("ar-sig").onclick = ()=> arMover(1);
+document.getElementById("ar-hoy").onclick = ()=>{ arFecha = new Date().toLocaleDateString("sv-SE"); arSel = null; renderArtic(); };
+document.getElementById("ar-v-ant").onclick = ()=>{ arVista = "ant"; renderArtic(); };
+document.getElementById("ar-v-pos").onclick = ()=>{ arVista = "pos"; renderArtic(); };
+
+// ---------- SÍNTOMAS (texto libre) ----------
+function claveSint(){ return "saludSintomasV1_"+perfilActivo; }
+function siLista(){ const l = leerJSON(claveSint(), []); return Array.isArray(l) ? l : []; }
+let siNivel = null;
+function siPintarNivel(){
+  document.getElementById("si-nivel").innerHTML = Array.from({length:11},(_,i)=> `<button type="button" data-n="${i}" class="${siNivel===i?"btn-guardar":"btn-cancelar"}" style="min-width:36px;padding:8px 0">${i}</button>`).join("");
+  document.querySelectorAll("#si-nivel [data-n]").forEach(b=> b.onclick = ()=>{ siNivel = +b.dataset.n; siPintarNivel(); });
+}
+function siAbrir(it){
+  document.getElementById("si-form").style.display = "block";
+  document.getElementById("si-id").value = it ? it.id : "";
+  document.getElementById("si-nombre").value = it ? it.nombre : "";
+  document.getElementById("si-fecha").value = it ? it.fecha : new Date().toLocaleDateString("sv-SE");
+  document.getElementById("si-hora").value = it ? (it.hora||"") : "";
+  document.getElementById("si-nota").value = it ? (it.nota||"") : "";
+  siNivel = it ? it.nivel : null; siPintarNivel();
+  document.getElementById("si-nombre").focus();
+}
+function siCerrar(){ document.getElementById("si-form").style.display = "none"; }
+function siGuardar(){
+  const nombre = document.getElementById("si-nombre").value.trim();
+  if(!nombre){ alert("Escribe el nombre del síntoma."); return; }
+  if(siNivel===null){ alert("Elige el nivel de 0 a 10."); return; }
+  const l = siLista(), id = document.getElementById("si-id").value;
+  const it = {id: id || ("s"+Date.now()), nombre, fecha: document.getElementById("si-fecha").value || new Date().toLocaleDateString("sv-SE"),
+    hora: document.getElementById("si-hora").value, nivel: siNivel, nota: document.getElementById("si-nota").value.trim()};
+  const i = l.findIndex(x=>x.id===it.id); if(i>=0) l[i] = it; else l.push(it);
+  guardarJSON(claveSint(), l); siCerrar(); renderSintomas();
+}
+function renderSintomas(){
+  const l = siLista(), esc = t=> String(t).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  const nombres = [...new Set(l.map(x=>x.nombre))].sort();
+  document.getElementById("si-lista").innerHTML = nombres.map(n=>`<option value="${esc(n)}">`).join("");
+  const fs = document.getElementById("si-filtro"), actual = fs.value;
+  fs.innerHTML = '<option value="">Todos los síntomas</option>' + nombres.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join("");
+  fs.value = nombres.includes(actual) ? actual : "";
+  const v = l.filter(x=> !fs.value || x.nombre===fs.value).sort((a,b)=> (b.fecha+(b.hora||"")).localeCompare(a.fecha+(a.hora||"")));
+  document.getElementById("si-historial").innerHTML = v.length ? v.map(x=>`<div class="form-add" style="display:block;margin:6px 0"><b>${esc(x.nombre)}</b> — nivel <b style="color:${x.nivel>=7?"#d94a4a":x.nivel>=4?"#e0a02c":"var(--accent)"}">${x.nivel}/10</b><div style="font-size:.85rem;color:var(--muted)">${x.fecha}${x.hora?" · "+x.hora:""}</div>${x.nota?`<div style="margin-top:4px">${esc(x.nota)}</div>`:""}<div class="fila" style="margin-top:8px"><button type="button" class="btn-cancelar" data-e="${x.id}">Editar</button><button type="button" class="btn-cancelar" data-b="${x.id}">Borrar</button></div></div>`).join("") : '<p class="aviso">Aún no hay síntomas registrados.</p>';
+  document.querySelectorAll("#si-historial [data-e]").forEach(b=> b.onclick = ()=>{ siAbrir(siLista().find(x=>x.id===b.dataset.e)); window.scrollTo(0,0); });
+  document.querySelectorAll("#si-historial [data-b]").forEach(b=> b.onclick = ()=>{ if(confirm("¿Borrar este registro?")){ guardarJSON(claveSint(), siLista().filter(x=>x.id!==b.dataset.b)); renderSintomas(); } });
+}
+document.getElementById("si-abrir").onclick = ()=> siAbrir(null);
+document.getElementById("si-cancelar").onclick = siCerrar;
+document.getElementById("si-guardar").onclick = siGuardar;
+document.getElementById("si-filtro").onchange = renderSintomas;
+
+pintarTabsPerfil();
+cambiarSeccion("condiciones");
+renderTodo();
+</script>
+<a href="ajustes.html" title="Ajustes y claves" aria-label="Ajustes y claves" style="position:fixed;bottom:14px;right:14px;z-index:50;width:42px;height:42px;border-radius:50%;border:1px solid #2a3242;background:#1b2330;display:flex;align-items:center;justify-content:center;text-decoration:none;font-size:1.2rem">⚙️</a>
+</body>
+</html>
