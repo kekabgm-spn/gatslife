@@ -203,6 +203,8 @@
     <select id="filtroZona"></select>
   </div>
 
+  <button type="button" class="btn-nueva" id="btnAjuste" style="display:none;background:#b45309;color:#fff;border:0;margin:0 0 14px">Reducir las tareas de casa a 50 (agrupadas)</button>
+
   <div id="bandejaInvitaciones" style="display:none;margin-bottom:14px"></div>
 
   <div id="franjas"></div>
@@ -212,7 +214,6 @@
   <div class="form-tarea" id="formInvitar" style="display:none"></div>
   <div class="form-tarea" id="formTarea" style="display:none"></div>
 
-  <button type="button" class="btn-nueva" id="btnAjuste" style="display:none;background:var(--panel);color:var(--ink);border:1px solid var(--line)">Reducir las tareas de casa a 50 (agrupadas)</button>
 
   <details id="histTareas" class="aviso" style="margin:14px 0;padding:10px 12px;background:var(--panel);border:1px solid var(--line);border-radius:12px;color:var(--ink)">
     <summary style="cursor:pointer;font-weight:700">📜 Hecho recientemente</summary>
@@ -1144,7 +1145,8 @@ function renderHistorialTareas(){
 }
 document.getElementById("htPersona").onchange = renderHistorialTareas;
 document.getElementById("htPeriodo").onchange = renderHistorialTareas;
-const _renderT0 = render; render = function(){ _renderT0.apply(this, arguments); renderHistorialTareas(); };
+function mostrarBtnReducir(){ const b = document.getElementById("btnAjuste"); if(b) b.style.display = estado.tareas.some(esSemillaVieja) ? "block" : "none"; }
+const _renderT0 = render; render = function(){ _renderT0.apply(this, arguments); renderHistorialTareas(); mostrarBtnReducir(); };
 sembrarTareasCasaSiHaceFalta();
 if(!localStorage.getItem(SEMILLA_V2) && estado.tareas.some(esSemillaVieja)){
   document.getElementById("btnAjuste").style.display = "block";
