@@ -156,8 +156,10 @@ Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localS
   <div class="fila" style="margin-bottom:0.4rem">
     <button type="button" class="chip on" id="fuente-youtube" onclick="elegirFuente('youtube')" style="flex:1;text-align:center">🎥 YouTube (video real)</button>
     <button type="button" class="chip" id="fuente-wger" onclick="elegirFuente('wger')" style="flex:1;text-align:center">📚 wger (ficha con imagen)</button>
+    <button type="button" class="chip" id="fuente-gifs" onclick="elegirFuente('gifs')" style="flex:1;text-align:center">🎞️ GIFs en español</button>
   </div>
   <p style="font-size:0.76rem;color:var(--gris);margin:0 0 0.6rem">wger es una base de ejercicios de código abierto, gratis y sin clave — trae imagen, músculo trabajado y equipo, sin ser un video.</p>
+  <p style="font-size:0.76rem;color:var(--gris);margin:0 0 0.6rem">🎞️ GIFs en español: unos 1.300 ejercicios con animación, sin anuncios ni clave. No distingue ejercicios suaves de fuertes ni filtra por intensidad o duración: en días regulares o malos, mirá bien el GIF antes de hacerlo. No tiene movilidad ni yoga.</p>
 
   <label>Zona del cuerpo (elegí una o varias)</label>
   <div id="zonas"></div>
@@ -370,13 +372,14 @@ const INTENSIDADES_TODAS = [
 ];
 
 let perfil = 'Mamy';
-let fuenteActual = 'youtube'; // 'youtube' | 'wger'
+let fuenteActual = 'youtube'; // 'youtube' | 'wger' | 'gifs'
 let zonasElegidas = new Set(['cuerpo completo']);
 
 function elegirFuente(f){
   fuenteActual = f;
   document.getElementById('fuente-youtube').classList.toggle('on', f==='youtube');
   document.getElementById('fuente-wger').classList.toggle('on', f==='wger');
+  document.getElementById('fuente-gifs').classList.toggle('on', f==='gifs');
   document.getElementById('campo-duracion').style.display = f==='youtube' ? 'block' : 'none';
 }
 
@@ -420,6 +423,68 @@ async function buscarWger(zona, cantidad){
   }).filter(Boolean).sort(()=>Math.random()-0.5).sort((a,b)=> (b.thumb?1:0)-(a.thumb?1:0));
   if(!cand.length) throw new Error('wger no devolvió ejercicios para esta zona.');
   return cand.slice(0, cantidad);
+}
+
+// --- Fuente GIFs (ExerciseGymGifsDB): GIFs animados con nombres en español, sin clave ni anuncios ---
+// Proyecto comunitario de terceros, sin licencia explícita: vale para uso personal/familiar, no para vender.
+const GIFS_BASE = 'https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0';
+const GIFS_CACHE = {};
+const ZONA_GIFS = {
+  'barriga':['abs'],
+  'pecho':['pectorals'],
+  'piernas':['quads','hamstrings','adductors','abductors','calves'],
+  'gluteos':['glutes'],
+  'espalda':['lats','upper-back','traps','spine'],
+  'brazos':['biceps','triceps','forearms'],
+  'cuerpo completo':['abs','pectorals','quads','glutes','lats','triceps'],
+  'cualquiera':['abs','pectorals','quads','glutes','lats','triceps']
+};
+const EQUIPO_GIFS = {'sin equipo':'bodyweight','con mancuernas':'dumbbell','con banda elástica':'band','con silla de apoyo':'bodyweight'};
+const EQUIPO_CASA_GIFS = ['bodyweight','dumbbell','band'];
+const EQUIPO_GIFS_ES = {bodyweight:'peso corporal', dumbbell:'mancuernas', band:'banda elástica', barbell:'barra', 'ez-bar':'barra Z', cable:'polea', kettlebell:'pesa rusa'};
+const MUSC_GIFS_ES = {abs:'abdomen', pectorals:'pecho', quads:'cuádriceps', hamstrings:'isquiotibiales', adductors:'aductores', abductors:'abductores', calves:'gemelos', glutes:'glúteos', lats:'dorsales', 'upper-back':'espalda alta', traps:'trapecios', spine:'columna', biceps:'bíceps', triceps:'tríceps', forearms:'antebrazos', delts:'hombros', cardio:'cardio'};
+function escHtml(t){ return String(t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function gifsMusculo(m){
+  if(!GIFS_CACHE[m]){
+    GIFS_CACHE[m] = fetch(GIFS_BASE + '/api/es/muscles/' + m + '.json')
+      .then(res => { if(!res.ok) throw new Error('GIFs: error ' + res.status + ' en ' + m); return res.json(); })
+      .then(d => Array.isArray(d.exercises) ? d.exercises : [])
+      .catch(e => { delete GIFS_CACHE[m]; throw e; });
+  }
+  return GIFS_CACHE[m];
+}
+
+async function buscarGifs(zona, cantidad){
+  cantidad = cantidad || 4;
+  const tipo = document.getElementById('tipo').value;
+  if(tipo === 'movilidad' || tipo === 'yoga') throw new Error('esta fuente no tiene movilidad ni yoga. Usá YouTube para eso.');
+  const musculos = (tipo === 'cardio' ? ['cardio'] : (ZONA_GIFS[zona] || ZONA_GIFS['cualquiera']).slice()).sort(() => Math.random() - 0.5).slice(0, 3);
+  const resp = await Promise.allSettled(musculos.map(gifsMusculo));
+  let lista = [];
+  resp.forEach(r => { if(r.status === 'fulfilled') lista = lista.concat(r.value); });
+  if(!lista.length) throw new Error('no se pudieron cargar los GIFs (revisá la conexión o probá otra zona).');
+  const eqSel = EQUIPO_GIFS[document.getElementById('equipo').value];
+  let cand = lista;
+  if(eqSel){ const f = lista.filter(e => e.equipment === eqSel); if(f.length) cand = f; }
+  else { const f = lista.filter(e => EQUIPO_CASA_GIFS.indexOf(e.equipment) >= 0); if(f.length >= cantidad) cand = f; }
+  const vistos = {};
+  cand = cand.filter(e => e && e.gifUrl && String(e.gifUrl).indexOf(GIFS_BASE) === 0 && !vistos[e.name] && (vistos[e.name] = true));
+  cand.sort(() => Math.random() - 0.5);
+  return cand.slice(0, cantidad).map(e => ({
+    id: 'gif-' + String(e.id).replace(/[^a-z0-9-]/gi, '_'),
+    titulo: escHtml(e.name),
+    canal: 'GIFs · ' + (MUSC_GIFS_ES[e.muscle] || e.muscle) + ' · ' + (EQUIPO_GIFS_ES[e.equipment] || e.equipment),
+    link: e.gifUrl,
+    thumb: e.gifUrl,
+    desc: (e.instructions || []).join(' ')
+  }));
+}
+
+function buscarPorFuente(zona, cantidad){
+  if(fuenteActual === 'wger') return buscarWger(zona, cantidad);
+  if(fuenteActual === 'gifs') return buscarGifs(zona, cantidad);
+  return buscarYouTube(construirQuery(zona), cantidad);
 }
 
 // --- Estimación de calorías quemadas (fórmula estándar MET × peso × tiempo, no es una medición real) ---
@@ -559,9 +624,7 @@ async function buscarParaDia(dia, zona){
   const id = 'dia-' + dia;
   renderCategoria(id, '📅 ' + dia + ' — ' + zLabel);
   try{
-    const resultados = fuenteActual === 'wger'
-      ? await buscarWger(zona, 4)
-      : await buscarYouTube(construirQuery(zona), 4);
+    const resultados = await buscarPorFuente(zona, 4);
     etiquetarConTipoYMinutos(resultados);
     resultados.forEach(r => r.diaSemana = dia); // se etiqueta con el día para agruparlo en "Mi rutina"
     renderResultado(id, '📅 ' + dia + ' — ' + zLabel, resultados);
@@ -665,7 +728,7 @@ function renderResultado(id, titulo, resultados){
     const yaGuardado = estaGuardadoParaDespues(r.id);
     return '<div class="resultado">' +
       (r.thumb ? '<img src="'+r.thumb+'">' : '') +
-      '<div class="txt"><a href="'+r.link+'" target="_blank" rel="noopener">'+r.titulo+'</a><p>'+r.canal+'</p>' + (String(r.id).indexOf('wger-')===0 ? '<a href="https://www.youtube.com/results?search_query='+encodeURIComponent(r.titulo+' ejercicio como hacerlo')+'" target="_blank" rel="noopener" style="font-size:0.8rem">▶ Ver en YouTube</a>' : '') + (r.desc ? '<details style="margin-top:6px"><summary style="cursor:pointer;font-size:0.8rem">Ver instrucciones</summary><p style="font-size:0.8rem;line-height:1.4">'+r.desc.replace(/</g,'&lt;')+'</p></details>' : '') + '</div>' +
+      '<div class="txt"><a href="'+r.link+'" target="_blank" rel="noopener">'+r.titulo+'</a><p>'+r.canal+'</p>' + (/^(wger|gif)-/.test(String(r.id)) ? '<a href="https://www.youtube.com/results?search_query='+encodeURIComponent(r.titulo+' ejercicio como hacerlo')+'" target="_blank" rel="noopener" style="font-size:0.8rem">▶ Ver en YouTube</a>' : '') + (r.desc ? '<details style="margin-top:6px"><summary style="cursor:pointer;font-size:0.8rem">Ver instrucciones</summary><p style="font-size:0.8rem;line-height:1.4">'+r.desc.replace(/</g,'&lt;')+'</p></details>' : '') + '</div>' +
       '<button class="addbtn'+(yaAgregado?' added':'')+'" data-id="'+r.id+'" onclick="agregarARutina(window._res[\''+r.id+'\'], this)">' +
       (yaAgregado ? '✓ En tu rutina' : '+ Agregar') + '</button>' +
       '<button class="addbtn guardarbtn'+(yaGuardado?' added':'')+'" data-id="'+r.id+'" onclick="guardarParaDespues(window._res[\''+r.id+'\'], this)">' +
@@ -687,16 +750,9 @@ async function buscarEjercicios(){
     const zLabel = zona==='cualquiera' ? 'Cualquier zona' : ZONAS.find(z=>z[0]===zona)[1];
     const id = 'z-' + zona.replace(/\s+/g,'_');
     renderCategoria(id, '💪 ' + zLabel);
-    if(fuenteActual === 'wger'){
-      buscarWger(zona, 4)
-        .then(r => renderResultado(id, '💪 ' + zLabel, etiquetarConTipoYMinutos(r)))
-        .catch(e => renderError(id, '💪 ' + zLabel, e.message));
-    } else {
-      const q = construirQuery(zona);
-      buscarYouTube(q, 4)
-        .then(r => renderResultado(id, '💪 ' + zLabel, etiquetarConTipoYMinutos(r)))
-        .catch(e => renderError(id, '💪 ' + zLabel, e.message));
-    }
+    buscarPorFuente(zona, 4)
+      .then(r => renderResultado(id, '💪 ' + zLabel, etiquetarConTipoYMinutos(r)))
+      .catch(e => renderError(id, '💪 ' + zLabel, e.message));
   }
 }
 
