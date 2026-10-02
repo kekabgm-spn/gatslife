@@ -33,11 +33,14 @@ button{margin-top:10px;padding:11px 16px;border-radius:10px;border:1px solid var
 <div id="lista"></div>
 <script>
 const CLAVES=[
- ["Gemini (leer fotos con IA en Nutrición)","dietaGeminiKey","AIza..."],
+ ["Gemini 1 (leer fotos y recetas con IA)","dietaGeminiKey","AIza..."],
+ ["Gemini 2 (respaldo: solo se usa si la 1 es inválida o fue revocada)","dietaGeminiKey2","AIza..."],
  ["Modelo de Gemini","dietaGeminiModelo","gemini-3.1-flash-lite"],
+ ["Tope diario de llamadas a la IA en este aparato","iaTopeDia","40"],
  ["Spoonacular (recetas reales, opcional)","dietaSpoonacularKey",""],
- ["YouTube (búsqueda de videos en Fitness)","fam_ex_yt_key",""]];
-document.getElementById("lista").innerHTML=CLAVES.map((c,i)=>`<div class="c"><label for="k${i}">${c[0]}</label><input id="k${i}" type="${i==1?'text':'password'}" placeholder="${c[2]}" autocomplete="off"><button onclick="g(${i})">Guardar</button><span class="ok" id="o${i}"></span><button onclick="b(${i})" style="border-color:var(--line);color:var(--muted)">Borrar</button></div>`).join("");
+ ["YouTube 1 (videos en Fitness)","fam_ex_yt_key",""],
+ ["YouTube 2 (respaldo: solo si la 1 es inválida o fue revocada)","fam_ex_yt_key2",""]];
+document.getElementById("lista").innerHTML=CLAVES.map((c,i)=>`<div class="c"><label for="k${i}">${c[0]}</label><input id="k${i}" type="${(i==2||i==3)?'text':'password'}" placeholder="${c[2]}" autocomplete="off"><button onclick="g(${i})">Guardar</button><span class="ok" id="o${i}"></span><button onclick="b(${i})" style="border-color:var(--line);color:var(--muted)">Borrar</button></div>`).join("");
 CLAVES.forEach((c,i)=>{document.getElementById("k"+i).value=localStorage.getItem(c[1])||""});
 function g(i){const v=document.getElementById("k"+i).value.trim();if(v)localStorage.setItem(CLAVES[i][1],v);document.getElementById("o"+i).textContent=v?"✓ Guardada":"";}
 function b(i){localStorage.removeItem(CLAVES[i][1]);document.getElementById("k"+i).value="";document.getElementById("o"+i).textContent="Borrada";}
@@ -86,7 +89,7 @@ function grafico(){ if(!document.getElementById("grafPeso")) return;
 }
 cargaP();
 </script></main><script>
-const SECRETAS=["dietaGeminiKey","dietaSpoonacularKey","fam_ex_yt_key"];
+const SECRETAS=["dietaGeminiKey","dietaGeminiKey2","dietaSpoonacularKey","fam_ex_yt_key","fam_ex_yt_key2"];
 const esControl=k=>k.indexOf("nube")===0||SECRETAS.indexOf(k)>=0;
 function exportarCopia(){
   const datos={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(!esControl(k))datos[k]=localStorage.getItem(k);}

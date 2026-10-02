@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="manifest" href="manifest.json">
+<script src="claves.js"></script>
 <script src="migracion.js"></script>
 <script src="tema.js"></script>
 <title>Nutrición</title>
@@ -399,6 +400,17 @@
   .gr-res b{display:block;font-size:0.92rem;}
   .gr-res span{font-size:0.66rem;color:var(--muted);}
   .gr-sube{color:var(--warn);} .gr-baja{color:var(--accent);}
+
+  /* ---- Barras de referencia (IMC y grasa) ---- */
+  .ref-wrap{position:relative;margin:24px 0 3px;}
+  .ref-barra{display:flex;height:12px;border-radius:6px;overflow:hidden;}
+  .ref-barra i{display:block;height:100%;}
+  .ref-marca{position:absolute;top:-19px;transform:translateX(-50%);font-size:13px;line-height:1;color:var(--text,#e8ecf2);}
+  .ref-oms{position:absolute;top:-3px;bottom:-3px;width:2px;background:#fff;opacity:.85;}
+  .ref-etq{display:flex;font-size:0.62rem;color:var(--muted);text-align:center;}
+  .ref-etq span{display:block;overflow:hidden;white-space:nowrap;}
+  .ref-bloque{margin:4px 0 16px;}
+  .ref-bloque h3{font-size:0.85rem;margin:0 0 2px;}
 </style>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 512 512%22%3E%3Crect width=%22512%22 height=%22512%22 rx=%22104%22 fill=%22%2310151f%22/%3E%3Csvg x=%2214%22 y=%22150%22 width=%22240%22 height=%22240%22 viewBox=%220 0 48 48%22 xmlns=%22http://www.w3.org/2000/svg%22 aria-hidden=%22true%22%3E%3Cpolygon points=%227%2C26 8%2C9 21%2C17%22 fill=%22%23a9b1bf%22/%3E%3Cpolygon points=%2241%2C26 40%2C9 27%2C17%22 fill=%22%23a9b1bf%22/%3E%3Cpolygon points=%2210%2C23 11%2C13 18%2C18%22 fill=%22%23f2b8c6%22/%3E%3Cpolygon points=%2238%2C23 37%2C13 30%2C18%22 fill=%22%23f2b8c6%22/%3E%3Cellipse cx=%2224%22 cy=%2230%22 rx=%2217%22 ry=%2214%22 fill=%22%23a9b1bf%22/%3E%3Cellipse cx=%2218%22 cy=%2230%22 rx=%222.2%22 ry=%222.6%22 fill=%22%231b1b24%22/%3E%3Cellipse cx=%2230%22 cy=%2230%22 rx=%222.2%22 ry=%222.6%22 fill=%22%231b1b24%22/%3E%3Cpolygon points=%2222%2C34 26%2C34 24%2C36.5%22 fill=%22%23f08aa0%22/%3E%3Cpath d=%22M24 36.5v2M24 38.5q-2.5 2-4.5.5M24 38.5q2.5 2 4.5.5%22 stroke=%22%231b1b24%22 stroke-width=%221.1%22 fill=%22none%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M12 34l-7-1.5M12 37l-7 1.5M36 34l7-1.5M36 37l7 1.5%22 stroke=%22%231b1b24%22 stroke-width=%221%22 opacity=%22.55%22 stroke-linecap=%22round%22/%3E%3Cellipse cx=%2226%22 cy=%2215%22 rx=%2215%22 ry=%226.5%22 transform=%22rotate%28-9 26 15%29%22 fill=%22%23d93b3b%22/%3E%3Crect x=%2221.5%22 y=%226%22 width=%223.4%22 height=%223.8%22 rx=%221.4%22 fill=%22%23d93b3b%22 transform=%22rotate%28-9 23 8%29%22/%3E%3C/svg%3E%3Csvg x=%22258%22 y=%22150%22 width=%22240%22 height=%22240%22 viewBox=%220 0 48 48%22 xmlns=%22http://www.w3.org/2000/svg%22 aria-hidden=%22true%22%3E%3Cpolygon points=%227%2C26 8%2C9 21%2C17%22 fill=%22%23f4e8d4%22/%3E%3Cpolygon points=%2241%2C26 40%2C9 27%2C17%22 fill=%22%23f4e8d4%22/%3E%3Cpolygon points=%2210%2C23 11%2C13 18%2C18%22 fill=%22%23f2b8c6%22/%3E%3Cpolygon points=%2238%2C23 37%2C13 30%2C18%22 fill=%22%23f2b8c6%22/%3E%3Cellipse cx=%2224%22 cy=%2230%22 rx=%2217%22 ry=%2214%22 fill=%22%23f4e8d4%22/%3E%3Cellipse cx=%2218%22 cy=%2230%22 rx=%222.2%22 ry=%222.6%22 fill=%22%231b1b24%22/%3E%3Cellipse cx=%2230%22 cy=%2230%22 rx=%222.2%22 ry=%222.6%22 fill=%22%231b1b24%22/%3E%3Cpolygon points=%2222%2C34 26%2C34 24%2C36.5%22 fill=%22%23f08aa0%22/%3E%3Cpath d=%22M24 36.5v2M24 38.5q-2.5 2-4.5.5M24 38.5q2.5 2 4.5.5%22 stroke=%22%231b1b24%22 stroke-width=%221.1%22 fill=%22none%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M12 34l-7-1.5M12 37l-7 1.5M36 34l7-1.5M36 37l7 1.5%22 stroke=%22%231b1b24%22 stroke-width=%221%22 opacity=%22.55%22 stroke-linecap=%22round%22/%3E%3Cellipse cx=%2226%22 cy=%2215%22 rx=%2215%22 ry=%226.5%22 transform=%22rotate%28-9 26 15%29%22 fill=%22%238f5ae6%22/%3E%3Crect x=%2221.5%22 y=%226%22 width=%223.4%22 height=%223.8%22 rx=%221.4%22 fill=%22%238f5ae6%22 transform=%22rotate%28-9 23 8%29%22/%3E%3C/svg%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="icono.png">
@@ -549,6 +561,12 @@
       <button type="button" data-g="todo">Todo</button>
     </div>
     <div id="graficoProgreso" style="margin-top:10px"></div>
+  </div>
+
+  <div class="heat-sec" id="refSec">
+    <h2><span>📏 Dónde estás</span></h2>
+    <div class="ref-bloque"><h3>IMC</h3><div id="barraIMC"></div></div>
+    <div class="ref-bloque" style="margin-bottom:0"><h3>Grasa corporal (promedio de 7 días)</h3><div id="barraGrasa"></div></div>
   </div>
 
 <div class="heat-sec" id="calMesSec" style="margin-top:18px">
@@ -1535,23 +1553,7 @@ function duplicarReceta(id){
   renderRecetas();
 }
 // ---------- Recetas con IA (Gemini, texto) ----------
-async function llamarGeminiTexto(prompt){
-  const key = localStorage.getItem(claveGeminiKey());
-  const modelo = localStorage.getItem(claveGeminiModelo()) || "gemini-3.1-flash-lite";
-  if(!key) throw new Error("Falta la clave de Gemini. Ponla una vez en ⚙️ Ajustes.");
-  const resp = await fetch(
-    "https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(modelo) + ":generateContent",
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-goog-api-key": key },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-    }
-  );
-  const data = await resp.json();
-  if(data.error) throw new Error(data.error.message || "Error de la API de Gemini.");
-  const texto = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-  return texto.replace(/```json|```/g, "").trim();
-}
+async function llamarGeminiTexto(prompt){ return IAClaves.geminiTexto(prompt); }
 
 function iniciarRecetaIA(){
   cancelarReceta(); // no dejar el builder manual a medias
@@ -2261,6 +2263,7 @@ function escalaBonita(mn, mx){
 }
 
 function renderGraficoProgreso(){
+  renderBarrasRef();
   const sel = document.getElementById("graficoMetrica");
   const m = METRICAS_GRAFICO.find(x => x.id === sel.value) || METRICAS_GRAFICO[0];
   const cont = document.getElementById("graficoProgreso");
@@ -2688,7 +2691,7 @@ function archivoABase64(archivo){
 async function leerFotoConIA(){
   const estado = document.getElementById("iaFotoEstado");
   const archivo = document.getElementById("mdFoto").files[0];
-  const key = (localStorage.getItem(claveGeminiKey()) || "").trim();
+  const key = IAClaves.tieneGemini() ? "ok" : "";
   const modelo = (localStorage.getItem(claveGeminiModelo()) || "").trim() || "gemini-3.1-flash-lite";
 
   if(!archivo){ estado.textContent = "Primero subí la foto, arriba."; return; }
@@ -2702,21 +2705,12 @@ async function leerFotoConIA(){
       "Devolvé SOLO un objeto JSON (sin texto extra, sin \`\`\`), con estas claves exactas cuando el dato aparezca en la imagen: "+
       camposTxt + ". Usá null en los campos que no aparezcan. Los valores deben ser números (sin unidad, sin texto), usando punto decimal.";
 
-    const resp = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(modelo) + ":generateContent",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-goog-api-key": key },
-        body: JSON.stringify({
+    const data = await IAClaves.gemini({
           contents: [{ parts: [
             { inline_data: { mime_type: archivo.type || "image/jpeg", data: base64 } },
             { text: prompt }
           ]}]
-        })
-      }
-    );
-    const data = await resp.json();
-    if(data.error) throw new Error(data.error.message || "Error de la API de Gemini.");
+        });
     const texto = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
     const limpio = texto.replace(/```json|```/g, "").trim();
     const campos = JSON.parse(limpio);
@@ -3052,7 +3046,7 @@ document.getElementById("pesoHoyQuitar").onclick = ()=>{
 };
 document.getElementById("pdLeer").onclick = async ()=>{
   const est = document.getElementById("pdIaEstado"), archivo = document.getElementById("pdFoto").files[0];
-  const key = (localStorage.getItem(claveGeminiKey()) || "").trim();
+  const key = IAClaves.tieneGemini() ? "ok" : "";
   const modelo = (localStorage.getItem(claveGeminiModelo()) || "").trim() || "gemini-3.1-flash-lite";
   if(!archivo){ est.textContent = "Primero elige la foto de la báscula."; return; }
   if(!key){ est.innerHTML = 'Falta la clave de Gemini. Ponla una vez en <a href="ajustes.html">⚙️ Ajustes</a>.'; return; }
@@ -3062,12 +3056,7 @@ document.getElementById("pdLeer").onclick = async ()=>{
     const prompt = "Esta imagen es la pantalla de una báscula inteligente o app de composición corporal (OKOK). Devuelve SOLO un objeto JSON, sin texto extra ni ```, con estas claves exactas: " +
       PD_TODOS.map(id => '"' + id + '"').join(", ") + ". Usa null si el dato no aparece. Copia los números tal como se ven, con punto decimal y sin unidades. " +
       "musculoEsqKg es la masa muscular esquelética en kg (si solo sale en %, pon null). metabolismo es el metabolismo basal en kcal. aguaPct y grasaPct son porcentajes.";
-    const resp = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(modelo) + ":generateContent", {
-      method:"POST", headers:{"Content-Type":"application/json", "x-goog-api-key":key},
-      body: JSON.stringify({contents:[{parts:[{inline_data:{mime_type:archivo.type || "image/jpeg", data:base64}}, {text:prompt}]}]})
-    });
-    const data = await resp.json();
-    if(data.error) throw new Error(data.error.message || "Error de la API de Gemini.");
+    const data = await IAClaves.gemini({contents:[{parts:[{inline_data:{mime_type:archivo.type || "image/jpeg", data:base64}}, {text:prompt}]}]});
     const texto = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
     const campos = JSON.parse(texto.replace(/```json|```/g, "").trim());
     let n = 0; const raros = [];
@@ -3082,7 +3071,7 @@ document.getElementById("pdLeer").onclick = async ()=>{
       (raros.length ? "No rellené por verse raros: " + raros.join(", ") + "." : "");
   }catch(e){ est.textContent = "No se pudo leer la foto: " + e.message; }
 };
-const _render0 = render; render = function(){ _render0.apply(this, arguments); renderPesoHoy(); };
+const _render0 = render; render = function(){ _render0.apply(this, arguments); renderPesoHoy(); renderBarrasRef(); };
 if(!estado.meta) document.getElementById("objetivosSec").open = true;
 
 // ---------- Pestañas ----------
@@ -3097,6 +3086,52 @@ let _p0 = "dia"; try{ _p0 = localStorage.getItem("nutriPestanaV1") || "dia"; }ca
 mostrarPestana(_p0);
 
 armarCamposMedida();
+// ---------- Barras de referencia: IMC y grasa corporal ----------
+var NF = v => String(Math.round(v*10)/10).replace(".", ",");
+var GRASA_TABLA = { // cortes de Gallagher (2000): [bajo <a, normal a–b, alto b–c, muy alto ≥c]
+  Mujer:  {"20":[21,33,39], "40":[23,34,40], "60":[24,36,42], min:10, max:50, oms:35},
+  Hombre: {"20":[8,20,25],  "40":[11,22,28], "60":[13,25,30], min:4,  max:40, oms:25}
+};
+function barraRef(zonas, min, max, valor, oms){
+  let prev = min, seg = "", etq = "";
+  zonas.forEach(z => { const w = (z[0]-prev)/(max-min)*100; seg += `<i style="width:${w}%;background:${z[2]}"></i>`; etq += `<span style="width:${w}%">${z[1]}</span>`; prev = z[0]; });
+  const pos = Math.max(0, Math.min(100, (valor-min)/(max-min)*100));
+  const om = oms ? `<b class="ref-oms" style="left:${(oms-min)/(max-min)*100}%"></b>` : "";
+  return `<div class="ref-wrap"><div class="ref-barra">${seg}</div>${om}<span class="ref-marca" style="left:${pos}%">▼</span></div><div class="ref-etq">${etq}</div>`;
+}
+function renderBarrasRef(){
+  if(typeof GRASA_TABLA === "undefined") return;
+  const e1 = document.getElementById("barraIMC"), e2 = document.getElementById("barraGrasa");
+  if(!e1 || !e2) return;
+  const pd = perfilDatos || {}, med = pesosOrdenados(), h = pd.altura;
+  const peso = med.length ? med[med.length-1].peso : pesoInicialPerfil();
+  if(!(h > 0)) e1.innerHTML = `<div class="rep-nota">Falta la altura. Ponla en la pestaña Perfil.</div>`;
+  else if(!(peso > 0)) e1.innerHTML = `<div class="rep-nota">Falta un peso. Regístralo en la pestaña Día.</div>`;
+  else {
+    const hm2 = Math.pow(h/100, 2), imc = peso/hm2;
+    const nombre = imc < 18.5 ? "Bajo peso" : imc < 25 ? "Ideal" : imc < 30 ? "Sobrepeso" : "Obesidad";
+    let frase;
+    if(imc >= 25) frase = "Te faltan " + NF(Math.ceil((peso - 24.9*hm2)*10)/10) + " kg para entrar en el rango ideal.";
+    else if(imc < 18.5) frase = "Te faltan " + NF(Math.ceil((18.5*hm2 - peso)*10)/10) + " kg para llegar al rango ideal.";
+    else frase = "Estás dentro del rango ideal (18,5 a 24,9).";
+    e1.innerHTML = barraRef([[18.5,"Bajo","#4aa8ff"],[25,"Ideal","#35c26a"],[30,"Sobrepeso","#f0a93b"],[40,"Obesidad","#e5533d"]], 15, 40, imc) +
+      `<div style="font-size:0.88rem;margin-top:6px"><b>IMC ${NF(imc)} · ${nombre}</b> <span style="color:var(--muted)">(${NF(peso)} kg, ${h} cm)</span></div><div class="rep-nota" style="margin-top:2px">${frase} El IMC no distingue músculo de grasa.</div>`;
+  }
+  const t = GRASA_TABLA[pd.genero], edad = pd.edad;
+  if(!t) { e2.innerHTML = `<div class="rep-nota">Elige Mujer u Hombre en el género del Perfil para ver esta barra.</div>`; return; }
+  if(!(edad >= 20 && edad <= 79)) { e2.innerHTML = `<div class="rep-nota">${edad ? "Esta tabla cubre de 20 a 79 años." : "Falta la edad. Ponla en la pestaña Perfil."}</div>`; return; }
+  const desde = isoDeDia(diaUTC(hoyISO()) - 6), sem = medidas.filter(x => x && x.grasaPct > 0 && x.fecha >= desde);
+  if(!sem.length) { e2.innerHTML = `<div class="rep-nota">Sin mediciones de grasa en los últimos 7 días.</div>`; return; }
+  const prom = sem.reduce((a,x) => a + x.grasaPct, 0) / sem.length;
+  const c = t[edad < 40 ? "20" : edad < 60 ? "40" : "60"];
+  const nom = prom < c[0] ? "Bajo" : prom < c[1] ? "Normal" : prom < c[2] ? "Alto" : "Muy alto";
+  e2.innerHTML = barraRef([[c[0],"Bajo","#4aa8ff"],[c[1],"Normal","#35c26a"],[c[2],"Alto","#f0a93b"],[t.max,"Muy alto","#e5533d"]], t.min, t.max, prom, t.oms) +
+    `<div style="font-size:0.88rem;margin-top:6px"><b>${NF(prom)} % · ${nom}</b> <span style="color:var(--muted)">(${sem.length} medición${sem.length===1?"":"es"})</span></div>` +
+    `<div class="rep-nota" style="margin-top:2px">Marca blanca: ${t.oms} % (referencia de la OMS). Es orientativo: la báscula tiene margen de error y esta tabla (Gallagher, 2000) es más permisiva que ese corte.</div>`;
+}
+['pfNombre','pfGenero','pfEdad','pfAltura'].forEach(id => document.getElementById(id).addEventListener("change", renderBarrasRef));
+renderBarrasRef();
+
 poblarSelectorGrafico();
 renderGraficoProgreso();
 pintarTabsPerfil();

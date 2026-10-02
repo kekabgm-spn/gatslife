@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="manifest" href="manifest.json">
+<script src="claves.js"></script>
 <script src="migracion.js"></script>
 <script src="tema.js"></script>
 <title>Fitness</title>
@@ -622,14 +623,8 @@ function cargarClaves(){
 
 async function buscarYouTube(query, cantidad){
   cantidad = cantidad || 4;
-  const ytKey = localStorage.getItem('fam_ex_yt_key');
-  if(!ytKey) throw new Error('Falta la clave de YouTube. Ponla en Ajustes (⚙️).');
-  const url = 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=' + cantidad
-    + '&safeSearch=strict&relevanceLanguage=es&q=' + encodeURIComponent(query)
-    + '&key=' + encodeURIComponent(ytKey);
-  const res = await fetch(url);
-  const data = await res.json();
-  if(data.error) throw new Error(data.error.message || 'Error de YouTube API');
+  const urlBase = 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=' + cantidad + '&safeSearch=strict&relevanceLanguage=es&q=' + encodeURIComponent(query);
+  const data = await IAClaves.youtube(urlBase);
   if(!data.items || data.items.length===0) throw new Error('Sin resultados.');
   return data.items.map(item => ({
     id: item.id.videoId,
@@ -876,7 +871,7 @@ document.querySelectorAll('#hc-filtros button').forEach(b=>{ b.onclick = ()=>{ h
 // ---------- Sugerencias de la IA (solo texto; usa únicamente los filtros de arriba) ----------
 async function sugerirIA(){
   const cont = document.getElementById('resultados');
-  const key = localStorage.getItem('dietaGeminiKey');
+  const key = IAClaves.tieneGemini() ? 'ok' : '';
   if(!key){ cont.innerHTML = '<p style="color:#e07a7a">Falta la clave de Gemini. Ponla en <a href="ajustes.html">⚙️ Ajustes</a> y vuelve a intentarlo.</p>'; return; }
   const modelo = localStorage.getItem('dietaGeminiModelo') || 'gemini-3.1-flash-lite';
   const txt = id => { const s = document.getElementById(id); return s && s.value ? s.options[s.selectedIndex].text : ''; };
@@ -885,11 +880,7 @@ async function sugerirIA(){
   const prompt = 'Eres un asistente de ejercicio suave para una persona adulta con artritis. Sugiere exactamente 3 ejercicios distintos, de bajo impacto (sin saltos ni movimientos bruscos), que se detengan si hay dolor. No des diagnósticos ni consejos médicos.\nFiltros elegidos:\n' + filtros + '\nResponde SOLO con un JSON válido, sin texto antes ni después ni marcas de código, con esta forma: [{"nombre":"","para_que":"","pasos":["","",""],"dosis":"series y repeticiones o minutos","cuidado":"aviso para las articulaciones","tipo":"fuerza|cardio|movilidad|yoga|otro","minutos":10}]. Todo en español sencillo.';
   cont.innerHTML = '<p>Pidiendo ideas a la IA…</p>';
   try{
-    const resp = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(modelo) + ':generateContent', {
-      method:'POST', headers:{'Content-Type':'application/json','x-goog-api-key':key},
-      body: JSON.stringify({ contents:[{parts:[{text:prompt}]}] }) });
-    const data = await resp.json();
-    if(data.error) throw new Error(data.error.message || 'Error de la API de Gemini.');
+    const data = await IAClaves.gemini({ contents:[{parts:[{text:prompt}]}] });
     const t = ((data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts || [])[0] || {}).text || '';
     let lista; try{ lista = JSON.parse(t.replace(/```json|```/g,'').trim()); }catch(err){ throw new Error('La IA no devolvió un formato válido. Inténtalo otra vez.'); }
     if(!Array.isArray(lista) || !lista.length) throw new Error('La IA no devolvió ejercicios. Inténtalo otra vez.');
