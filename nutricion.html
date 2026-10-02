@@ -378,6 +378,27 @@
   .tabs-sec button{flex:1;padding:10px 2px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--muted);font-weight:800;font-size:0.78rem;cursor:pointer;}
   .tabs-sec button.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);}
   .panel[hidden]{display:none;}
+
+  /* ---- Progreso del día en tamaño pequeño (pestaña Día) ---- */
+  .prog-mini{padding:12px 14px;}
+  .prog-mini h2{font-size:0.85rem;margin:0 0 8px;}
+  .prog-mini #progreso{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;}
+  .prog-mini .prog-fila{margin-bottom:0;}
+  .prog-mini .prog-cab{font-size:0.72rem;margin-bottom:3px;flex-wrap:wrap;gap:2px 6px;}
+  .prog-mini .cuadritos{gap:3px;}
+  .prog-mini .cuadritos span{width:11px;height:11px;border-radius:3px;}
+  .prog-mini .rep-nota{grid-column:1/-1;font-size:0.68rem;margin:2px 0 0;}
+  /* ---- Peso y medidas del día ---- */
+  .pd-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+  .pd-grid label{display:block;font-size:0.76rem;color:var(--muted);margin-bottom:2px;}
+  .pd-grid input{width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:inherit;font-size:0.95rem;}
+  .pd-acciones{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;}
+  /* ---- Gráfico de progreso ---- */
+  .gr-res{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:4px 0 8px;}
+  .gr-res div{background:var(--panel-alt);border-radius:8px;padding:6px 8px;}
+  .gr-res b{display:block;font-size:0.92rem;}
+  .gr-res span{font-size:0.66rem;color:var(--muted);}
+  .gr-sube{color:var(--warn);} .gr-baja{color:var(--accent);}
 </style>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 512 512%22%3E%3Crect width=%22512%22 height=%22512%22 rx=%22104%22 fill=%22%2310151f%22/%3E%3Csvg x=%2214%22 y=%22150%22 width=%22240%22 height=%22240%22 viewBox=%220 0 48 48%22 xmlns=%22http://www.w3.org/2000/svg%22 aria-hidden=%22true%22%3E%3Cpolygon points=%227%2C26 8%2C9 21%2C17%22 fill=%22%23a9b1bf%22/%3E%3Cpolygon points=%2241%2C26 40%2C9 27%2C17%22 fill=%22%23a9b1bf%22/%3E%3Cpolygon points=%2210%2C23 11%2C13 18%2C18%22 fill=%22%23f2b8c6%22/%3E%3Cpolygon points=%2238%2C23 37%2C13 30%2C18%22 fill=%22%23f2b8c6%22/%3E%3Cellipse cx=%2224%22 cy=%2230%22 rx=%2217%22 ry=%2214%22 fill=%22%23a9b1bf%22/%3E%3Cellipse cx=%2218%22 cy=%2230%22 rx=%222.2%22 ry=%222.6%22 fill=%22%231b1b24%22/%3E%3Cellipse cx=%2230%22 cy=%2230%22 rx=%222.2%22 ry=%222.6%22 fill=%22%231b1b24%22/%3E%3Cpolygon points=%2222%2C34 26%2C34 24%2C36.5%22 fill=%22%23f08aa0%22/%3E%3Cpath d=%22M24 36.5v2M24 38.5q-2.5 2-4.5.5M24 38.5q2.5 2 4.5.5%22 stroke=%22%231b1b24%22 stroke-width=%221.1%22 fill=%22none%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M12 34l-7-1.5M12 37l-7 1.5M36 34l7-1.5M36 37l7 1.5%22 stroke=%22%231b1b24%22 stroke-width=%221%22 opacity=%22.55%22 stroke-linecap=%22round%22/%3E%3Cellipse cx=%2226%22 cy=%2215%22 rx=%2215%22 ry=%226.5%22 transform=%22rotate%28-9 26 15%29%22 fill=%22%23d93b3b%22/%3E%3Crect x=%2221.5%22 y=%226%22 width=%223.4%22 height=%223.8%22 rx=%221.4%22 fill=%22%23d93b3b%22 transform=%22rotate%28-9 23 8%29%22/%3E%3C/svg%3E%3Csvg x=%22258%22 y=%22150%22 width=%22240%22 height=%22240%22 viewBox=%220 0 48 48%22 xmlns=%22http://www.w3.org/2000/svg%22 aria-hidden=%22true%22%3E%3Cpolygon points=%227%2C26 8%2C9 21%2C17%22 fill=%22%23f4e8d4%22/%3E%3Cpolygon points=%2241%2C26 40%2C9 27%2C17%22 fill=%22%23f4e8d4%22/%3E%3Cpolygon points=%2210%2C23 11%2C13 18%2C18%22 fill=%22%23f2b8c6%22/%3E%3Cpolygon points=%2238%2C23 37%2C13 30%2C18%22 fill=%22%23f2b8c6%22/%3E%3Cellipse cx=%2224%22 cy=%2230%22 rx=%2217%22 ry=%2214%22 fill=%22%23f4e8d4%22/%3E%3Cellipse cx=%2218%22 cy=%2230%22 rx=%222.2%22 ry=%222.6%22 fill=%22%231b1b24%22/%3E%3Cellipse cx=%2230%22 cy=%2230%22 rx=%222.2%22 ry=%222.6%22 fill=%22%231b1b24%22/%3E%3Cpolygon points=%2222%2C34 26%2C34 24%2C36.5%22 fill=%22%23f08aa0%22/%3E%3Cpath d=%22M24 36.5v2M24 38.5q-2.5 2-4.5.5M24 38.5q2.5 2 4.5.5%22 stroke=%22%231b1b24%22 stroke-width=%221.1%22 fill=%22none%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M12 34l-7-1.5M12 37l-7 1.5M36 34l7-1.5M36 37l7 1.5%22 stroke=%22%231b1b24%22 stroke-width=%221%22 opacity=%22.55%22 stroke-linecap=%22round%22/%3E%3Cellipse cx=%2226%22 cy=%2215%22 rx=%2215%22 ry=%226.5%22 transform=%22rotate%28-9 26 15%29%22 fill=%22%238f5ae6%22/%3E%3Crect x=%2221.5%22 y=%226%22 width=%223.4%22 height=%223.8%22 rx=%221.4%22 fill=%22%238f5ae6%22 transform=%22rotate%28-9 23 8%29%22/%3E%3C/svg%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="icono.png">
@@ -429,6 +450,11 @@
     <div class="resumen-fila total"><span>Calorías restantes</span><span class="num" id="rRestantes">–</span></div>
   </div>
 
+  <div class="prog-sec prog-mini">
+    <h2><span>🟩 Progreso del día</span></h2>
+    <div id="progreso"></div>
+  </div>
+
   <div id="comidas"></div>
 
   <div class="agua-sec">
@@ -454,12 +480,20 @@
   </div>
 
   <div class="agua-sec" id="pesoHoySec">
-    <h2><span>⚖️ Peso de hoy <small style="font-weight:400;color:var(--muted)">(opcional)</small></span><span id="pesoHoyEstado" style="font-weight:400;font-size:0.8rem;color:var(--muted)"></span></h2>
-    <div style="display:flex;gap:8px;align-items:center">
-      <input type="number" id="pesoHoyInput" step="0.1" min="20" max="400" inputmode="decimal" placeholder="kg" aria-label="Peso en kg" style="flex:1;max-width:140px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font-size:0.95rem">
+    <h2><span>⚖️ Peso y medidas del día <small style="font-weight:400;color:var(--muted)">(opcional)</small></span><span id="pesoHoyEstado" style="font-weight:400;font-size:0.8rem;color:var(--muted)"></span></h2>
+    <div class="pd-grid" id="pdPrincipales"></div>
+    <details class="ia-foto" id="pdMas">
+      <summary>Más datos (opcionales)</summary>
+      <div class="pd-grid" id="pdExtra" style="margin-top:8px"></div>
+    </details>
+    <label for="pdFoto" style="font-size:0.78rem;color:var(--muted)">Foto de la báscula (app OKOK)</label>
+    <input type="file" id="pdFoto" accept="image/*">
+    <div class="pd-acciones">
+      <button type="button" id="pdLeer">📷 Leer foto con IA</button>
       <button type="button" class="btn-primario" id="pesoHoyGuardar" style="margin-top:0">Guardar</button>
       <button type="button" id="pesoHoyQuitar" style="padding:8px 12px">Quitar</button>
     </div>
+    <div class="rep-nota" id="pdIaEstado" style="margin-top:6px"></div>
     <div class="rep-nota" id="pesoHoyNota" style="margin-top:6px"></div>
   </div>
 
@@ -491,11 +525,6 @@
   </div>
 
   <div class="panel" data-panel="seg">
-  <div class="prog-sec">
-    <h2><span>🟩 Progreso del día</span></h2>
-    <div id="progreso"></div>
-  </div>
-
   <div class="heat-sec">
     <h2><span>🗓️ Últimas 4 semanas</span></h2>
     <div class="chips" id="heatChips">
@@ -514,18 +543,13 @@
     <label for="graficoMetrica">Qué mostrar</label>
     <select id="graficoMetrica"></select>
     <div class="chips" id="graficoGranularidad" style="margin-top:8px">
-      <button type="button" data-g="dia" class="on">Día</button>
+      <button type="button" data-g="sem" class="on">Semana</button>
       <button type="button" data-g="mes">Mes</button>
       <button type="button" data-g="anio">Año</button>
+      <button type="button" data-g="todo">Todo</button>
     </div>
     <div id="graficoProgreso" style="margin-top:10px"></div>
   </div>
-
-<div class="heat-sec" id="pesoSec" style="margin-top:18px">
-  <h2><span>⚖️ Peso</span></h2>
-  <div id="pesoInicialFijo" style="font-size:0.9rem;margin-bottom:6px"></div>
-  <div id="pesoGraf"></div>
-</div>
 
 <div class="heat-sec" id="calMesSec" style="margin-top:18px">
   <h2><span>📅 Calendario del mes</span></h2>
@@ -603,22 +627,9 @@
 
       <details class="ia-foto">
         <summary>📷 Completar con foto (IA) — opcional</summary>
-        <p class="rep-nota">Subí la foto de arriba primero, después tocá "Leer foto". La IA completa los campos para que los revises antes de guardar — no guarda nada sola.</p>
-        <label for="geminiKey">Clave de Gemini (una sola vez, queda en este navegador)</label>
-        <input type="password" id="geminiKey" placeholder="AIza...">
-        <label for="geminiModelo">Modelo</label>
-        <input type="text" id="geminiModelo" value="gemini-3.1-flash-lite">
-        <p class="rep-nota">Si en algún momento deja de funcionar, es porque Google cambió el nombre del modelo — se actualiza acá, revisando <a href="https://ai.google.dev/gemini-api/docs/changelog" target="_blank" rel="noopener noreferrer">el changelog de Gemini</a>, sin tocar el resto de la app.</p>
+        <p class="rep-nota">Sube la foto de arriba y toca el botón. La IA completa los campos para que los revises antes de guardar; no guarda nada sola. Las claves (Gemini, Spoonacular…) se ponen solo en <a href="ajustes.html">⚙️ Ajustes</a>.</p>
         <button type="button" class="btn-primario" id="btnLeerFoto">Leer foto y completar campos</button>
         <div id="iaFotoEstado" class="rep-nota" style="margin-top:8px"></div>
-      </details>
-
-      <details class="ia-foto">
-        <summary>🍲 Clave de Spoonacular — opcional, para "Recetas reales"</summary>
-        <p class="rep-nota">Se guarda solo en este navegador, nunca en el código que se sube a GitHub.</p>
-        <label for="spoonKey">Clave de Spoonacular</label>
-        <input type="password" id="spoonKey" placeholder="pega tu clave acá">
-        <button type="button" class="btn-primario" id="btnGuardarSpoonKey">Guardar clave en este navegador</button>
       </details>
 
       <button type="button" class="btn-primario" id="btnGuardarMedicion">Guardar medición</button>
@@ -1527,7 +1538,7 @@ function duplicarReceta(id){
 async function llamarGeminiTexto(prompt){
   const key = localStorage.getItem(claveGeminiKey());
   const modelo = localStorage.getItem(claveGeminiModelo()) || "gemini-3.1-flash-lite";
-  if(!key) throw new Error("Falta la clave de Gemini (se configura en Perfil y medidas, al completar una medición con foto).");
+  if(!key) throw new Error("Falta la clave de Gemini. Ponla una vez en ⚙️ Ajustes.");
   const resp = await fetch(
     "https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(modelo) + ":generateContent",
     {
@@ -2199,14 +2210,21 @@ function renderHeat(){
   }
 }
 
-// ---------- Gráfico general de progreso (día/mes/año) ----------
-const METRICAS_GRAFICO = [
+// ---------- Gráfico de progreso (semana / mes / año / todo) ----------
+const PD_PRINC = ["peso","grasaPct","musculoEsqKg","grasaVisceral","cintura"];
+const PD_EXTRA = ["aguaPct","metabolismo","caderas","pecho","biceps","muslo","pantorrilla"];
+const PD_RANGOS = {peso:[20,400],grasaPct:[3,70],musculoEsqKg:[5,90],grasaVisceral:[1,40],cintura:[40,200],aguaPct:[20,80],metabolismo:[600,4500],caderas:[50,200],pecho:[50,200],biceps:[10,80],muslo:[20,120],pantorrilla:[15,80]};
+const UNIDAD_MEDIDA = {peso:"kg",grasaPct:"%",musculoEsqKg:"kg",grasaVisceral:"",cintura:"cm",aguaPct:"%",metabolismo:"kcal",caderas:"cm",pecho:"cm",biceps:"cm",muslo:"cm",pantorrilla:"cm"};
+function pdEtiqueta(id){ const c = CAMPOS_MEDIDA.find(x=>x.id===id); return c ? c.etiqueta : id; }
+const METRICAS_GRAFICO = PD_PRINC.concat(PD_EXTRA).map(id => ({
+  id, nombre: id==="grasaPct" ? "Grasa corporal" : pdEtiqueta(id).replace(/\s*\([^)]*\)\s*$/,""), unidad: UNIDAD_MEDIDA[id], fuente:"medida"
+})).concat([
   {id:"kcalConsumidas", nombre:"Calorías consumidas", unidad:"kcal", fuente:"dia"},
   {id:"kcalQuemadas",   nombre:"Calorías quemadas",   unidad:"kcal", fuente:"dia"},
-  {id:"agua",           nombre:"Agua",                unidad:"ml",   fuente:"dia"}
-].concat(CAMPOS_MEDIDA.map(c => ({id:c.id, nombre:c.etiqueta, unidad:"", fuente:"medida"})));
+  {id:"agua",           nombre:"Agua bebida",         unidad:"ml",   fuente:"dia"}
+]);
 
-let granularidadGrafico = "dia";
+let granularidadGrafico = "sem";
 
 function poblarSelectorGrafico(){
   const sel = document.getElementById("graficoMetrica");
@@ -2226,55 +2244,107 @@ function serieDeMetrica(m){
   return medidas.filter(x => x[m.id] > 0).map(x => ({fecha:x.fecha, valor:x[m.id]}));
 }
 
-function agruparSerie(serie, granularidad){
-  const ordenada = serie.slice().sort((a,b)=> a.fecha < b.fecha ? -1 : (a.fecha > b.fecha ? 1 : 0));
-  if(granularidad === "dia") return ordenada;
-  const grupos = {};
-  ordenada.forEach(p=>{
-    const clave = granularidad === "mes" ? p.fecha.slice(0,7) : p.fecha.slice(0,4);
-    if(!grupos[clave]) grupos[clave] = [];
-    grupos[clave].push(p.valor);
-  });
-  return Object.keys(grupos).sort().map(k => ({
-    fecha:k, valor: grupos[k].reduce((s,v)=>s+v,0)/grupos[k].length
-  }));
+const MESES_CORTOS = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+function diaUTC(f){ const p = f.split("-").map(Number); return Date.UTC(p[0], p[1]-1, p[2]) / 864e5; }
+function isoDeDia(n){ return new Date(Math.round(n) * 864e5).toISOString().slice(0,10); }
+function etiquetaDia(n, conAnio){
+  const f = isoDeDia(n).split("-");
+  return conAnio ? MESES_CORTOS[+f[1]-1] + " " + f[0].slice(2) : (+f[2]) + " " + MESES_CORTOS[+f[1]-1];
+}
+function escalaBonita(mn, mx){
+  if(mx - mn < 1e-9){ mn -= 1; mx += 1; }
+  const bruto = (mx - mn) / 4, mag = Math.pow(10, Math.floor(Math.log10(bruto))), norm = bruto / mag;
+  const paso = (norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 2.5 ? 2.5 : norm <= 5 ? 5 : 10) * mag;
+  const lo = Math.floor(mn / paso) * paso, hi = Math.ceil(mx / paso) * paso, ticks = [];
+  for(let v = lo; v <= hi + paso/2; v += paso) ticks.push(Math.round(v*1000)/1000);
+  return {lo, hi: ticks[ticks.length-1], ticks};
 }
 
 function renderGraficoProgreso(){
-  const metricaId = document.getElementById("graficoMetrica").value;
-  const m = METRICAS_GRAFICO.find(x => x.id === metricaId) || METRICAS_GRAFICO[0];
-  const serie = agruparSerie(serieDeMetrica(m), granularidadGrafico);
+  const sel = document.getElementById("graficoMetrica");
+  const m = METRICAS_GRAFICO.find(x => x.id === sel.value) || METRICAS_GRAFICO[0];
   const cont = document.getElementById("graficoProgreso");
+  const g = granularidadGrafico, hoy = diaUTC(hoyISO()), u = m.unidad ? " " + m.unidad : "";
+  const todos = serieDeMetrica(m).map(p => ({d:diaUTC(p.fecha), v:p.valor})).sort((a,b) => a.d - b.d);
 
-  if(serie.length === 0){
-    cont.innerHTML = `<div class="rep-nota">Todavía no hay datos de "${esc(m.nombre)}" para graficar.</div>`;
+  let ini = g==="sem" ? hoy-6 : g==="mes" ? hoy-29 : g==="anio" ? hoy-364 : Math.min(todos.length ? todos[0].d : hoy, hoy-6);
+  const fin = hoy;
+  let pts = todos.filter(p => p.d >= ini && p.d <= fin);
+  if(g === "anio"){ // un punto por mes (promedio)
+    const grupos = {};
+    pts.forEach(p => { const k = isoDeDia(p.d).slice(0,7); (grupos[k] = grupos[k] || []).push(p.v); });
+    pts = Object.keys(grupos).sort().map(k => ({
+      d: Math.min(fin, Math.max(ini, diaUTC(k + "-15"))), v: grupos[k].reduce((a,b)=>a+b,0) / grupos[k].length
+    }));
+  }
+  if(!pts.length){
+    cont.innerHTML = `<div class="rep-nota">Sin datos de "${esc(m.nombre)}" en este periodo.${todos.length ? " Prueba con <b>Todo</b> o <b>Año</b>." : ""}</div>`;
     return;
   }
-  if(serie.length === 1){
-    cont.innerHTML = `<div class="rep-nota">Un solo dato: ${esc(serie[0].fecha)} — ${fmt(serie[0].valor)} ${esc(m.unidad)}</div>`;
-    return;
+
+  const pi = m.id === "peso" ? pesoInicialPerfil() : null;
+  const ult = pts[pts.length-1].v, prim = pts[0].v, base = pi || prim;
+  const prom = pts.reduce((a,p)=>a+p.v,0) / pts.length;
+  const vals = pts.map(p => p.v), mn = Math.min(...vals), mx = Math.max(...vals);
+  const cambio = ult - base, signo = cambio > 0 ? "+" : "";
+
+  // escala vertical con aire arriba y abajo
+  const todosV = vals.concat(pi ? [pi] : []);
+  const a = Math.min(...todosV), b = Math.max(...todosV), aire = (b - a) * 0.15 || 1;
+  const esc_ = escalaBonita(a - aire, b + aire);
+  const W = 340, H = 210, pl = 40, pr = 14, pt = 18, pb = 26;
+  const X = d => pl + (d - ini) / ((fin - ini) || 1) * (W - pl - pr);
+  const Y = v => pt + (esc_.hi - v) / (esc_.hi - esc_.lo) * (H - pt - pb);
+
+  let svg = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block" role="img" aria-label="Gráfico de ${esc(m.nombre)}">
+    <defs><linearGradient id="gArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" style="stop-color:var(--accent);stop-opacity:.35"/><stop offset="100%" style="stop-color:var(--accent);stop-opacity:0"/></linearGradient></defs>`;
+  esc_.ticks.forEach(t => {
+    svg += `<line x1="${pl}" x2="${W-pr}" y1="${Y(t).toFixed(1)}" y2="${Y(t).toFixed(1)}" stroke="var(--line)" stroke-width="1"/>
+      <text x="${pl-5}" y="${(Y(t)+3).toFixed(1)}" text-anchor="end" font-size="9" fill="var(--muted)">${Number(t.toFixed(2))}</text>`;
+  });
+  const anioLargo = g === "anio" || (fin - ini) > 200;
+  for(let i = 0; i <= 3; i++){
+    const d = ini + (fin - ini) * i / 3;
+    svg += `<text x="${X(d).toFixed(1)}" y="${H-8}" text-anchor="${i===0?"start":i===3?"end":"middle"}" font-size="9" fill="var(--muted)">${etiquetaDia(d, anioLargo)}</text>`;
   }
+  if(pi) svg += `<line x1="${pl}" x2="${W-pr}" y1="${Y(pi).toFixed(1)}" y2="${Y(pi).toFixed(1)}" stroke="var(--warn)" stroke-width="1.5" stroke-dasharray="5 4"/>
+      <text x="${W-pr}" y="${(Y(pi)-4).toFixed(1)}" text-anchor="end" font-size="9" fill="var(--warn)">inicial ${fmt(pi)}</text>`;
 
-  const W = 320, H = 150, PAD = 26;
-  const valores = serie.map(p => p.valor);
-  const minV = Math.min(...valores), maxV = Math.max(...valores);
-  const rango = (maxV - minV) || 1;
-  const paso = (W - 2*PAD) / (serie.length - 1);
-  const puntos = serie.map((p,i) => [
-    PAD + i*paso,
-    H - PAD - ((p.valor - minV) / rango) * (H - 2*PAD)
-  ]);
-  const linea = puntos.map((p,i) => (i===0?"M":"L") + p[0].toFixed(1) + "," + p[1].toFixed(1)).join(" ");
-  const circulos = puntos.map((p,i) =>
-    `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3.2" fill="var(--accent)"><title>${esc(serie[i].fecha)}: ${fmt(serie[i].valor)} ${esc(m.unidad)}</title></circle>`
-  ).join("");
+  let pendiente = null;
+  if(pts.length >= 3 && pts[pts.length-1].d - pts[0].d >= 5){ // línea de tendencia (mínimos cuadrados)
+    const n = pts.length, sx = pts.reduce((s,p)=>s+p.d,0), sy = pts.reduce((s,p)=>s+p.v,0);
+    const sxy = pts.reduce((s,p)=>s+p.d*p.v,0), sxx = pts.reduce((s,p)=>s+p.d*p.d,0);
+    const den = n*sxx - sx*sx;
+    if(den){
+      pendiente = (n*sxy - sx*sy) / den; const c = (sy - pendiente*sx) / n;
+      const d1 = pts[0].d, d2 = pts[n-1].d;
+      svg += `<line x1="${X(d1).toFixed(1)}" y1="${Y(pendiente*d1+c).toFixed(1)}" x2="${X(d2).toFixed(1)}" y2="${Y(pendiente*d2+c).toFixed(1)}" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="2 4" stroke-linecap="round"/>`;
+    }
+  }
+  if(pts.length >= 2){
+    const linea = pts.map((p,i) => (i?"L":"M") + X(p.d).toFixed(1) + "," + Y(p.v).toFixed(1)).join(" ");
+    svg += `<path d="${linea} L${X(pts[pts.length-1].d).toFixed(1)},${Y(esc_.lo).toFixed(1)} L${X(pts[0].d).toFixed(1)},${Y(esc_.lo).toFixed(1)} Z" fill="url(#gArea)"/>
+      <path d="${linea}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+  }
+  pts.forEach((p,i) => {
+    const ultimo = i === pts.length-1, x = X(p.d).toFixed(1), y = Y(p.v).toFixed(1);
+    const tit = (g==="anio" ? etiquetaDia(p.d, true) + " (promedio)" : isoDeDia(p.d)) + ": " + fmt(p.v) + u;
+    svg += ultimo ? `<circle cx="${x}" cy="${y}" r="9" fill="var(--accent)" opacity=".2"/><circle cx="${x}" cy="${y}" r="5" fill="var(--accent)" stroke="var(--panel)" stroke-width="2"><title>${esc(tit)}</title></circle>
+        <text x="${x}" y="${(+y-12).toFixed(1)}" text-anchor="${X(p.d) > W-60 ? "end" : "middle"}" font-size="11" font-weight="700" fill="var(--accent)">${fmt(p.v)}</text>`
+      : `<circle cx="${x}" cy="${y}" r="3.2" fill="var(--accent)"><title>${esc(tit)}</title></circle>`;
+  });
+  svg += `</svg>`;
 
-  cont.innerHTML = `
-    <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block">
-      <path d="${linea}" fill="none" stroke="var(--accent)" stroke-width="2"/>
-      ${circulos}
-    </svg>
-    <div class="rep-nota">${esc(serie[0].fecha)} → ${esc(serie[serie.length-1].fecha)} · ${serie.length} punto${serie.length===1?"":"s"} · min ${fmt(minV)} / máx ${fmt(maxV)} ${esc(m.unidad)}</div>`;
+  const clase = cambio > 0 ? "gr-sube" : cambio < 0 ? "gr-baja" : "";
+  const resumen = `<div class="gr-res">
+    <div><b>${fmt(ult)}${u}</b><span>Último</span></div>
+    <div><b class="${clase}">${signo}${fmt(cambio)}${u}</b><span>${pi ? "vs inicial" : "vs primero"}</span></div>
+    <div><b>${fmt(prom)}${u}</b><span>Promedio</span></div>
+    <div><b>${fmt(mn)}–${fmt(mx)}</b><span>Mín–máx</span></div></div>`;
+  let nota = pts.length + " dato" + (pts.length===1 ? "" : "s") + (g==="anio" ? " (promedio por mes)" : "");
+  if(pendiente !== null && m.id === "peso") nota += " · tendencia: " + (pendiente*7 > 0 ? "+" : "") + fmt(pendiente*7) + " kg por semana";
+  else if(pts.length < 3) nota += " · con pocos datos la línea es corta; se irá llenando a medida que registres.";
+  cont.innerHTML = resumen + svg + `<div class="rep-nota">${nota}</div>`;
 }
 
 document.getElementById("graficoMetrica").addEventListener("change", renderGraficoProgreso);
@@ -2606,21 +2676,6 @@ function claveGeminiKey(){ return "dietaGeminiKey"; } // una sola clave, no por 
 function claveGeminiModelo(){ return "dietaGeminiModelo"; }
 function claveSpoonacularKey(){ return "dietaSpoonacularKey"; } // igual que Gemini: local, no por perfil, no se sincroniza
 
-function cargarConfigGemini(){
-  document.getElementById("geminiKey").value = localStorage.getItem(claveGeminiKey()) || "";
-  document.getElementById("geminiModelo").value = localStorage.getItem(claveGeminiModelo()) || "gemini-3.1-flash-lite";
-}
-function guardarConfigGemini(){
-  localStorage.setItem(claveGeminiKey(), document.getElementById("geminiKey").value.trim());
-  localStorage.setItem(claveGeminiModelo(), document.getElementById("geminiModelo").value.trim() || "gemini-3.1-flash-lite");
-}
-function cargarConfigSpoonacular(){
-  document.getElementById("spoonKey").value = localStorage.getItem(claveSpoonacularKey()) || "";
-}
-function guardarConfigSpoonacular(){
-  localStorage.setItem(claveSpoonacularKey(), document.getElementById("spoonKey").value.trim());
-}
-
 function archivoABase64(archivo){
   return new Promise((resolve, reject)=>{
     const r = new FileReader();
@@ -2633,12 +2688,11 @@ function archivoABase64(archivo){
 async function leerFotoConIA(){
   const estado = document.getElementById("iaFotoEstado");
   const archivo = document.getElementById("mdFoto").files[0];
-  const key = document.getElementById("geminiKey").value.trim();
-  const modelo = document.getElementById("geminiModelo").value.trim() || "gemini-3.1-flash-lite";
-  guardarConfigGemini();
+  const key = (localStorage.getItem(claveGeminiKey()) || "").trim();
+  const modelo = (localStorage.getItem(claveGeminiModelo()) || "").trim() || "gemini-3.1-flash-lite";
 
   if(!archivo){ estado.textContent = "Primero subí la foto, arriba."; return; }
-  if(!key){ estado.textContent = "Falta la clave de Gemini."; return; }
+  if(!key){ estado.innerHTML = 'Falta la clave de Gemini. Ponla una vez en <a href="ajustes.html">⚙️ Ajustes</a>.'; return; }
 
   estado.textContent = "Leyendo la foto...";
   try{
@@ -2841,7 +2895,6 @@ document.getElementById("btnNuevaReceta").onclick = iniciarNuevaReceta;
 document.getElementById("btnRecetaIA").onclick = iniciarRecetaIA;
 document.getElementById("btnRecetaReal").onclick = iniciarRecetaReal;
 document.getElementById("btnNuevaComidaGuardada").onclick = iniciarNuevaComidaGuardada;
-document.getElementById("btnGuardarSpoonKey").onclick = guardarConfigSpoonacular;
 
 document.querySelectorAll(".agua-botones button").forEach(b=>{
   b.onclick = ()=>sumarAgua(parseInt(b.dataset.ml, 10));
@@ -2876,24 +2929,7 @@ function pesoDelDia(f, med){ // {v, propio} : el de ese día o, si no hay, el ú
   if(ult) return {v:ult.peso, propio: ult.fecha===f};
   const pi = pesoInicialPerfil(); return pi ? {v:pi, propio:false} : null;
 }
-function renderPesoGraf(){
-  const med = pesosOrdenados(), pi = pesoInicialPerfil();
-  document.getElementById("pesoInicialFijo").innerHTML = pi ? `Peso inicial: <b>${pi} kg</b> <span style="color:var(--muted,#8a94a3)">(fijo, lo cambias en ⚙️ Ajustes)</span>` : `Falta el peso inicial: ponlo en <a href="ajustes.html">⚙️ Ajustes → Perfil</a>.`;
-  const g = document.getElementById("pesoGraf");
-  if(!med.length){ g.innerHTML = '<p class="rep-nota">Aún no hay mediciones de peso. Añádelo en ⚖️ Peso de hoy (pestaña Día) o en Perfil y medidas.</p>'; return; }
-  const W=340,H=170,pl=36,pr=10,pt=12,pb=26, vs = med.map(x=>x.peso).concat(pi?[pi]:[]), mn=Math.min(...vs)-1, mx=Math.max(...vs)+1;
-  const X=i=> pl+(med.length===1?(W-pl-pr)/2:i*(W-pl-pr)/(med.length-1)), Y=v=> pt+(mx-v)/(mx-mn)*(H-pt-pb);
-  let s=`<svg viewBox="0 0 ${W} ${H}" style="width:100%">`;
-  for(let i=0;i<=3;i++){ const v=mn+(mx-mn)*i/3, y=Y(v); s+=`<line x1="${pl}" x2="${W-pr}" y1="${y}" y2="${y}" stroke="#2a3242"/><text x="${pl-4}" y="${y+3}" text-anchor="end" font-size="9" fill="#8a94a3">${v.toFixed(1)}</text>`; }
-  if(pi) s+=`<line x1="${pl}" x2="${W-pr}" y1="${Y(pi)}" y2="${Y(pi)}" stroke="#e0a02c" stroke-width="1.5" stroke-dasharray="5 4"/><text x="${W-pr}" y="${Y(pi)-4}" text-anchor="end" font-size="9" fill="#e0a02c">inicial ${pi}</text>`;
-  s+=`<polyline fill="none" stroke="#35c26a" stroke-width="2" points="${med.map((x,i)=>X(i)+","+Y(x.peso)).join(" ")}"/>`;
-  med.forEach((x,i)=>{ s+=`<circle cx="${X(i)}" cy="${Y(x.peso)}" r="3.5" fill="#35c26a"><title>${x.fecha}: ${x.peso} kg</title></circle>`; });
-  s+=`<text x="${pl}" y="${H-8}" font-size="9" fill="#8a94a3">${med[0].fecha}</text><text x="${W-pr}" y="${H-8}" text-anchor="end" font-size="9" fill="#8a94a3">${med[med.length-1].fecha}</text></svg>`;
-  const ult = med[med.length-1].peso, base = pi || med[0].peso;
-  g.innerHTML = s + `<p class="rep-nota">Último: <b>${ult} kg</b> · cambio desde ${pi?"el inicial":"la primera medición"}: ${(ult-base>0?"+":"")+(ult-base).toFixed(1)} kg</p>`;
-}
 function renderCalMes(){
-  renderPesoGraf();
   const [Y,M] = mesCal.split("-").map(Number), grid = document.getElementById("cmGrid"), med = pesosOrdenados();
   document.getElementById("cmSalto").value = mesCal;
   const diasMes = new Date(Y, M, 0).getDate(), lead = (new Date(Y, M-1, 1).getDay()+6)%7, meta = objetivosDia().kcal, hoy = hoyISO();
@@ -2953,32 +2989,98 @@ document.getElementById("cmHoy").onclick = ()=>{ mesCal = hoyISO().slice(0,7); r
 document.getElementById("cmSalto").onchange = e=>{ if(e.target.value){ mesCal = e.target.value; renderCalMes(); } };
 
 
-// ---------- Peso diario opcional ----------
+// ---------- Peso y medidas del día (opcional) ----------
 function pesoRegDia(f){ return medidas.filter(x=>x && x.fecha===f && x.peso>0).slice(-1)[0] || null; }
-function renderPesoHoy(){
-  const f = fechaActual, r = pesoRegDia(f), inp = document.getElementById("pesoHoyInput");
-  const ult = pesoDelDia(f, pesosOrdenados());
-  if(document.activeElement !== inp) inp.value = r ? r.peso : "";
-  inp.placeholder = (!r && ult) ? String(ult.v) : "kg";
-  document.getElementById("pesoHoyEstado").textContent = r ? "guardado" : "";
-  document.getElementById("pesoHoyNota").textContent = r ? "Peso de este día guardado. Aparece en el gráfico y en el calendario."
-    : (ult ? "Sin peso este día. Último conocido: " + ult.v + " kg." : "Aún sin peso. Es opcional.");
-  document.getElementById("pesoHoyQuitar").style.display = r ? "" : "none";
+function regDia(f){ return medidas.filter(x=>x && x.fecha===f).slice(-1)[0] || null; }
+const PD_TODOS = PD_PRINC.concat(PD_EXTRA);
+function pdArmar(){
+  const caja = ids => ids.map(id => `<div><label for="pd_${id}">${esc(pdEtiqueta(id))}</label><input type="number" id="pd_${id}" step="0.1" min="0" inputmode="decimal"></div>`).join("");
+  document.getElementById("pdPrincipales").innerHTML = caja(PD_PRINC);
+  document.getElementById("pdExtra").innerHTML = caja(PD_EXTRA);
 }
-function pesoHoyRefrescar(){ renderMedidas(); render(); renderGraficoProgreso(); renderCalMes(); }
-document.getElementById("pesoHoyGuardar").onclick = ()=>{
-  const v = parseFloat(String(document.getElementById("pesoHoyInput").value).replace(",","."));
-  if(!(v>=20 && v<=400)){ alert("Escribe un peso entre 20 y 400 kg."); return; }
-  const r = pesoRegDia(fechaActual);
-  if(r) r.peso = Math.round(v*10)/10; else medidas.push({id:"m"+Date.now(), fecha:fechaActual, peso:Math.round(v*10)/10});
+pdArmar();
+let pdClave = null; // para no borrar lo que estás escribiendo cuando la app se repinta
+function renderPesoHoy(){
+  const f = fechaActual, r = regDia(f);
+  const clave = f + "|" + PD_TODOS.map(id => r && r[id] > 0 ? r[id] : 0).join(",");
+  if(clave === pdClave) return;
+  pdClave = clave;
+  PD_TODOS.forEach(id => { const inp = document.getElementById("pd_"+id); if(inp) inp.value = r && r[id] > 0 ? r[id] : ""; });
+  const hay = !!r && PD_TODOS.some(id => r[id] > 0), ult = pesoDelDia(f, pesosOrdenados());
+  document.getElementById("pd_peso").placeholder = (!(r && r.peso > 0) && ult) ? String(ult.v) : "kg";
+  document.getElementById("pesoHoyEstado").textContent = hay ? "guardado" : "";
+  document.getElementById("pesoHoyNota").textContent = hay ? "Guardado en este día. Aparece en el gráfico y en el calendario."
+    : (ult ? "Sin registro este día. Último peso conocido: " + ult.v + " kg." : "Aún sin registro. Todo es opcional.");
+  document.getElementById("pesoHoyQuitar").style.display = hay ? "" : "none";
+  if(r && PD_EXTRA.some(id => r[id] > 0)) document.getElementById("pdMas").open = true;
+}
+function pesoHoyRefrescar(){ pdClave = null; renderMedidas(); render(); renderGraficoProgreso(); renderCalMes(); }
+document.getElementById("pesoHoyGuardar").onclick = async ()=>{
+  const vals = {}; let fuera = "";
+  PD_TODOS.forEach(id=>{
+    const raw = String(document.getElementById("pd_"+id).value).replace(",",".").trim();
+    if(raw === "") return;
+    const v = parseFloat(raw), rg = PD_RANGOS[id];
+    if(!(v >= rg[0] && v <= rg[1])) fuera += pdEtiqueta(id) + " (entre " + rg[0] + " y " + rg[1] + "). ";
+    else vals[id] = Math.round(v*10)/10;
+  });
+  if(fuera){ alert("Revisa estos valores, se ven fuera de lo normal: " + fuera); return; }
+  const archivo = document.getElementById("pdFoto").files[0];
+  if(!Object.keys(vals).length && !archivo){ alert("Escribe al menos un dato."); return; }
+  let r = regDia(fechaActual);
+  if(!r){ r = {id:"m"+Date.now(), fecha:fechaActual}; medidas.push(r); }
+  PD_TODOS.forEach(id => { if(id in vals) r[id] = vals[id]; else delete r[id]; });
+  // lo que se calcula solo (no se pide en el formulario)
+  if(r.peso > 0){
+    const alt = perfilDatos && perfilDatos.altura;
+    if(alt > 0) r.bmi = Math.round(r.peso / Math.pow(alt/100, 2) * 10) / 10;
+    if(r.grasaPct > 0){ r.grasaKg = Math.round(r.peso * r.grasaPct / 10) / 10; r.pesoSinGrasa = Math.round((r.peso - r.grasaKg) * 10) / 10; }
+  }
+  if(archivo){
+    try{ await fotoGuardar(claveFoto(r.id), archivo); r.tieneFoto = true; }
+    catch(e){ alert("No se pudo guardar la foto en este navegador. Los datos sí se guardaron."); }
+    document.getElementById("pdFoto").value = "";
+  }
   escribirJSON(CLAVE_MEDIDAS(), medidas); pesoHoyRefrescar();
 };
-document.getElementById("pesoHoyInput").addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); document.getElementById("pesoHoyGuardar").click(); } });
 document.getElementById("pesoHoyQuitar").onclick = ()=>{
-  const r = pesoRegDia(fechaActual); if(!r) return;
-  delete r.peso;
-  if(!CAMPOS_MEDIDA.some(c=>r[c.id]>0) && !r.enlace && !r.tieneFoto) medidas = medidas.filter(x=>x!==r);
+  const r = regDia(fechaActual); if(!r) return;
+  if(!confirm("¿Quitar el peso y las medidas de este día?")) return;
+  PD_TODOS.concat(["bmi","grasaKg","pesoSinGrasa"]).forEach(id => delete r[id]);
+  if(!CAMPOS_MEDIDA.some(c => r[c.id] > 0) && !r.enlace && !r.tieneFoto) medidas = medidas.filter(x => x !== r);
   escribirJSON(CLAVE_MEDIDAS(), medidas); pesoHoyRefrescar();
+};
+document.getElementById("pdLeer").onclick = async ()=>{
+  const est = document.getElementById("pdIaEstado"), archivo = document.getElementById("pdFoto").files[0];
+  const key = (localStorage.getItem(claveGeminiKey()) || "").trim();
+  const modelo = (localStorage.getItem(claveGeminiModelo()) || "").trim() || "gemini-3.1-flash-lite";
+  if(!archivo){ est.textContent = "Primero elige la foto de la báscula."; return; }
+  if(!key){ est.innerHTML = 'Falta la clave de Gemini. Ponla una vez en <a href="ajustes.html">⚙️ Ajustes</a>.'; return; }
+  est.textContent = "Leyendo la foto...";
+  try{
+    const base64 = await archivoABase64(archivo);
+    const prompt = "Esta imagen es la pantalla de una báscula inteligente o app de composición corporal (OKOK). Devuelve SOLO un objeto JSON, sin texto extra ni ```, con estas claves exactas: " +
+      PD_TODOS.map(id => '"' + id + '"').join(", ") + ". Usa null si el dato no aparece. Copia los números tal como se ven, con punto decimal y sin unidades. " +
+      "musculoEsqKg es la masa muscular esquelética en kg (si solo sale en %, pon null). metabolismo es el metabolismo basal en kcal. aguaPct y grasaPct son porcentajes.";
+    const resp = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(modelo) + ":generateContent", {
+      method:"POST", headers:{"Content-Type":"application/json", "x-goog-api-key":key},
+      body: JSON.stringify({contents:[{parts:[{inline_data:{mime_type:archivo.type || "image/jpeg", data:base64}}, {text:prompt}]}]})
+    });
+    const data = await resp.json();
+    if(data.error) throw new Error(data.error.message || "Error de la API de Gemini.");
+    const texto = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    const campos = JSON.parse(texto.replace(/```json|```/g, "").trim());
+    let n = 0; const raros = [];
+    PD_TODOS.forEach(id=>{
+      const v = campos[id]; if(typeof v !== "number" || !(v > 0)) return;
+      const rg = PD_RANGOS[id];
+      if(v < rg[0] || v > rg[1]){ raros.push(pdEtiqueta(id) + " (leyó " + v + ")"); return; }
+      document.getElementById("pd_"+id).value = v; n++;
+    });
+    if(PD_EXTRA.some(id => document.getElementById("pd_"+id).value)) document.getElementById("pdMas").open = true;
+    est.textContent = (n ? "Se completaron " + n + " campos. REVISA los números con la foto y toca Guardar. " : "No se pudo leer ningún dato. Escríbelos a mano. ") +
+      (raros.length ? "No rellené por verse raros: " + raros.join(", ") + "." : "");
+  }catch(e){ est.textContent = "No se pudo leer la foto: " + e.message; }
 };
 const _render0 = render; render = function(){ _render0.apply(this, arguments); renderPesoHoy(); };
 if(!estado.meta) document.getElementById("objetivosSec").open = true;
@@ -2995,8 +3097,6 @@ let _p0 = "dia"; try{ _p0 = localStorage.getItem("nutriPestanaV1") || "dia"; }ca
 mostrarPestana(_p0);
 
 armarCamposMedida();
-cargarConfigGemini();
-cargarConfigSpoonacular();
 poblarSelectorGrafico();
 renderGraficoProgreso();
 pintarTabsPerfil();

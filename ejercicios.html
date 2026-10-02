@@ -138,11 +138,8 @@ Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localS
 </fieldset>
 
 <fieldset>
-  <legend>2. Claves (una sola vez por navegador)</legend>
-  <label for="ytkey">YouTube Data API Key</label>
-  <input type="password" id="ytkey" placeholder="AIza...">
-  <button class="secundario" onclick="guardarClaves()">Guardar clave en este navegador</button>
-  <span id="claves-estado" style="font-size:0.82rem;color:var(--gris2)"></span>
+  <legend>2. Clave de YouTube</legend>
+  <p style="font-size:0.85rem;margin:0">La clave se pone una sola vez en <a href="ajustes.html">⚙️ Ajustes</a>, junto con las demás.</p>
 </fieldset>
 
 <fieldset>
@@ -614,20 +611,19 @@ function poblarZonas(){
   });
 }
 
-function guardarClaves(){
+function guardarClaves(){ return;
   const yt = document.getElementById('ytkey').value.trim();
   if(yt) localStorage.setItem('fam_ex_yt_key', yt);
   document.getElementById('claves-estado').textContent = 'Clave guardada en este navegador.';
 }
 function cargarClaves(){
   const yt = localStorage.getItem('fam_ex_yt_key');
-  if(yt) document.getElementById('ytkey').value = yt;
 }
 
 async function buscarYouTube(query, cantidad){
   cantidad = cantidad || 4;
   const ytKey = localStorage.getItem('fam_ex_yt_key');
-  if(!ytKey) throw new Error('No hay clave de YouTube cargada.');
+  if(!ytKey) throw new Error('Falta la clave de YouTube. Ponla en Ajustes (⚙️).');
   const url = 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=' + cantidad
     + '&safeSearch=strict&relevanceLanguage=es&q=' + encodeURIComponent(query)
     + '&key=' + encodeURIComponent(ytKey);

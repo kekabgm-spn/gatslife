@@ -1,5 +1,5 @@
 // sw.js — funciona sin conexión. Sube VERSION cada vez que cambies archivos para que se actualice la caché.
-const VERSION = "nuestra-app-vv25";
+const VERSION = "nuestra-app-vv26";
 const LOCAL = ["./","index.html","ajustes.html","nutricion.html","ejercicios.html","tareas.html","calendario.html","salud.html",
   "nube.js","familia.js","tema.js","migracion.js","manifest.json","icono.png","icono-192.png","icono-maskable-192.png","icono-maskable-512.png","gato-mamy.png","gato-filha.png",
   "cuerpo-anterior.jpg","cuerpo-posterior.jpg"];
