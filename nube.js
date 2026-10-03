@@ -15,6 +15,8 @@ const GIS_CLIENT_ID = "235893987189-hkdej19871r8qkbkgke2dm6n971tb1q1.apps.google
 window.__nubeVivo = true;
 const app = initializeApp({ apiKey:"AIzaSyDYK1EoCKWyX_zvNk0XCu8KKxawgk4v598", authDomain:"gatslife0470.firebaseapp.com", projectId:"gatslife0470", storageBucket:"gatslife0470.firebasestorage.app", messagingSenderId:"235893987189", appId:"1:235893987189:web:733eeb67e6ad46f2aca53c" });
 const auth = getAuth(app), db = getFirestore(app);
+// Entrega la credencial de tu sesión para hablar con tu Worker (las claves de IA ya no viven en el aparato).
+window.__nubeToken = async () => { try{ await auth.authStateReady(); return auth.currentUser ? await auth.currentUser.getIdToken() : null; }catch(e){ return null; } };
 
 // Solo se sincronizan estos datos, y solo los de tu perfil (terminan en _Mamy o _Filha).
 const PREF = ["dietaDiarioV3_","dietaRecetasV1_","dietaComidasGuardadasV1_","dietaRepartoV1_","dietaFrecuentesV1_","dietaFiltrosV1_","dietaMedidasV1_","dietaPerfilDatosV1_","ejercicioHistorial_","huaweiDiaV1_","huaweiPasosKcalV1_","fam_ex_rutina_","fam_ex_favoritos_","fam_ex_videos_","saludCondicionesV1_","saludCirugiasV1_","saludMedicacionV1_","saludMedTomasV1_","saludBancoMedV1_","saludPruebasV1_","saludArticV1_","saludSintomasV1_","perfilMetasV1_"];

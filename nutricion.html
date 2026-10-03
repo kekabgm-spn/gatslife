@@ -1708,7 +1708,7 @@ function iniciarRecetaReal(){
   cancelarReceta();
   document.getElementById("iaRecetaContainer").innerHTML = "";
   const cont = document.getElementById("realRecetaContainer");
-  const tieneSpoon = !!localStorage.getItem(claveSpoonacularKey());
+  const tieneSpoon = IAClaves.tieneSpoonacular();
   cont.innerHTML = `
     <div class="receta-builder">
       <label for="realPedido">¿Qué querés cocinar, o qué ingrediente querés usar?</label>
@@ -1723,11 +1723,10 @@ function iniciarRecetaReal(){
   document.getElementById("btnCancelarReal").onclick = ()=>{ cont.innerHTML = ""; };
 }
 
-async function buscarEnSpoonacular(query, key){
+async function buscarEnSpoonacular(query){
   const url = "https://api.spoonacular.com/recipes/complexSearch?query=" + encodeURIComponent(query) +
-    "&number=6&addRecipeInformation=true&addRecipeNutrition=true&apiKey=" + encodeURIComponent(key);
-  const res = await fetch(url);
-  const data = await res.json();
+    "&number=6&addRecipeInformation=true&addRecipeNutrition=true";
+  const data = await IAClaves.spoonacular(url);
   if(data.status === "failure") throw new Error(data.message || "Error de Spoonacular.");
   return (data.results || []).map(r=>{
     const nut = (r.nutrition && r.nutrition.nutrients) || [];
@@ -1769,7 +1768,7 @@ async function buscarRecetasReales(){
   if(!pedido){ estado.textContent = "Escribí qué querés cocinar."; return; }
   estado.textContent = "Buscando...";
   resultados.innerHTML = "";
-  const key = localStorage.getItem(claveSpoonacularKey());
+  const key = IAClaves.tieneSpoonacular();
   const tareas = [ buscarEnMealDB(pedido).catch(e=>{ console.warn("TheMealDB:", e); return []; }) ];
   if(key) tareas.push(buscarEnSpoonacular(pedido, key).catch(e=>{ estado.textContent = "Spoonacular: " + e.message; return []; }));
   const [mealdb, spoon] = await Promise.all([tareas[0], tareas[1] || Promise.resolve([])]);

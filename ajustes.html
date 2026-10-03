@@ -29,8 +29,9 @@ button{margin-top:10px;padding:11px 16px;border-radius:10px;border:1px solid var
 <div class="c"><p class="n" style="margin-top:0">Guarda todos tus datos de este aparato en un archivo. Las claves de API <b>no</b> se incluyen. Para volver a cargarlo, elige el archivo: se reemplaza lo que haya con el mismo nombre y no se borra nada más.</p>
 <button onclick="exportarCopia()">⬇️ Descargar copia</button><button onclick="document.getElementById('fCopia').click()" style="margin-left:8px">⬆️ Restaurar copia</button>
 <input type="file" id="fCopia" accept="application/json,.json" style="display:none" onchange="importarCopia(this.files[0])"><p class="n" id="cp_msg"></p></div>
-<h2 style="font-size:1.05rem;margin:22px 0 0">Claves</h2><p class="n">Las claves se guardan solo en este aparato. Tendrás que ponerlas una vez en cada móvil u ordenador. Nunca las compartas ni las pegues en el código.</p>
+<h2 style="font-size:1.05rem;margin:22px 0 0">Claves</h2><p class="n" id="notaClaves">Las claves se guardan solo en este aparato. Tendrás que ponerlas una vez en cada móvil u ordenador. Nunca las compartas ni las pegues en el código.</p>
 <div id="lista"></div>
+<script src="claves.js"></script>
 <script>
 const CLAVES=[
  ["Gemini 1 (leer fotos y recetas con IA)","dietaGeminiKey","AIza..."],
@@ -42,6 +43,7 @@ const CLAVES=[
  ["YouTube 2 (respaldo: solo si la 1 es inválida o fue revocada)","fam_ex_yt_key2",""]];
 document.getElementById("lista").innerHTML=CLAVES.map((c,i)=>`<div class="c"><label for="k${i}">${c[0]}</label><input id="k${i}" type="${(i==2||i==3)?'text':'password'}" placeholder="${c[2]}" autocomplete="off"><button onclick="g(${i})">Guardar</button><span class="ok" id="o${i}"></span><button onclick="b(${i})" style="border-color:var(--line);color:var(--muted)">Borrar</button></div>`).join("");
 CLAVES.forEach((c,i)=>{document.getElementById("k"+i).value=localStorage.getItem(c[1])||""});
+if(window.IAClaves && IAClaves.proxyActivo()){ [0,1,4,5,6].forEach(i=>{document.getElementById("k"+i).closest(".c").style.display="none";}); document.getElementById("notaClaves").innerHTML="🔒 Las claves de Gemini, YouTube y Spoonacular están guardadas en tu servidor (Worker de Cloudflare), no en este aparato. No tienes que ponerlas aquí. Solo quedan el modelo y el tope diario."; }
 function g(i){const v=document.getElementById("k"+i).value.trim();if(v)localStorage.setItem(CLAVES[i][1],v);document.getElementById("o"+i).textContent=v?"✓ Guardada":"";}
 function b(i){localStorage.removeItem(CLAVES[i][1]);document.getElementById("k"+i).value="";document.getElementById("o"+i).textContent="Borrada";}
 
