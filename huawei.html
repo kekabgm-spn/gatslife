@@ -20,9 +20,9 @@ Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localS
   *{box-sizing:border-box;}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;}
   .wrap{max-width:720px;margin:0 auto;padding:14px 14px 40px;}
-  nav{display:flex;flex-wrap:wrap;gap:6px;margin:0 44px 12px 0;font-size:.75rem;font-weight:800;}
-  nav a{color:var(--mut);text-decoration:none;padding:6px 8px;border:1px solid var(--line);border-radius:8px;}
-  nav a.on{color:var(--accent);border-color:var(--accent);}
+  .navapp{display:flex;gap:4px;margin:0 44px 14px 0;background:#1b2330;border:1px solid #2a3242;border-radius:10px;padding:4px;}
+  .navapp a{flex:1;text-align:center;padding:9px 2px;border-radius:7px;color:#8a94a3;text-decoration:none;font-size:0.62rem;font-weight:800;}
+  .navapp a[aria-current="page"]{background:rgba(53,194,106,0.15);color:#35c26a;}
   h1{margin:6px 0 4px;font-size:1.4rem;} .sub{color:var(--mut);font-size:.85rem;margin:0 0 12px;}
   .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:0 0 12px;}
   .card h2{margin:0 0 8px;font-size:1rem;}
@@ -37,7 +37,7 @@ Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localS
 <body>
 <button id="btnTema" onclick="alternarTema()" aria-label="Cambiar tema">☀️</button>
 <div class="wrap">
-<nav><a href="index.html">🏠 INICIO</a><a href="nutricion.html">NUTRICIÓN</a><a href="ejercicios.html">FITNESS</a><a href="salud.html">SALUD</a><a href="huawei.html" class="on">⌚ HUAWEI</a></nav>
+<nav class="navapp" aria-label="Áreas de la app"><a href="nutricion.html">NUTRICIÓN</a><a href="ejercicios.html">FITNESS</a><a href="tareas.html">TAREAS</a><a href="calendario.html">CALENDARIO</a><a href="salud.html">SALUD</a><a href="huawei.html" aria-current="page">HUAWEI</a></nav>
 <h1>⌚ Huawei</h1>
 <p class="sub">Datos del reloj que Health Sync deja en tu Google Drive. Solo se leen; no se borra ni se cambia nada. Datos de <b id="quien">Mamy</b>.</p>
 

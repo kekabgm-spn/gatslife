@@ -1,14 +1,25 @@
 {
+  "id": "./",
   "name": "Nuestra App",
   "short_name": "Nuestra App",
-  "description": "Nutrici\u00f3n, ejercicios, tareas, calendario y salud, compartido entre las dos.",
+  "description": "Nutrición, ejercicios, tareas, calendario y salud, compartido entre las dos.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
+  "display_override": [
+    "standalone"
+  ],
   "orientation": "portrait",
   "background_color": "#000000",
   "theme_color": "#10151f",
   "lang": "es",
+  "dir": "ltr",
+  "categories": [
+    "health",
+    "lifestyle",
+    "productivity"
+  ],
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "icono-192.png",
@@ -33,6 +44,24 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Nutrición",
+      "url": "./nutricion.html"
+    },
+    {
+      "name": "Fitness",
+      "url": "./ejercicios.html"
+    },
+    {
+      "name": "Salud",
+      "url": "./salud.html"
+    },
+    {
+      "name": "Huawei",
+      "url": "./huawei.html"
     }
   ]
 }
