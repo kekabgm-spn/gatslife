@@ -534,11 +534,14 @@ function fechaMasDias(dias){
   return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
 }
 // Una tarea está "pospuesta" mientras su fecha de regreso sea posterior a hoy; ese día vuelve sola a pendientes.
+const IDS_VISIBLES_SIEMPRE = ["casa_ampl1_7","casa_ampl1_8","casa_ampl1_9"]; // colada: separar y poner lavadora / tender y recoger / doblar y guardar
+function esVisibleSiempre(t){ return !!t.visibleSiempre || IDS_VISIBLES_SIEMPRE.indexOf(t.id) >= 0; }
 function estadoTarea(t){
   if(t.modo==="congelada") return "congelada";
   if(t.pospuestaHasta && t.pospuestaHasta > hoyISO()) return "pospuesta";
   // "Según necesidad": no molesta en Pendientes; se ve en su propio filtro y, al marcarla, queda "hecha" ese día.
-  if(t.tipo==="repetitiva" && t.frecuencia==="necesidad") return estaCompletadaHoy(t) ? "hecha" : "necesidad";
+  // Excepción: la colada (visibleSiempre) sí se ve en Pendientes, y al día siguiente vuelve a aparecer.
+  if(t.tipo==="repetitiva" && t.frecuencia==="necesidad" && !esVisibleSiempre(t)) return estaCompletadaHoy(t) ? "hecha" : "necesidad";
   return estaCompletadaHoy(t) ? "hecha" : "pendiente";
 }
 function posponer(t, dias){
