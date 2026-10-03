@@ -2,7 +2,7 @@
 // Regla: la clave 2 solo se usa si la 1 es inválida o fue revocada. Si se agota la cuota (error 429) NO se cambia de clave ni se reintenta.
 (function(){
   // Dirección de tu Worker de Cloudflare (sin barra al final). Si está vacía, la app usa las claves guardadas en este aparato como antes.
-  var PROXY = "";   // ej.: "https://gatslife-ia.kekabgm.workers.dev"
+  var PROXY = "https://gatslife-ia.kekabgm.workers.dev";
   var K = {gem:["dietaGeminiKey","dietaGeminiKey2"], yt:["fam_ex_yt_key","fam_ex_yt_key2"], modelo:"dietaGeminiModelo", tope:"iaTopeDia", cont:"iaConteoV1"};
   try{ localStorage.removeItem("iaCacheV1"); }catch(e){} // limpia la memoria antigua
   function leer(k){ try{ return (localStorage.getItem(k)||"").trim(); }catch(e){ return ""; } }
