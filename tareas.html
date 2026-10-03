@@ -168,6 +168,7 @@
       <option value="pospuesta">Pospuestas</option>
       <option value="hecha">Hechas</option>
       <option value="congelada">Congeladas</option>
+      <option value="necesidad">Según necesidad</option>
       <option value="todas">Todas</option>
     </select>
     <select id="filtroFrec">
@@ -179,6 +180,7 @@
       <option value="trimestral">Trimestrales</option>
       <option value="semestral">Semestrales</option>
       <option value="anual">Anuales</option>
+      <option value="necesidad">Según necesidad</option>
     </select>
   </div>
 
@@ -195,6 +197,7 @@
       <option value="frec:trimestral">Repetirlas: cada 3 meses</option>
       <option value="frec:semestral">Repetirlas: cada 6 meses</option>
       <option value="frec:anual">Repetirlas: cada año</option>
+      <option value="frec:necesidad">Repetirlas: según necesidad</option>
     </select>
   </div>
 
@@ -254,6 +257,15 @@ function guardarEstado(){
 }
 let estado = cargarEstado();
 
+// ---------- Lista de casa: ayudas de la semilla (arriba, para estar listas cuando llegue la nube) ----------
+const SEMILLA_V1 = "tareasCasaSembradas_v1", SEMILLA_V2 = "tareasCasaSembradas_v2";
+function esSemillaVieja(t){ return String(t.id).startsWith("casa_seed_"); }
+function esSemillaNueva(t){ return String(t.id).startsWith("casa_seed50_"); }
+function tareaDeSemilla(f, i){
+  return { id:"casa_seed50_"+i, nombre:f.nombre, lista:"casa", zona:f.zona, tipo:"repetitiva", franja:null,
+           frecuencia:f.frecuencia, reseteo:f.reseteo, completadaPor:{Mamy:false,Filha:false}, historialPor:{Mamy:[],Filha:[]} };
+}
+
 // ---------- Fase 2: conectar la lista de Casa compartida en cuanto esté lista la conexión ----------
 let familiaCasaConectada = false;
 function conectarCasaCompartida(){
@@ -263,6 +275,7 @@ function conectarCasaCompartida(){
   window.Familia.escucharCasa((tareasCasaNube)=>{
     if(primeraVez && tareasCasaNube.length===0){
       // Todavía no existe el documento compartido: esta cuenta "siembra" la nube con lo que ya tenía localmente.
+      ampliarTareasCasa();
       const casaLocal = estado.tareas.filter(t=>t.lista==="casa"||t.lista==="invitadas").map(t=>{
         const t2 = Object.assign({}, t);
         if(t2.completada !== undefined){ t2.completadaPor = { Mamy:false, Filha:false, [miPerfil()]: t2.completada }; delete t2.completada; }
@@ -272,8 +285,13 @@ function conectarCasaCompartida(){
       if(casaLocal.length){ window.Familia.guardarCasa(casaLocal); }
     } else {
       estado.tareas = estado.tareas.filter(t=>t.lista!=="casa").concat(tareasCasaNube);
-      localStorage.setItem(CLAVE, JSON.stringify(estado));
-      render();
+      if(estado.tareas.some(esSemillaVieja)){
+        reducirTareasCasa(true); // la nube todavía tenía las 287 antiguas: se reemplazan por las 50 y se suben a la nube
+      } else {
+        if(ampliarTareasCasa()) guardarEstado(); // añade las tareas nuevas una sola vez y las sube a la nube
+        else localStorage.setItem(CLAVE, JSON.stringify(estado));
+        render();
+      }
     }
     primeraVez = false;
   });
@@ -447,7 +465,8 @@ function estaCompletadaHoy(t){
   if(t.lista === "casa" || t.lista === "invitadas"){
     // Casa es de las dos: se cuenta "hecha" solo cuando ambas la marcaron. Si falta una, queda "a medias".
     const periodo = (t.tipo==="repetitiva" && t.reseteo==="auto") ? periodoActual(t) : null;
-    return hechaPorPersona(t,"Mamy",periodo) && hechaPorPersona(t,"Filha",periodo);
+    const mamy = hechaPorPersona(t,"Mamy",periodo), filha = hechaPorPersona(t,"Filha",periodo);
+    return t.unaBasta ? (mamy || filha) : (mamy && filha); // unaBasta: con que la haga una de las dos ya cuenta como hecha
   }
   if(t.tipo === "repetitiva" && t.reseteo === "auto"){
     return (t.historial||[]).includes(periodoActual(t));
@@ -518,6 +537,8 @@ function fechaMasDias(dias){
 function estadoTarea(t){
   if(t.modo==="congelada") return "congelada";
   if(t.pospuestaHasta && t.pospuestaHasta > hoyISO()) return "pospuesta";
+  // "Según necesidad": no molesta en Pendientes; se ve en su propio filtro y, al marcarla, queda "hecha" ese día.
+  if(t.tipo==="repetitiva" && t.frecuencia==="necesidad") return estaCompletadaHoy(t) ? "hecha" : "necesidad";
   return estaCompletadaHoy(t) ? "hecha" : "pendiente";
 }
 function posponer(t, dias){
@@ -576,7 +597,7 @@ const FRANJAS = [
 const ZONAS = [
   "Gatas","Salón","Habitación 1","Habitación 2","Habitación 3",
   "Baño 1","Baño 2","Pasillo","Cocina","Solana/Lavadero",
-  "Ventanas y cristales","Suelos (general)","Basura y reciclaje","Mantenimiento del piso"
+  "Ventanas y cristales","Suelos (general)","Basura y reciclaje","Mantenimiento del piso","Orden y organización"
 ];
 let zonaFiltro = ""; // "" = todas las zonas (solo aplica a la pestaña Casa)
 
@@ -592,14 +613,17 @@ const FRECUENCIA_LABEL = {
   mensual: "Repite cada mes",
   trimestral: "Repite cada 3 meses",
   semestral: "Repite cada 6 meses",
-  anual: "Repite cada año"
+  anual: "Repite cada año",
+  necesidad: "Según necesidad"
 };
-const FREC_OPCIONES = [["diaria","Cada día"],["semanal","Cada semana"],["quincenal","Cada 15 días"],["mensual","Cada mes"],["trimestral","Cada 3 meses"],["semestral","Cada 6 meses"],["anual","Cada año"]];
+const FREC_OPCIONES = [["diaria","Cada día"],["semanal","Cada semana"],["quincenal","Cada 15 días"],["mensual","Cada mes"],["trimestral","Cada 3 meses"],["semestral","Cada 6 meses"],["anual","Cada año"],["necesidad","Según necesidad"]];
 function metaTexto(t){
   const partes = [];
   if(t.tipo==="repetitiva"){
     partes.push(FRECUENCIA_LABEL[t.frecuencia] || "Se repite");
-    partes.push(t.reseteo==="auto" ? "se resetea sola" : "la desmarcás a mano");
+    if(t.frecuencia==="necesidad") partes.push("se anota cuando la haces");
+    else partes.push(t.reseteo==="auto" ? "se resetea sola" : "la desmarcás a mano");
+    if(t.unaBasta) partes.push("basta con una de las dos");
   }
   if(estadoTarea(t)==="pospuesta") partes.push("⏭️ vuelve el "+t.pospuestaHasta.split("-").reverse().slice(0,2).join("/"));
   if(t.modo==="opcional") partes.push("opcional");
@@ -699,6 +723,8 @@ function guardarFiltros(){
 }
 function render(){
   guardarFiltros();
+  const optNec = document.querySelector('#filtroEstado option[value="necesidad"]');
+  if(optNec) optNec.textContent = "Según necesidad (" + estado.tareas.filter(t=>t.lista===listaActiva && estadoTarea(t)==="necesidad").length + ")";
   document.getElementById("subfecha").textContent = diaSemana();
 
   document.querySelectorAll("#tabsLista button").forEach(b=>{
@@ -824,6 +850,7 @@ function formularioHTML(){
         <option value="trimestral">Una vez cada 3 meses</option>
         <option value="semestral">Una vez cada 6 meses</option>
         <option value="anual">Una vez por año</option>
+        <option value="necesidad">Según necesidad (no sale en pendientes)</option>
       </select>
       <label>¿Cómo se marca de nuevo como pendiente?</label>
       <div class="grupo-radio" id="fReseteo">
@@ -1061,18 +1088,43 @@ function construirSemillaCasa(){
   return filas;
 }
 
-const SEMILLA_V1 = "tareasCasaSembradas_v1", SEMILLA_V2 = "tareasCasaSembradas_v2";
-const esSemillaVieja = t => String(t.id).startsWith("casa_seed_");
-const esSemillaNueva = t => String(t.id).startsWith("casa_seed50_");
-function tareaDeSemilla(f, i){
-  return { id:"casa_seed50_"+i, nombre:f.nombre, lista:"casa", zona:f.zona, tipo:"repetitiva", franja:null,
-           frecuencia:f.frecuencia, reseteo:f.reseteo, completada:false, historial:[] };
+// --- Ampliación de Casa (v1): tareas nuevas, se añaden una sola vez (después de leer la nube, para no perderse) ---
+// Formato: [nombre, zona, frecuencia]. Todas con "basta con una de las dos" (unaBasta).
+function tareasAmpliacion1(){
+  return [
+    ["Revisar alimentos que caducan","Cocina","semanal"],
+    ["Preparar comida para varios días","Cocina","semanal"],
+    ["Revisar cajones y organizar papeles/documentos","Orden y organización","mensual"],
+    ["Organizar despensa y congelador","Cocina","mensual"],
+    ["Revisar cosas pendientes de reparar y productos de limpieza","Mantenimiento del piso","mensual"],
+    ["Revisar armarios","Orden y organización","trimestral"],
+    ["Revisar herramientas","Mantenimiento del piso","semestral"],
+    ["Separar la ropa y poner la lavadora","Solana/Lavadero","necesidad"],
+    ["Tender y recoger la ropa seca","Solana/Lavadero","necesidad"],
+    ["Doblar y guardar la ropa","Solana/Lavadero","necesidad"],
+    ["Congelar raciones y descongelar comida","Cocina","necesidad"],
+    ["Limpiar recipientes/tuppers","Cocina","necesidad"],
+    ["Descongelar el congelador","Cocina","necesidad"],
+    ["Reponer bombillas y pilas","Mantenimiento del piso","necesidad"],
+    ["Hacer pequeñas reparaciones","Mantenimiento del piso","necesidad"]
+  ];
 }
+// Devuelve true si añadió tareas (hay que guardar). La marca local solo se pone cuando ya están en la lista leída de la nube.
+function ampliarTareasCasa(){
+  if(localStorage.getItem("tareasCasaAmpliacion_v1")) return false;
+  if(estado.tareas.some(t=>String(t.id).indexOf("casa_ampl1_")===0)){ localStorage.setItem("tareasCasaAmpliacion_v1","1"); return false; }
+  tareasAmpliacion1().forEach((f,i)=>{
+    estado.tareas.push({ id:"casa_ampl1_"+i, nombre:f[0], lista:"casa", zona:f[1], tipo:"repetitiva", franja:null,
+      frecuencia:f[2], reseteo:"auto", unaBasta:true, historialPor:{ Mamy:[], Filha:[] } });
+  });
+  return true;
+}
+
 function sembrarTareasCasaSiHaceFalta(){
   if(localStorage.getItem(SEMILLA_V2)) return;
   if(localStorage.getItem(SEMILLA_V1)) return; // ya tenía la lista anterior: se ofrece reducirla con el botón (no se borra nada sola)
   construirSemillaCasa().forEach((f,i)=>{ if(!estado.tareas.some(t=>t.id==="casa_seed50_"+i)) estado.tareas.push(tareaDeSemilla(f,i)); });
-  guardarEstado();
+  localStorage.setItem(CLAVE, JSON.stringify(estado)); // solo local: no se sube sin haber leído antes la nube (si no, podría pisarla)
   localStorage.setItem(SEMILLA_V1, "1"); localStorage.setItem(SEMILLA_V2, "1");
 }
 
@@ -1094,21 +1146,21 @@ document.getElementById("btnInvitar").onclick = ()=>{
   };
 };
 
-function reducirTareasCasa(){
+function reducirTareasCasa(auto){
   const viejas = estado.tareas.filter(esSemillaVieja);
   const propias = estado.tareas.filter(t=>(t.lista==="casa") && !esSemillaVieja(t) && !esSemillaNueva(t)).length;
   const filas = construirSemillaCasa();
   if(viejas.length){
-    if(!confirm("Esto va a reemplazar las "+viejas.length+" tareas de casa que creó la app por una lista de "+filas.length+" tareas agrupadas.\n• Las tareas que añadiste tú ("+propias+") se quedan.\n• Se pierde lo marcado y el historial de las tareas reemplazadas (en «Hecho recientemente»).\nSi quieres conservarlo, descarga antes una copia en ⚙️ Ajustes.\n¿Continuar?")) return;
+    if(auto !== true && !confirm("Esto va a reemplazar las "+viejas.length+" tareas de casa que creó la app por una lista de "+filas.length+" tareas agrupadas.\n• Las tareas que añadiste tú ("+propias+") se quedan.\n• Se pierde lo marcado y el historial de las tareas reemplazadas (en «Hecho recientemente»).\nSi quieres conservarlo, descarga antes una copia en ⚙️ Ajustes.\n¿Continuar?")) return;
     estado.tareas = estado.tareas.filter(t=>!esSemillaVieja(t));
   }
   filas.forEach((f,i)=>{ if(!estado.tareas.some(t=>t.id==="casa_seed50_"+i)) estado.tareas.push(tareaDeSemilla(f,i)); });
-  guardarEstado();
+  ampliarTareasCasa(); // mantiene las tareas de la ampliación (Según necesidad, etc.) si todavía no estaban
+  guardarEstado(); // sube la lista nueva a la nube
   localStorage.setItem(SEMILLA_V1, "1"); localStorage.setItem(SEMILLA_V2, "1");
-  document.getElementById("btnAjuste").style.display = "none";
   render();
 }
-document.getElementById("btnAjuste").onclick = reducirTareasCasa;
+document.getElementById("btnAjuste").onclick = ()=> reducirTareasCasa();
 
 try{
   const f = JSON.parse(localStorage.getItem("tareasFiltros_v1") || "null");
