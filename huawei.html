@@ -151,15 +151,21 @@ const sumaDias = (iso, n) => { const d = new Date(iso + "T00:00:00Z"); d.setUTCD
 const hoy = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
 const CARPETAS = [["actividad", "act"], ["frecuencia", "fc"], ["pasos", "pasos"], ["sueno", "sueno"], ["saturacion", "spo2"]];
 
-async function listarArchivos(t, carpetaId, desde){
-  const out = []; let pg = "";
+async function listarArchivos(t, carpetaId, desde, info){
+  const out = []; let pg = "", vistos = 0; const ej = [];
   do{ const q = encodeURIComponent("'" + carpetaId + "' in parents and trashed=false");
     const j = await api("files?q=" + q + "&pageSize=1000&fields=nextPageToken,files(id,name,mimeType)" + (pg ? "&pageToken=" + pg : ""), t);
-    (j.files || []).forEach(f => { const m = /(\d{4})_(\d{2})_(\d{2})/.exec(f.name); if(!m) return; const esCsv = /\.csv$/i.test(f.name) || f.mimeType.indexOf("application/vnd.google-apps") === 0; if(esCsv && m[1] + "-" + m[2] + "-" + m[3] >= desde) out.push(f); });
+    (j.files || []).forEach(f => { vistos++; if(ej.length < 2) ej.push(f.name);
+      const m = /(\d{4})[._\-\s](\d{2})[._\-\s](\d{2})/.exec(f.name); if(!m || /\.(fit|tcx|gpx|kml)$/i.test(f.name)) return;
+      if(m[1] + "-" + m[2] + "-" + m[3] >= desde) out.push(f); });
     pg = j.nextPageToken || ""; } while(pg);
+  if(info) info(vistos, out.length, ej);
   return out;
 }
-async function bajar(t, f){ return f.mimeType.indexOf("application/vnd.google-apps") === 0 ? api("files/" + f.id + "/export?mimeType=text/csv", t, true) : api("files/" + f.id + "?alt=media", t, true); }
+async function bajar(t, f){
+  if(f.mimeType.indexOf("application/vnd.google-apps") !== 0) return api("files/" + f.id + "?alt=media", t, true);
+  return api("files/" + f.id + "/export?mimeType=" + (f.mimeType.indexOf("spreadsheet") >= 0 ? "text/csv" : "text/plain"), t, true);
+}
 
 async function sincronizar(perfil, dias, progreso){
   progreso = progreso || (() => {});
@@ -171,8 +177,11 @@ async function sincronizar(perfil, dias, progreso){
   const carp = (await api("files?q=" + q + "&pageSize=100&fields=files(id,name)", t)).files || [];
   if(!carp.length) throw new Error("No encontré carpetas «Health Sync …» en este Google Drive. ¿Entraste con la misma cuenta de Health Sync?");
   const txt = { pasos: [], fc: [], spo2: [], sueno: [], act: [] }; let total = 0, hechos = 0; const lotes = [];
-  for(const [needle, clave] of CARPETAS){ const c = carp.find(x => norm(x.name).indexOf(needle) >= 0); if(!c) continue;
-    const arch = await listarArchivos(t, c.id, clave === "sueno" ? sumaDias(desde, -1) : desde); total += arch.length; lotes.push([clave, arch]); }
+  const diag = [];
+  for(const [needle, clave] of CARPETAS){ const c = carp.find(x => norm(x.name).indexOf(needle) >= 0); if(!c){ diag.push("sin carpeta «" + needle + "»"); continue; }
+    const arch = await listarArchivos(t, c.id, clave === "sueno" ? sumaDias(desde, -1) : desde, (v, ok, ej) => diag.push(c.name + ": " + v + " archivos, " + ok + " recientes" + (ej.length ? " (ej: " + ej.join(" / ") + ")" : "")));
+    total += arch.length; lotes.push([clave, arch]); }
+  if(!total) throw new Error("No encontré archivos desde " + desde + ". Detalle → " + diag.join(" | "));
   for(const [clave, arch] of lotes){
     for(let i = 0; i < arch.length; i += 6){
       const parte = await Promise.all(arch.slice(i, i + 6).map(f => bajar(t, f).catch(e => { if(e.status === 401 || e.status === 403) throw e; return ""; })));
