@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="manifest" href="manifest.json">
+<script src="migracion.js"></script>
+<script src="tema.js"></script>
+<title>Huawei</title>
+<link rel="icon" type="image/png" href="icono.png">
+<meta name="theme-color" content="#10151f">
+<script>(function(){var o=Storage.prototype.setItem;window.__nubeRaw=function(k,v){o.call(localStorage,k,v)};window.__nubeSucias={};window.__nubeOn=false;
+function __nubeAvisoDetalle(t){var d=document.getElementById("__nubeErrReal");if(!d){d=document.createElement("div");d.id="__nubeErrReal";d.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#7a1f1f;color:#fff;padding:10px 14px;font:13px monospace;text-align:left;white-space:pre-wrap;max-height:40vh;overflow:auto";(document.body||document.documentElement).appendChild(d)}d.textContent+="⚠️ "+t+"\n"}
+window.addEventListener("error",function(e){__nubeAvisoDetalle("Error: "+(e.message||e.error||"")+" @ "+(e.filename||"")+":"+(e.lineno||"")) },true);
+window.addEventListener("unhandledrejection",function(e){__nubeAvisoDetalle("Promesa fallida: "+(e.reason&&(e.reason.message||e.reason)||e.reason))});
+Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localStorage&&window.__nubeOn){window.__nubeSucias[k]=1;window.dispatchEvent(new Event("nube-cambio"))}};setTimeout(function(){if(!window.__nubeVivo){var d=document.createElement("div");d.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99998;background:#7a1f1f;color:#fff;padding:10px 14px;font:14px system-ui,sans-serif;text-align:center";d.textContent="⚠️ La entrada con Google no cargó: tus datos NO se están guardando en la nube. Avísale a Claude (en el computador: F12 → Console → copia el mensaje rojo).";(document.body||document.documentElement).appendChild(d)}},6000);})();</script>
+<style>
+  :root{--bg:#10151f;--card:#1b2330;--line:#2a3242;--ink:#e8ecf2;--mut:#8a94a3;--accent:#35c26a;color-scheme:dark;}
+  :root[data-theme="light"]{--bg:#f4f6f8;--card:#fff;--line:#d7dce3;--ink:#1b2330;--mut:#5d6877;--accent:#1f9d52;color-scheme:light;}
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;}
+  .wrap{max-width:720px;margin:0 auto;padding:14px 14px 40px;}
+  nav{display:flex;flex-wrap:wrap;gap:6px;margin:0 44px 12px 0;font-size:.75rem;font-weight:800;}
+  nav a{color:var(--mut);text-decoration:none;padding:6px 8px;border:1px solid var(--line);border-radius:8px;}
+  nav a.on{color:var(--accent);border-color:var(--accent);}
+  h1{margin:6px 0 4px;font-size:1.4rem;} .sub{color:var(--mut);font-size:.85rem;margin:0 0 12px;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:0 0 12px;}
+  .card h2{margin:0 0 8px;font-size:1rem;}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;} .m{background:var(--bg);border-radius:10px;padding:10px;} .m b{display:block;font-size:1.25rem;} .m span{font-size:.75rem;color:var(--mut);}
+  button.go{padding:12px 16px;border-radius:12px;border:1px solid var(--accent);background:transparent;color:var(--accent);font-weight:800;font-size:1rem;cursor:pointer;}
+  button.go:disabled{opacity:.5;} a.mini{font-size:.8rem;color:var(--mut);margin-left:10px;}
+  table{width:100%;border-collapse:collapse;font-size:.85rem;text-align:center;} th,td{padding:6px 2px;border-bottom:1px solid var(--line);} th{color:var(--mut);font-weight:600;}
+  .nota{font-size:.8rem;color:var(--mut);line-height:1.5;} details{margin-top:10px;font-size:.85rem;line-height:1.55;} summary{cursor:pointer;font-weight:700;color:var(--accent);} details li{margin:4px 0;}
+  #btnTema{position:fixed;top:12px;right:12px;z-index:500;width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;}
+</style>
+</head>
+<body>
+<button id="btnTema" onclick="alternarTema()" aria-label="Cambiar tema">☀️</button>
+<div class="wrap">
+<nav><a href="index.html">🏠 INICIO</a><a href="nutricion.html">NUTRICIÓN</a><a href="ejercicios.html">FITNESS</a><a href="salud.html">SALUD</a><a href="huawei.html" class="on">⌚ HUAWEI</a></nav>
+<h1>⌚ Huawei</h1>
+<p class="sub">Datos del reloj que Health Sync deja en tu Google Drive. Solo se leen; no se borra ni se cambia nada. Datos de <b id="quien">Mamy</b>.</p>
+
+<div class="card">
+  <button class="go" id="sync">⌚ Sincronizar Huawei</button><a href="#" class="mini" id="s90">traer 90 días</a>
+  <div id="estado" class="nota" style="margin-top:8px"></div>
+</div>
+
+<div class="card"><h2 id="hTit">Último día con datos</h2><div class="grid" id="hoy"></div></div>
+
+<div class="card">
+  <h2>🔥 Calorías que se suman a Nutrición</h2>
+  <div id="kcal"></div>
+  <label style="display:flex;gap:8px;align-items:flex-start;margin-top:10px;font-size:.85rem"><input type="checkbox" id="chkPasos" style="margin-top:3px"><span>Contar también los <b>pasos que no son de una actividad</b> como calorías extra <span class="nota">(recomendado dejarlo apagado hasta entender cómo se calcula tu meta)</span></span></label>
+  <div id="avisoPasos" class="nota"></div>
+  <details><summary>¿Cómo funcionan las calorías? (con las capturas de Huawei)</summary>
+    <ul>
+      <li><b>Total quemadas = En reposo + Activas.</b> Ej.: 1.766 = 1.594 + 172. El «reposo» es lo que gasta tu cuerpo solo por estar vivo.</li>
+      <li><b>El «déficit» de Huawei</b> es quemadas − consumidas. Si no anotas comida en Huawei, «consumidas» es 0 y el déficit sale igual al total quemado (1.766). <b>No es un déficit real.</b></li>
+      <li><b>Esta app no usa nada de eso.</b> Nutrición calcula con tu meta diaria, lo que comiste y lo <i>extra</i> que quemaste: <code>restantes = meta − comido + quemadas extra</code>.</li>
+      <li><b>Lo que sí importamos:</b> las calorías reales de cada actividad que inicias en el reloj (carrera, caminata…). Las 172 «activas» del día <b>no vienen</b> en los archivos de Health Sync.</li>
+      <li><b>Por qué los pasos van aparte y apagados:</b> los pasos de una carrera ya están contados con sus kcal; sumarlos otra vez duplica. Por eso se restan los pasos de actividades. Además, si tu meta ya incluye caminar a diario, sumar pasos cuenta lo mismo dos veces. Tampoco sumes jamás el «reposo».</li>
+      <li>Son estimaciones del reloj. Para saber si va bien, mira la tendencia del peso por semana, no un día suelto.</li>
+    </ul>
+  </details>
+</div>
+
+<div class="card"><h2>Últimos 14 días</h2><div style="overflow-x:auto" id="tabla"></div></div>
+</div>
+<script>
+// huawei.js — Importa los CSV que Health Sync deja en Google Drive (solo lectura) y los guarda en la app.
+// Actividades -> ejercicioHistorial_<perfil> (con kcal reales; Nutrición ya las suma sola).
+// Pasos, sueño, pulso y oxígeno -> huaweiDiaV1_<perfil> (un resumen por día).
+(function(){
+const CLIENT_ID = "235893987189-hkdej19871r8qkbkgke2dm6n971tb1q1.apps.googleusercontent.com";
+const SCOPE = "https://www.googleapis.com/auth/drive.readonly";
+const norm = s => String(s == null ? "" : s).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+const KP = p => "huaweiPasosKcalV1_" + p, KD = p => "huaweiDiaV1_" + p, KU = p => "huaweiUltimaV1_" + p, KH = p => "ejercicioHistorial_" + p;
+const lj = (k, d) => { try{ const v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; }catch(e){ return d; } };
+
+// ---------- CSV ----------
+function parseCSV(t){
+  t = String(t).replace(/^\uFEFF/, ""); const r = []; let f = "", row = [], q = false;
+  for(let i = 0; i < t.length; i++){ const c = t[i];
+    if(q){ if(c === '"'){ if(t[i+1] === '"'){ f += '"'; i++; } else q = false; } else f += c; }
+    else if(c === '"') q = true;
+    else if(c === ","){ row.push(f); f = ""; }
+    else if(c === "\n" || c === "\r"){ if(c === "\r" && t[i+1] === "\n") i++; row.push(f); f = ""; if(row.length > 1 || row[0] !== "") r.push(row); row = []; }
+    else f += c; }
+  if(f !== "" || row.length){ row.push(f); r.push(row); }
+  return r;
+}
+function objs(rows){ if(!rows.length) return []; const h = rows[0]; return rows.slice(1).map(r => { const o = {}; h.forEach((k, i) => o[k] = r[i]); return o; }); }
+function get(o, needle){ for(const k in o) if(norm(k).indexOf(needle) >= 0) return o[k]; return undefined; }
+function dt(s){ const m = /(\d{4})[.\-\/](\d{2})[.\-\/](\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?/.exec(String(s || "")); if(!m) return null;
+  return { f: m[1] + "-" + m[2] + "-" + m[3], k: m[0], min: Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]) / 60000 }; }
+const hhmm = min => new Date(min * 60000).toISOString().slice(11, 16);
+const dia = min => new Date(min * 60000).toISOString().slice(0, 10);
+
+// ---------- Procesar texto de los CSV (funciones puras, se pueden probar fuera del navegador) ----------
+// txt = { pasos:[texto..], fc:[..], spo2:[..], sueno:[..], act:[..] }
+function procesar(txt){
+  const dias = {}, D = f => dias[f] || (dias[f] = {});
+  const serie = (lista, needle) => { const m = {}; (lista || []).forEach(t => objs(parseCSV(t)).forEach(o => {
+    const p = dt(get(o, "fecha")), v = parseFloat(get(o, needle)); if(p && isFinite(v)) m[p.k] = [p.f, v]; })); return m; };
+  const porDia = m => { const g = {}; Object.keys(m).forEach(k => { const [f, v] = m[k]; (g[f] || (g[f] = [])).push(v); }); return g; };
+  const g1 = porDia(serie(txt.pasos, "pasos")); Object.keys(g1).forEach(f => D(f).pasos = g1[f].reduce((a, b) => a + b, 0));
+  const g2 = porDia(serie(txt.fc, "frecuencia")); Object.keys(g2).forEach(f => { const v = g2[f]; D(f).fc = { med: Math.round(v.reduce((a, b) => a + b, 0) / v.length), min: Math.min(...v), max: Math.max(...v), n: v.length }; });
+  const g3 = porDia(serie(txt.spo2, "saturacion")); Object.keys(g3).forEach(f => { const v = g3[f]; D(f).spo2 = { med: Math.round(v.reduce((a, b) => a + b, 0) / v.length * 10) / 10, min: Math.min(...v), n: v.length }; });
+  // Sueño: se juntan todas las filas, se agrupan en sesiones (hueco > 60 min = otra sesión) y cuentan en el día en que te despiertas.
+  const filas = {}; (txt.sueno || []).forEach(t => objs(parseCSV(t)).forEach(o => { const p = dt(get(o, "fecha")), dur = parseFloat(get(o, "duracion")), et = norm(get(o, "etapa")).trim();
+    if(p && dur > 0 && et) filas[p.min] = { ini: p.min, fin: p.min + dur / 60, et }; }));
+  const ord = Object.keys(filas).map(Number).sort((a, b) => a - b).map(k => filas[k]);
+  const ses = []; ord.forEach(r => { const s = ses[ses.length - 1]; if(s && r.ini - s.fin <= 60){ s.filas.push(r); s.fin = Math.max(s.fin, r.fin); } else ses.push({ ini: r.ini, fin: r.fin, filas: [r] }); });
+  ses.forEach(s => { const f = dia(s.fin), d = D(f), t = { deep: 0, light: 0, rem: 0, awake: 0 };
+    s.filas.forEach(r => { if(t[r.et] != null) t[r.et] += r.fin - r.ini; });
+    const prev = d.sueno || { min: 0, deep: 0, light: 0, rem: 0, awake: 0 };
+    d.sueno = { min: Math.round(prev.min + t.deep + t.light + t.rem), deep: Math.round(prev.deep + t.deep), light: Math.round(prev.light + t.light), rem: Math.round(prev.rem + t.rem), awake: Math.round(prev.awake + t.awake), ini: prev.ini || hhmm(s.ini), fin: hhmm(s.fin) }; });
+  // Actividades
+  const TIPO = { running: ["corrida", "Correr"], walking: ["caminata", "Caminar"], cycling: ["cardio", "Bicicleta"], biking: ["cardio", "Bicicleta"], swimming: ["natacion", "Nadar"], yoga: ["yoga", "Yoga"] };
+  const acts = []; (txt.act || []).forEach(t => objs(parseCSV(t)).forEach(o => {
+    const p = dt(get(o, "fecha")); if(!p) return;
+    const tipoH = norm(get(o, "tipo de actividad")).trim(), m = TIPO[tipoH] || ["otro", tipoH ? tipoH.charAt(0).toUpperCase() + tipoH.slice(1) : "Actividad"];
+    const seg = parseFloat(get(o, "tiempo transcurrido")) || parseFloat(get(o, "tiempo activo")) || 0;
+    const km = parseFloat(String(get(o, "distancia") || "").replace(",", ".")), kcal = parseFloat(String(get(o, "calorias") || "").replace(",", "."));
+    const e = { fecha: p.f, tipo: m[0], nombre: "⌚ " + m[1] + (km > 0 ? " · " + String(Math.round(km * 100) / 100).replace(".", ",") + " km" : ""), minutos: Math.max(1, Math.round(seg / 60)), hid: "hw:" + p.k + ":" + tipoH };
+    if(kcal > 0) e.kcal = Math.round(kcal);
+    const ps = parseInt(get(o, "pasos"), 10); if(ps > 0) D(p.f).actPasos = (D(p.f).actPasos || 0) + ps;
+    acts.push(e); }));
+  return { dias, acts };
+}
+
+// ---------- Google Drive ----------
+let tok = null, tokExp = 0;
+function cargarGIS(){ return new Promise((res, rej) => { if(window.google && google.accounts && google.accounts.oauth2) return res();
+  let s = document.getElementById("gis-huawei"); if(!s){ s = document.createElement("script"); s.id = "gis-huawei"; s.src = "https://accounts.google.com/gsi/client"; s.async = true; document.head.appendChild(s); }
+  s.addEventListener("load", () => res()); s.addEventListener("error", () => rej(new Error("No se pudo cargar el acceso de Google. ¿Hay internet?"))); }); }
+function token(){ if(tok && Date.now() < tokExp) return Promise.resolve(tok);
+  return new Promise((res, rej) => { try{
+    const c = google.accounts.oauth2.initTokenClient({ client_id: CLIENT_ID, scope: SCOPE,
+      callback: r => { if(r.error) return rej(new Error(r.error_description || r.error)); tok = r.access_token; tokExp = Date.now() + ((r.expires_in || 3600) - 60) * 1000; res(tok); },
+      error_callback: e => rej(new Error(e && e.type === "popup_closed" ? "Cerraste la ventana de Google antes de terminar." : (e && e.type) || "No se pudo abrir la ventana de Google.")) });
+    c.requestAccessToken();
+  }catch(e){ rej(e); } }); }
+async function api(path, t, texto){
+  const r = await fetch("https://www.googleapis.com/drive/v3/" + path, { headers: { Authorization: "Bearer " + t } });
+  if(!r.ok){ let m = ""; try{ m = (await r.json()).error.message; }catch(e){} const err = new Error("Drive " + r.status + (m ? ": " + m : "")); err.status = r.status; throw err; }
+  return texto ? r.text() : r.json();
+}
+const sumaDias = (iso, n) => { const d = new Date(iso + "T00:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+const hoy = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+const CARPETAS = [["actividad", "act"], ["frecuencia", "fc"], ["pasos", "pasos"], ["sueno", "sueno"], ["saturacion", "spo2"]];
+
+async function listarArchivos(t, carpetaId, desde){
+  const out = []; let pg = "";
+  do{ const q = encodeURIComponent("'" + carpetaId + "' in parents and trashed=false");
+    const j = await api("files?q=" + q + "&pageSize=1000&fields=nextPageToken,files(id,name,mimeType)" + (pg ? "&pageToken=" + pg : ""), t);
+    (j.files || []).forEach(f => { const m = /(\d{4})_(\d{2})_(\d{2})/.exec(f.name); if(!m) return; const esCsv = /\.csv$/i.test(f.name) || f.mimeType.indexOf("application/vnd.google-apps") === 0; if(esCsv && m[1] + "-" + m[2] + "-" + m[3] >= desde) out.push(f); });
+    pg = j.nextPageToken || ""; } while(pg);
+  return out;
+}
+async function bajar(t, f){ return f.mimeType.indexOf("application/vnd.google-apps") === 0 ? api("files/" + f.id + "/export?mimeType=text/csv", t, true) : api("files/" + f.id + "?alt=media", t, true); }
+
+async function sincronizar(perfil, dias, progreso){
+  progreso = progreso || (() => {});
+  progreso("Pidiendo permiso a Google…"); const t = await token();
+  const ult = localStorage.getItem(KU(perfil));
+  const desde = dias ? sumaDias(hoy(), -dias) : (ult ? sumaDias(ult, -2) : sumaDias(hoy(), -30));
+  progreso("Buscando las carpetas de Health Sync…");
+  const q = encodeURIComponent("mimeType='application/vnd.google-apps.folder' and trashed=false and name contains 'Health Sync'");
+  const carp = (await api("files?q=" + q + "&pageSize=100&fields=files(id,name)", t)).files || [];
+  if(!carp.length) throw new Error("No encontré carpetas «Health Sync …» en este Google Drive. ¿Entraste con la misma cuenta de Health Sync?");
+  const txt = { pasos: [], fc: [], spo2: [], sueno: [], act: [] }; let total = 0, hechos = 0; const lotes = [];
+  for(const [needle, clave] of CARPETAS){ const c = carp.find(x => norm(x.name).indexOf(needle) >= 0); if(!c) continue;
+    const arch = await listarArchivos(t, c.id, clave === "sueno" ? sumaDias(desde, -1) : desde); total += arch.length; lotes.push([clave, arch]); }
+  for(const [clave, arch] of lotes){
+    for(let i = 0; i < arch.length; i += 6){
+      const parte = await Promise.all(arch.slice(i, i + 6).map(f => bajar(t, f).catch(e => { if(e.status === 401 || e.status === 403) throw e; return ""; })));
+      parte.forEach(x => { if(x) txt[clave].push(x); }); hechos += parte.length; progreso("Leyendo archivos… " + hechos + " de " + total); } }
+  const r = procesar(txt);
+  // Guardar resúmenes por día (solo pisa las medidas que llegaron)
+  const guardados = lj(KD(perfil), {}); let nDias = 0;
+  Object.keys(r.dias).forEach(f => { if(f < desde && !r.dias[f].sueno) return; guardados[f] = Object.assign(guardados[f] || {}, r.dias[f]); nDias++; });
+  const lim = sumaDias(hoy(), -400); Object.keys(guardados).forEach(f => { if(f < lim) delete guardados[f]; });
+  localStorage.setItem(KD(perfil), JSON.stringify(guardados));
+  // Actividades al historial de Fitness (sin repetir)
+  const hist = lj(KH(perfil), []); const vistos = {}; hist.forEach(h => { if(h && h.hid) vistos[h.hid] = 1; });
+  let nuevas = 0; r.acts.forEach(a => { if(!vistos[a.hid]){ hist.push(a); vistos[a.hid] = 1; nuevas++; } });
+  if(nuevas) localStorage.setItem(KH(perfil), JSON.stringify(hist));
+  localStorage.setItem(KU(perfil), hoy());
+  const pk = aplicarPasos(perfil);
+  return { sinPeso: pk.sinPeso, dias: nDias, nuevas, archivos: total };
+}
+
+// ---------- Pasos -> calorías extra (opcional) ----------
+// Solo cuentan los pasos que NO pertenecen a una actividad ya registrada (esos ya van con sus kcal reales).
+// Estimación prudente: pasos x peso x 0,0003 kcal (~0,4 kcal por kg y km, sin contar el reposo).
+function pesoDe(p){ const m = lj("dietaMedidasV1_" + p, []).filter(x => x && x.peso > 0).sort((a, b) => a.fecha < b.fecha ? 1 : -1); if(m.length) return m[0].peso;
+  const pm = lj("perfilMetasV1_" + p, null); return pm && pm.pesoInicial > 0 ? pm.pesoInicial : null; }
+const esPasos = h => h && h.hid && String(h.hid).indexOf("hwp:") === 0;
+function kcalPasosDe(x, peso){ const extra = Math.max(0, (x.pasos || 0) - (x.actPasos || 0)); return { extra, kcal: Math.round(extra * peso * 0.0003) }; }
+function aplicarPasos(p){
+  const on = localStorage.getItem(KP(p)) === "1"; let h = lj(KH(p), []).filter(x => !esPasos(x)), n = 0;
+  if(on){ const peso = pesoDe(p); if(!peso) return { n: 0, sinPeso: true };
+    const d = lj(KD(p), {}); Object.keys(d).forEach(f => { const k = kcalPasosDe(d[f], peso); if(k.kcal > 0){ h.push({ fecha: f, tipo: "caminata", nombre: "👣 Pasos del día (sin actividades)", minutos: Math.round(k.extra / 100), kcal: k.kcal, hid: "hwp:" + f }); n++; } }); }
+  localStorage.setItem(KH(p), JSON.stringify(h)); return { n, sinPeso: false };
+}
+const fmtH = m => Math.floor(m / 60) + " h " + String(Math.round(m % 60)).padStart(2, "0") + " min";
+const NF = v => String(v).replace(".", ",");
+function mensaje(e){
+  const m = String(e && e.message || e);
+  if(e && e.status === 403 && /not been used|disabled|accessNotConfigured/i.test(m)) return "La API de Google Drive no está activada en el proyecto gatslife0470 (Google Cloud → APIs y servicios → Biblioteca → Google Drive API → Habilitar). Detalle: " + m;
+  if(/access_denied/i.test(m)) return "Google no dio el permiso. Si la app está en «Testing», agrega tu correo en Google Auth Platform → Público → Usuarios de prueba. Detalle: " + m;
+  return m;
+}
+window.Huawei = { cargarGIS, sincronizar, procesar, aplicarPasos, pesoDe, kcalPasosDe, fmtH, NF, mensaje, KD, KU, KH, KP, lj, hoy };
+if(typeof module !== "undefined") module.exports = { procesar, parseCSV };
+})();
+
+(function(){
+const H = window.Huawei, $ = id => document.getElementById(id);
+let perfil = "Mamy", ocupado = false;
+const m = (t, v, s) => '<div class="m"><span>' + t + '</span><b>' + v + '</b><span>' + (s || "&nbsp;") + '</span></div>';
+function render(){
+  if(ocupado) return; $("quien").textContent = perfil;
+  const d = H.lj(H.KD(perfil), {}), ks = Object.keys(d).sort(), f = ks[ks.length - 1], x = f ? d[f] : {}, u = localStorage.getItem(H.KU(perfil));
+  $("estado").textContent = u ? "Última sincronización: " + u : "Todavía no sincronizaste. Toca el botón.";
+  $("hTit").textContent = f ? (f === H.hoy() ? "Hoy" : "Último día con datos: " + f.slice(8) + "/" + f.slice(5, 7)) : "Sin datos todavía";
+  $("hoy").innerHTML = f ? m("👣 Pasos", x.pasos != null ? x.pasos.toLocaleString("es") : "–", x.actPasos ? x.actPasos + " en actividades" : "") +
+    m("😴 Sueño", x.sueno ? H.fmtH(x.sueno.min) : "–", x.sueno ? "profundo " + H.fmtH(x.sueno.deep) + " · REM " + H.fmtH(x.sueno.rem) : "") +
+    m("❤️ Pulso medio", x.fc ? x.fc.med + " ppm" : "–", x.fc ? "mín " + x.fc.min + " · máx " + x.fc.max : "") +
+    m("🫁 Oxígeno (SpO₂)", x.spo2 ? H.NF(x.spo2.med) + " %" : "–", x.spo2 ? "mínimo " + H.NF(x.spo2.min) + " %" : "") : '<div class="nota">Cuando sincronices aparecerán aquí tus datos.</div>';
+  const on = localStorage.getItem(H.KP(perfil)) === "1"; $("chkPasos").checked = on;
+  const hist = H.lj(H.KH(perfil), []).filter(e => e && e.fecha === f), sum = p => hist.filter(e => e.hid && String(e.hid).indexOf(p) === 0).reduce((a, e) => a + (e.kcal || 0), 0);
+  const act = sum("hw:"), pas = sum("hwp:"), peso = H.pesoDe(perfil), pot = (peso && x.pasos) ? H.kcalPasosDe(x, peso).kcal : null;
+  $("kcal").innerHTML = f ? "<div>Actividades del reloj: <b>" + act + " kcal</b></div><div>Pasos fuera de actividades: <b>" + (on ? pas + " kcal" : "apagado" + (pot != null ? " (sumaría ≈ " + pot + " kcal)" : "")) + "</b></div><div style='margin-top:4px'>Suma a Nutrición ese día: <b>" + (act + pas) + " kcal</b></div>" : '<div class="nota">Sin datos todavía.</div>';
+  $("avisoPasos").textContent = on && !peso ? "⚠️ Falta tu peso: regístralo en Nutrición para poder calcular." : "";
+  const t = ks.slice(-14).reverse().map(g => { const y = d[g]; return "<tr><td>" + g.slice(8) + "/" + g.slice(5, 7) + "</td><td>" + (y.pasos != null ? y.pasos : "–") + "</td><td>" + (y.sueno ? H.fmtH(y.sueno.min) : "–") + "</td><td>" + (y.fc ? y.fc.med : "–") + "</td><td>" + (y.spo2 ? H.NF(y.spo2.med) + "%" : "–") + "</td></tr>"; }).join("");
+  $("tabla").innerHTML = t ? "<table><tr><th>Día</th><th>👣 Pasos</th><th>😴 Sueño</th><th>❤️ Pulso</th><th>🫁 SpO₂</th></tr>" + t + "</table>" : '<div class="nota">Aún no hay días guardados.</div>';
+}
+function lanzar(dias){ const est = $("estado"); ocupado = true; $("sync").disabled = true; est.style.color = "";
+  H.sincronizar(perfil, dias, s => est.textContent = s).then(r => { ocupado = false; $("sync").disabled = false; render();
+    est.textContent = "Listo: " + r.archivos + " archivos leídos, " + r.dias + " días actualizados, " + r.nuevas + " actividad" + (r.nuevas === 1 ? "" : "es") + " nueva" + (r.nuevas === 1 ? "" : "s") + "." + (r.sinPeso ? " ⚠️ No conté los pasos: falta tu peso en Nutrición." : ""); })
+  .catch(e => { ocupado = false; $("sync").disabled = false; est.style.color = "#ff9b6b"; est.textContent = "⚠️ " + H.mensaje(e); }); }
+$("sync").onclick = () => lanzar(0);
+$("s90").onclick = ev => { ev.preventDefault(); lanzar(90); };
+$("chkPasos").onchange = ev => { localStorage.setItem(H.KP(perfil), ev.target.checked ? "1" : "0"); H.aplicarPasos(perfil); render(); };
+window.elegirPerfil = p => { perfil = p; render(); };
+window.addEventListener("focus", render);
+render(); H.cargarGIS().catch(() => {});
+})();
+</script>
+<script type="module" src="nube.js" onerror="var d=document.createElement('div');d.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99998;background:#7a1f1f;color:#fff;padding:10px 14px;font:14px system-ui,sans-serif;text-align:center';d.textContent='⚠️ El archivo nube.js no se pudo descargar (revisa que esté subido a GitHub con ese nombre exacto).';document.body.appendChild(d)"></script>
+</body>
+</html>
