@@ -461,6 +461,7 @@
 
   <div class="resumen">
     <h2>Resumen</h2>
+    <div class="resumen-fila"><span>Meta diaria</span><span id="rMeta">–</span></div>
     <div class="resumen-fila"><span>Calorías consumidas</span><span id="rConsumidas">0</span></div>
     <div class="resumen-fila"><span>Calorías quemadas (Fitness + extra)</span><span id="rQuemadas">0</span></div>
       <div class="quemadas" style="margin:8px 0 0;padding:10px 12px;background:var(--panel-alt,#1b2330)">
@@ -535,31 +536,6 @@
     </details>
   </div>
 
-  <details class="perfil-sec" id="objetivosSec">
-    <summary>🎯 Objetivos: meta diaria y reparto de macros</summary>
-    <div class="perfil-cuerpo">
-    <div class="meta-fila">
-      <label for="metaInput" style="color:var(--muted);font-size:0.85rem;">Meta diaria</label>
-      <input type="number" id="metaInput" placeholder="ej. 2000">
-    </div>
-  <div class="reparto-sec">
-    <h2>🎯 Reparto de macros</h2>
-    <div class="rep-sub">Elegís vos los porcentajes. La app calcula los gramos diarios a partir de tu meta de calorías.</div>
-    <div class="reparto-fila">
-      <div class="rep-col"><label>% Carbohidratos</label><input type="number" id="repCarb" min="0" max="100"></div>
-      <div class="rep-col"><label>% Proteínas</label><input type="number" id="repProt" min="0" max="100"></div>
-      <div class="rep-col"><label>% Grasas</label><input type="number" id="repGrasa" min="0" max="100"></div>
-    </div>
-    <div class="rep-suma" id="repSuma"></div>
-    <div class="rep-limites" id="repLimites" style="display:none">
-      <div class="rl-col"><div class="rl-label">Carbos/día</div><div class="rl-val" id="rlCarb">–</div></div>
-      <div class="rl-col"><div class="rl-label">Proteína/día</div><div class="rl-val" id="rlProt">–</div></div>
-      <div class="rl-col"><div class="rl-label">Grasa/día</div><div class="rl-val" id="rlGrasa">–</div></div>
-    </div>
-    <div class="rep-nota" id="repNota"></div>
-  </div>
-    </div>
-  </details>
   </div>
 
   <div class="panel" data-panel="seg">
@@ -667,6 +643,33 @@
       <div id="listaMedidas"></div>
     </div>
   </details>
+
+  <details class="perfil-sec" id="objetivosSec">
+    <summary>🎯 Objetivos: meta diaria y reparto de macros</summary>
+    <div class="perfil-cuerpo">
+    <div class="meta-fila">
+      <label for="metaInput" style="color:var(--muted);font-size:0.85rem;">Meta diaria</label>
+      <input type="number" id="metaInput" placeholder="ej. 2000">
+    </div>
+  <div class="reparto-sec">
+    <h2>🎯 Reparto de macros</h2>
+    <div class="rep-sub">Tú eliges los porcentajes. La app calcula los gramos diarios a partir de tu meta de calorías.</div>
+    <div class="reparto-fila">
+      <div class="rep-col"><label>% Carbohidratos</label><input type="number" id="repCarb" min="0" max="100"></div>
+      <div class="rep-col"><label>% Proteínas</label><input type="number" id="repProt" min="0" max="100"></div>
+      <div class="rep-col"><label>% Grasas</label><input type="number" id="repGrasa" min="0" max="100"></div>
+    </div>
+    <div class="rep-suma" id="repSuma"></div>
+    <div class="rep-limites" id="repLimites" style="display:none">
+      <div class="rl-col"><div class="rl-label">Carbos/día</div><div class="rl-val" id="rlCarb">–</div></div>
+      <div class="rl-col"><div class="rl-label">Proteína/día</div><div class="rl-val" id="rlProt">–</div></div>
+      <div class="rl-col"><div class="rl-label">Grasa/día</div><div class="rl-val" id="rlGrasa">–</div></div>
+    </div>
+    <div class="rep-nota" id="repNota"></div>
+  </div>
+    </div>
+  </details>
+
 
   <div class="aviso">
     Se guarda solo en este navegador (no sincroniza entre dispositivos todavía — eso llega con el login real).<br>
@@ -970,7 +973,7 @@ function actualizarReparto(guardar){
 
   if(!estado.meta){
     limitesEl.style.display = "none";
-    notaEl.textContent = "Falta poner tu meta diaria de calorías (más abajo, en Resumen) para calcular los gramos.";
+    notaEl.textContent = "Falta poner tu meta diaria de calorías (arriba, en Meta diaria) para calcular los gramos.";
     return;
   }
 
@@ -2595,6 +2598,9 @@ function render(){
   document.getElementById("rConsumidas").textContent = t.kcal + " kcal";
   document.getElementById("rQuemadas").textContent = q.total + " kcal";
 
+  const rMetaEl = document.getElementById("rMeta");
+  if(estado.meta) rMetaEl.textContent = estado.meta + " kcal";
+  else rMetaEl.innerHTML = '<a href="#" id="rMetaLink" style="color:var(--accent)">Pon tu meta en Perfil</a>';
   const restantesEl = document.getElementById("rRestantes");
   if(estado.meta){
     const restantes = estado.meta - t.kcal + q.total;
@@ -3220,7 +3226,15 @@ document.getElementById("pdLeer").onclick = async ()=>{
 // leer siempre: al elegir la foto se lee sola (el botón queda para reintentar)
 document.getElementById("pdFoto").onchange = ()=>{ if(document.getElementById("pdFoto").files[0]) document.getElementById("pdLeer").onclick(); };
 const _render0 = render; render = function(){ _render0.apply(this, arguments); renderPesoHoy(); renderBarrasRef(); };
-if(!estado.meta) document.getElementById("objetivosSec").open = true;
+document.getElementById("rMeta").addEventListener("click", ev=>{
+  if(ev.target && ev.target.id === "rMetaLink"){
+    ev.preventDefault();
+    mostrarPestana("per");
+    const o = document.getElementById("objetivosSec"); o.open = true;
+    o.scrollIntoView({behavior:"smooth", block:"start"});
+    document.getElementById("metaInput").focus();
+  }
+});
 
 // ---------- Pestañas ----------
 function mostrarPestana(p){

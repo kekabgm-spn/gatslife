@@ -171,6 +171,12 @@
   .ahora{position:absolute;left:40px;right:0;height:2px;background:var(--accent);z-index:3;pointer-events:none;}
   .ahora::before{content:"";position:absolute;left:-5px;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--accent);}
 
+  details.res-det{background:var(--panel);border:1px solid var(--line);border-radius:10px;margin:12px 0;}
+  details.res-det summary{padding:12px 16px;cursor:pointer;font-size:0.92rem;font-weight:600;}
+  details.res-det .res-cuerpo{padding:0 16px 12px;}
+  details.res-det .res-cuerpo .ir{display:inline-block;margin-top:6px;}
+  .res-linea{display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin:12px 0;font-size:0.92rem;font-weight:600;}
+  .res-linea a{font-size:0.76rem;font-weight:600;color:var(--accent);text-decoration:none;white-space:nowrap;}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:12px 0;}
   .card h3{font-size:0.92rem;margin:0 0 10px;display:flex;justify-content:space-between;align-items:center;gap:8px;}
   .card h3 a,.ir{font-size:0.76rem;font-weight:600;color:var(--accent);text-decoration:none;}
@@ -300,6 +306,8 @@
     </div>
     <div id="bcRes"></div>
   </section>
+
+  <div id="panelResumen"></div>
 
 
   <details class="ajuste">
@@ -615,7 +623,7 @@ window.addEventListener("familia-calendario-lista", conectarCalendarioCompartido
 if(window.Familia && window.Familia.listo) conectarCalendarioCompartido();
 let especialistas = cargarEsp();
 let vista = cargarVista();
-let fuentes = {est:null, hist:null, peso:null, tareas:null};
+let fuentes = {est:null, hist:null, peso:null, medidas:[], tareas:null};
 
 function refrescarFuentes(){
   const est = leerJSON("dietaDiarioV3_"+perfil, null);
@@ -631,6 +639,7 @@ function refrescarFuentes(){
     est: (est && typeof est === "object" && est.dias && typeof est.dias === "object") ? est : null,
     hist: Array.isArray(hist) ? hist : null,
     peso,
+    medidas: Array.isArray(med) ? med : [],
     tareas: (tar && Array.isArray(tar.tareas)) ? tar.tareas : null
   };
 }
@@ -894,33 +903,53 @@ function htmlEvento(e, f){
   </div>`;
 }
 
+// Peso del día; si ese día no hay pesaje, el último anterior
+function pesoPara(f){
+  const m = (fuentes.medidas||[]).filter(x => x && x.peso > 0 && x.fecha <= f).sort((a,b)=> a.fecha < b.fecha ? 1 : (a.fecha > b.fecha ? -1 : 0))[0];
+  return m ? {peso:m.peso, fecha:m.fecha, delDia:m.fecha === f} : null;
+}
 function cardNutri(f){
   const nom = esc(nombreDe(perfil));
   const enlace = {href:RUTAS.dieta, txt:"Abrir Nutrición"};
   if(!fuentes.est) return tarjeta("🍽️ Nutrición", enlace,
     `<p class="vacio">No encuentro el diario de Dieta de ${nom}. Se lee solo si Dieta y el calendario están publicados bajo el mismo dominio y ya cargaste algo.</p>`);
   const n = nutriDia(f);
-  if(!n || (n.n === 0 && n.agua === 0)) return tarjeta("🍽️ Nutrición", enlace, `<p class="vacio">Sin comidas ni agua registradas este día.</p>`);
-  let h = "";
-  if(n.n > 0){
-    const pct = n.meta ? n.kcal/n.meta : 0;
-    h += `<div class="lin"><b>${n.kcal}</b>${n.meta ? ` <small>/ ${n.meta} kcal</small>` : ` <small>kcal</small>`}</div>`;
-    h += n.meta ? cuadritos(pct, "", `Calorías: ${n.kcal} de ${n.meta}`)
-                : `<p class="nota">Poné tu meta diaria en Dieta para ver el avance.</p>`;
-    h += `<div class="macros"><div><small>Grasas</small><b>${n.grasa} g</b></div><div><small>Carbohidratos</small><b>${n.carbh} g</b></div><div><small>Proteínas</small><b>${n.prot} g</b></div></div>`;
+  const pe = pesoPara(f);
+  const ej = ejDia(f);
+  const quemadas = Math.round((n ? n.quemadasManual : 0) + (ej ? ej.kcal : 0));
+  let pesoTxt = "—", pesoSub = "sin pesaje";
+  if(pe){
+    pesoTxt = String(pe.peso).replace(".", ",") + " kg";
+    if(pe.delDia) pesoSub = "de este día";
+    else { const q = parseF(pe.fecha); pesoSub = "último · " + new Date(q.y,q.m-1,q.d).toLocaleDateString("es-ES",{day:"numeric", month:"short"}); }
   }
-  if(n.agua > 0 || n.metaAgua){
-    h += `<div class="lin"><b style="color:var(--agua)">${n.agua}</b> <small>${n.metaAgua ? "/ "+n.metaAgua+" " : ""}ml de agua</small></div>`;
-    if(n.metaAgua) h += cuadritos(n.agua/n.metaAgua, "agua", `Agua: ${n.agua} de ${n.metaAgua} ml`);
-  }
+  const consumidas = n ? n.kcal : 0;
+  const h = `<div class="macros">
+    <div><small>Peso</small><b>${pesoTxt}</b><small>${pesoSub}</small></div>
+    <div><small>Consumidas</small><b>${consumidas} kcal</b>${n && n.meta ? `<small>meta ${n.meta}</small>` : ""}</div>
+    <div><small>Quemadas</small><b>${quemadas} kcal</b></div>
+  </div>`;
   return tarjeta("🍽️ Nutrición", enlace, h);
 }
 
 function cardEj(f){
-  const enlace = {href:RUTAS.ejercicio, txt:"Abrir Fitness"};
   const plan = planDia(f);
-  let h = `<div class="lin"><small>${plan.dia}:</small> ${plan.zona ? esc(plan.zona) : "Descanso / movilidad suave"}</div>`;
   const ej = ejDia(f);
+  const n = nutriDia(f);
+  const manual = n ? Math.round(n.quemadasManual) : 0;
+  const hechos = ej ? ej.items.length : 0;
+  const kcal = Math.round((ej ? ej.kcal : 0) + manual);
+  const min = ej ? Math.round(ej.min) : 0;
+  const zona = plan.zona ? esc(plan.zona) : "Descanso";
+  // Línea resumida (siempre visible)
+  let resumen = `🏃 Fitness · <span style="font-weight:400">${zona}</span>`;
+  if(hechos > 0 || kcal > 0){
+    resumen += ` <span style="font-weight:400;color:var(--muted)">· ${hechos} ${hechos===1?"ejercicio":"ejercicios"}${min ? " · "+min+" min" : ""}${kcal ? " · ≈ "+kcal+" kcal quemadas" : ""}</span>`;
+  } else {
+    resumen += ` <span style="font-weight:400;color:var(--muted)">· ${f > hoy ? "pendiente" : "nada marcado"}</span>`;
+  }
+  // Detalle (se abre al tocar)
+  let h = `<div class="lin"><small>${plan.dia}:</small> ${zona}${plan.zona ? "" : " / movilidad suave"}</div>`;
   if(!ej){
     h += `<p class="vacio">Todavía no hay historial de Fitness para ${esc(nombreDe(perfil))} (o no comparten dominio).</p>`;
   } else if(!ej.items.length){
@@ -930,40 +959,22 @@ function cardEj(f){
     h += `<p class="nota">Total: ${ej.min} min${ej.kcal ? " · ≈ " + ej.kcal + " kcal quemadas" : ""}.` +
          (ej.sinPeso ? " Falta el peso en Dieta para estimar las calorías de algunos." : "") + `</p>`;
   }
-  const n = nutriDia(f);
-  if(n && n.quemadasManual > 0) h += `<p class="nota">Calorías quemadas cargadas a mano en Dieta: ${Math.round(n.quemadasManual)} kcal.</p>`;
-  return tarjeta("🏃 Fitness", enlace, h);
+  if(manual > 0) h += `<p class="nota">Calorías quemadas cargadas a mano en Dieta: ${manual} kcal.</p>`;
+  h += `<a class="ir" href="${RUTAS.ejercicio}">Abrir Fitness</a>`;
+  return `<details class="res-det"><summary>${resumen}</summary><div class="res-cuerpo">${h}</div></details>`;
 }
 
 function cardTar(f){
-  const enlace = {href:RUTAS.tareas, txt:"Abrir Tareas"};
-  if(!fuentes.tareas) return tarjeta("✅ Tareas", enlace, `<p class="vacio">No encuentro tareas guardadas todavía (o no comparten dominio).</p>`);
+  const enlace = `<a href="${RUTAS.tareas}">Abrir Tareas</a>`;
+  if(!fuentes.tareas) return `<div class="res-linea"><span>✅ Tareas <span style="font-weight:400;color:var(--muted)">· sin datos todavía</span></span>${enlace}</div>`;
   const t = tarDia(f);
-  let h = "";
-  const li = (x, extra) => `<div class="fila-item"><span>${esc(x.nombre)}${x.modo==="opcional"?" <small style='color:var(--muted)'>(opcional)</small>":""}</span><span>${extra||""}</span></div>`;
-  if(f === hoy){
-    if(!t.paraHoy.length) h += `<p class="vacio">No quedan tareas de hoy pendientes. 🎉</p>`;
-    else {
-      const orden = FRANJAS.map(([id,et]) => [et, t.paraHoy.filter(x => (x.tipo==="horario" ? (x.franja||null) : null) === id)]);
-      let restantes = 8;
-      orden.forEach(([et, lista])=>{
-        if(!lista.length || restantes <= 0) return;
-        const corte = lista.slice(0, restantes); restantes -= corte.length;
-        h += `<div class="franja">${et}</div>` + corte.map(x => li(x, x.lista==="casa" ? "🏠" : "")).join("");
-      });
-      if(t.paraHoy.length > 8) h += `<p class="nota">y ${t.paraHoy.length-8} más en Tareas.</p>`;
-    }
-    const lp = Object.keys(t.largoPlazo);
-    if(lp.length) h += `<p class="nota">Además, pendientes de más largo plazo: ${lp.map(k => t.largoPlazo[k]+" "+(t.largoPlazo[k]>1 ? k+"es" : k)).join(", ")}.</p>`;
-  }
-  if(t.hechas.length){
-    h += `<div class="franja">Hechas este día</div>` + t.hechas.map(x => li(x, x._extra || "✔")).join("");
-  }
-  if(t.vuelven.length){
-    h += `<div class="franja">${f > hoy ? "Vuelven a pendientes" : "Volvieron a pendientes"}</div>` + t.vuelven.map(x => li(x, "⏰")).join("");
-  }
-  if(!h) h = `<p class="vacio">${f > hoy ? "Nada programado. Las tareas repetitivas se calculan sobre la marcha." : "Sin datos de tareas este día."}</p>`;
-  return tarjeta("✅ Tareas", enlace, h);
+  const hechas = new Set(t.hechas.map(x => x.id)).size;
+  const partes = [];
+  if(f <= hoy) partes.push(hechas + (hechas===1 ? " hecha" : " hechas"));
+  if(f === hoy) partes.push(t.paraHoy.length + (t.paraHoy.length===1 ? " pendiente de hoy" : " pendientes de hoy"));
+  if(t.vuelven.length) partes.push(t.vuelven.length + (f > hoy ? " vuelve" : " volvió") + (t.vuelven.length===1 ? "" : "n") + " a pendientes");
+  if(!partes.length) partes.push("nada programado");
+  return `<div class="res-linea"><span>✅ Tareas: <span style="font-weight:400">${partes.join(" · ")}</span></span>${enlace}</div>`;
 }
 
 let agendaAbierta = null;   // null = automática (abierta si el día tiene citas con hora)
@@ -1022,10 +1033,12 @@ function renderPanel(){
   if(!evs.length) h += `<p class="vacio">Sin citas este día.</p>`;
   if(sinHora.length) h += `<div class="franja" style="margin-top:0">Todo el día</div>` + sinHora.map(e => htmlEvento(e, sel)).join("");
   h += htmlAgenda(sel, conHora);
-  if(vista.capas.nutri) h += cardNutri(sel);
-  if(vista.capas.ej) h += cardEj(sel);
-  if(vista.capas.tar) h += cardTar(sel);
   document.getElementById("panelDia").innerHTML = h;
+  let r = "";
+  if(vista.capas.nutri) r += cardNutri(sel);
+  if(vista.capas.ej) r += cardEj(sel);
+  if(vista.capas.tar) r += cardTar(sel);
+  document.getElementById("panelResumen").innerHTML = r;
 }
 
 function renderProximas(){
