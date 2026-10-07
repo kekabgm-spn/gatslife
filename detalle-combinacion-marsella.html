@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <script>document.documentElement.style.visibility = "hidden";</script>
+  <script type="module" src="js/muro-login.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Detalle de combinación — Marsella — El Código de las Cartas</title>
+
+  <link rel="stylesheet" href="css/icons.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/responsive.css">
+
+  <style>
+    /* Pestañas RR/RI/IR/II — no existe una clase previa para esto en
+       components.css (distinto del toggle-orientacion, que es de 2
+       estados, no 4). */
+    .tabs-posicion {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-1);
+      border-bottom: 1px solid rgba(201, 168, 76, 0.15);
+      margin-bottom: var(--space-4);
+    }
+    .tab-posicion {
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--text-muted);
+      font-family: 'Cinzel', serif;
+      font-size: 0.8rem;
+      letter-spacing: 0.03em;
+      padding: var(--space-2) var(--space-3);
+      cursor: pointer;
+      transition: color 0.15s ease, border-color 0.15s ease;
+    }
+    .tab-posicion:hover {
+      color: var(--text-main);
+    }
+    .tab-posicion.activo {
+      color: var(--secondary);
+      border-bottom-color: var(--secondary);
+    }
+    .tab-posicion:disabled {
+      opacity: 0.3;
+      cursor: default;
+    }
+    .panel-combinacion {
+      background: var(--bg-card);
+      border: 1px solid rgba(201, 168, 76, 0.15);
+      border-radius: 10px;
+      padding: var(--space-4);
+    }
+  </style>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0A0A0A">
+  <link rel="icon" type="image/png" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <script src="js/pwa.js" defer></script>
+</head>
+<body data-page="detalle-combinacion">
+
+  <header class="nav">
+    <a href="index.html" class="nav__logo">El Código de las Cartas</a>
+    <nav class="nav__links">
+      <a href="combinaciones-marsella.html" class="nav__link">
+        <i class="ph ph-arrow-left" aria-hidden="true"></i>&nbsp;Combinaciones
+      </a>
+      <a href="arcanos.html" class="nav__link">
+        <i class="ph ph-cards" aria-hidden="true"></i>&nbsp;Arcanos
+      </a>
+      <a href="estudios.html" class="nav__link">
+        <i class="ph ph-book-open-text" aria-hidden="true"></i>&nbsp;Estudios
+      </a>
+      <a href="index.html" class="nav__link">
+        <i class="ph ph-house" aria-hidden="true"></i>&nbsp;Inicio
+      </a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="page-header">
+      <div class="container--narrow">
+        <h1 class="page-header__title" id="titulo">Cargando…</h1>
+        <p class="page-header__subtitle">Tarot de Marsella</p>
+        <div class="imagenes-combinacion" id="imagenes-combinacion"></div>
+      </div>
+    </section>
+
+    <section class="section--tight">
+      <div class="container--narrow">
+
+        <div class="tabs-posicion" id="tabs-posicion" role="tablist"></div>
+
+        <div class="panel-combinacion" id="panel-combinacion">
+          <p style="text-align:center; color: var(--text-muted);">
+            <i class="ph ph-spinner" aria-hidden="true"></i> Cargando combinación…
+          </p>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <footer class="section--tight" style="text-align:center; color: var(--text-muted); font-size: 0.8rem;">
+    <p>El Código de las Cartas · Tarot de Marsella &amp; Rider-Waite-Smith</p>
+  </footer>
+
+  <script>
+    // Fija --nav-height con la altura real de .nav, para que la barra
+    // de cartas (.imagenes-combinacion, sticky) se pegue justo debajo
+    // sin dejar hueco ni taparla.
+    function _fijarAlturaNav() {
+      const nav = document.querySelector('.nav');
+      if (nav) document.documentElement.style.setProperty('--nav-height', nav.offsetHeight + 'px');
+    }
+    _fijarAlturaNav();
+    window.addEventListener('resize', _fijarAlturaNav);
+  </script>
+
+  <script type="module">
+    import { getUrlParam, verificarEstadoRecovery, navigateTo, getMazo } from './js/navigation.js';
+    import { getCartaById, buscarTodasLasPosiciones } from './js/data-marsella.js';
+    import { renderCombinacionCompleta } from './js/combinations-marsella.js';
+    import { renderPlaceholderCarta } from './js/card-helpers.js';
+
+    const TABS = [
+      { codigo: 'RR', label: 'Recta · Recta' },
+      { codigo: 'RI', label: 'Recta · Invertida' },
+      { codigo: 'IR', label: 'Invertida · Recta' },
+      { codigo: 'II', label: 'Invertida · Invertida' },
+    ];
+
+    let _combinaciones = null;
+    let _carta1 = null;
+    let _carta2 = null;
+    let _tabActiva = 'RR';
+
+    function renderTabs() {
+      const cont = document.getElementById('tabs-posicion');
+      cont.innerHTML = TABS.map(t => {
+        const disponible = !!_combinaciones[t.codigo];
+        return `
+          <button class="tab-posicion${t.codigo === _tabActiva ? ' activo' : ''}"
+                  data-codigo="${t.codigo}" role="tab"
+                  ${!disponible ? 'disabled title="Sin datos para esta posición"' : ''}>
+            ${t.label}
+          </button>`;
+      }).join('');
+
+      cont.querySelectorAll('.tab-posicion:not(:disabled)').forEach(btn => {
+        btn.addEventListener('click', () => {
+          _tabActiva = btn.dataset.codigo;
+          renderTabs();
+          renderPanel();
+        });
+      });
+    }
+
+    function renderImagenes() {
+      const [or1, or2] = _tabActiva.split('').map(c => c === 'I' ? 'invertida' : 'recta');
+      document.getElementById('imagenes-combinacion').innerHTML = `
+        ${renderPlaceholderCarta(_carta1, getMazo(), 'medium', or1)}
+        <i class="ph ph-plus" aria-hidden="true"></i>
+        ${renderPlaceholderCarta(_carta2, getMazo(), 'medium', or2)}`;
+    }
+
+    function renderPanel() {
+      const panel = document.getElementById('panel-combinacion');
+      panel.innerHTML = renderCombinacionCompleta(_combinaciones[_tabActiva], _carta1, _carta2);
+      renderImagenes();
+    }
+
+    async function init() {
+      const check = verificarEstadoRecovery('detalle-combinacion', 'marsella');
+      if (!check.ok) {
+        navigateTo(check.redirectTo);
+        return;
+      }
+
+      const id1 = parseInt(getUrlParam('id1'), 10);
+      const id2 = parseInt(getUrlParam('id2'), 10);
+
+      try {
+        [_carta1, _carta2, _combinaciones] = await Promise.all([
+          getCartaById(id1),
+          getCartaById(id2),
+          buscarTodasLasPosiciones(id1, id2),
+        ]);
+
+        document.getElementById('titulo').textContent =
+          `${_carta1?.arcano_es ?? '—'} + ${_carta2?.arcano_es ?? '—'}`;
+
+        // Primera pestaña con datos reales, por si RR faltara para este par
+        _tabActiva = TABS.find(t => _combinaciones[t.codigo])?.codigo ?? 'RR';
+
+        renderTabs();
+        renderPanel();
+
+      } catch (err) {
+        console.error('[detalle-combinacion-marsella] Error cargando combinación:', err);
+        document.getElementById('panel-combinacion').innerHTML = `
+          <p style="text-align:center; color: var(--text-muted);">
+            <i class="ph ph-warning-circle" aria-hidden="true"></i>
+            No se pudo cargar esta combinación.
+          </p>`;
+      }
+    }
+
+    init();
+  </script>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

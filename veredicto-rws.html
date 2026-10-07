@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <script>document.documentElement.style.visibility = "hidden";</script>
+  <script type="module" src="js/muro-login.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tu veredicto — El Código de las Cartas</title>
+
+  <link rel="stylesheet" href="css/icons.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/responsive.css">
+
+  <style>
+    /* Clases nuevas del rediseño del 24/8/2026 — no existían en
+       components.css (esa hoja cubre el esquema viejo de resultado-*.html).
+       El resto (badge-tipo, badge-recta/invertida, dato-item, etc.) ya
+       existe y se reutiliza tal cual. */
+    .tira-cartas { display: flex; gap: var(--space-3); flex-wrap: wrap; justify-content: center; margin-bottom: var(--space-5); }
+    .tira-cartas__item { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); width: 110px; }
+    .tira-cartas__posicion { font-size: 0.7rem; color: var(--secondary); text-transform: uppercase; letter-spacing: 0.05em; }
+    .tira-cartas__carta { width: 100%; }
+    .tira-cartas__nombre { font-size: 0.75rem; text-align: center; color: var(--text-main); }
+
+    .bloque-respuesta { background: var(--bg-card); border: 1px solid rgba(201,168,76,0.15); border-radius: 10px; padding: var(--space-4); margin-bottom: var(--space-5); }
+    .respuesta__apertura { font-family: 'Cinzel', serif; color: var(--secondary); margin-bottom: var(--space-2); }
+
+    .parte-a__carta, .carta-tirada { border-bottom: 1px solid rgba(255,255,255,0.06); padding: var(--space-3) 0; }
+    .parte-a__dom-nota { color: var(--text-muted); font-size: 0.85rem; font-style: italic; }
+
+    .parte-b, .parte-c { margin: var(--space-5) 0; }
+    .proximo-paso { background: var(--bg-card); border-left: 3px solid var(--secondary); padding: var(--space-3); margin-top: var(--space-3); }
+    .proximo-paso .fuente { font-size: 0.7rem; color: var(--text-muted); margin-top: var(--space-2); }
+
+    .acciones { display: flex; gap: var(--space-2); margin: var(--space-5) 0; }
+
+    .cartas-tirada .carta-tirada h3 { font-family: 'Cinzel', serif; color: var(--text-main); }
+    .carta-tirada__tema { color: var(--secondary); font-weight: 600; }
+
+    .tension-fila { display: grid; grid-template-columns: 1fr 100px 90px; align-items: center; gap: var(--space-2); font-size: 0.8rem; padding: var(--space-1) 0; }
+    .tension-barra { background: rgba(255,255,255,0.08); border-radius: 4px; height: 8px; overflow: hidden; }
+    .tension-barra span { display: block; height: 100%; background: var(--secondary); }
+    .respuesta__desarrollo { list-style: none; padding: 0; margin: var(--space-2) 0; display: flex; flex-direction: column; gap: var(--space-1); }
+    .respuesta__desarrollo li { font-size: 0.9rem; color: var(--text-main); }
+    .respuesta__sintesis-ia { font-style: italic; color: var(--text-main); margin-bottom: var(--space-3); border-left: 2px solid var(--secondary); padding-left: var(--space-2); }
+  </style>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0A0A0A">
+  <link rel="icon" type="image/png" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <script src="js/pwa.js" defer></script>
+</head>
+<body data-page="veredicto-rws">
+
+  <header class="nav">
+    <a href="index.html" class="nav__logo">El Código de las Cartas</a>
+    <nav class="nav__links">
+      <div id="auth-widget"></div>
+      <a href="historial.html" class="nav__link"><i class="ph ph-clock-counter-clockwise" aria-hidden="true"></i>&nbsp;Mi historial</a>
+      <a href="index.html" class="nav__link"><i class="ph ph-house" aria-hidden="true"></i>&nbsp;Inicio</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="section--tight">
+      <div class="container--narrow" id="contenido-veredicto">
+        <p style="text-align:center; color: var(--text-muted);">
+          <i class="ph ph-spinner" aria-hidden="true"></i> Preparando tu veredicto…
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="section--tight" style="text-align:center; color: var(--text-muted); font-size: 0.8rem;">
+    <p>El Código de las Cartas · Tarot Rider-Waite-Smith &amp; Rider-Waite-Smith</p>
+  </footer>
+
+  <script type="module">
+    import { initAuthWidget } from './js/auth-widget.js';
+    initAuthWidget('auth-widget');
+  </script>
+  <script type="module" src="js/veredicto-rws.js"></script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

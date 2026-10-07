@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <script>document.documentElement.style.visibility = "hidden";</script>
+  <script type="module" src="js/muro-login.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tabla Maestra · 78 Arcanos — Base NEW_ERA.cartas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Cinzel:wght@400;500&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Noto+Sans+Symbols+2&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0c0a; --bg2: #141210; --bg3: #1a1714;
+    --ink: #e8e2d8; --ink2: #b8b0a4; --ink3: #7a7268;
+    --gold: #c9a96e; --gold2: #a07840; --gold-light: #e8c990;
+    --border: rgba(201,169,110,0.18); --border2: rgba(201,169,110,0.08);
+    --fuego: #c0392b; --agua: #2471a3; --aire: #b7950b;
+    --tierra: #1e8449; --espiritu: #7d3c98;
+    --fuego-bg: rgba(192,57,43,0.13); --agua-bg: rgba(36,113,163,0.13);
+    --aire-bg: rgba(183,149,11,0.13); --tierra-bg: rgba(30,132,73,0.13);
+    --espiritu-bg: rgba(125,60,152,0.13);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: 'EB Garamond', 'Cormorant Garamond', 'Noto Sans Symbols 2', serif;
+    font-size: 18px; line-height: 1.75;
+  }
+
+  nav {
+    position: sticky; top: 0; z-index: 200;
+    background: rgba(14,12,10,0.96); backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+    padding: 0.55rem 2rem; display: flex; align-items: center;
+    justify-content: space-between; gap: 1rem;
+  }
+  nav .site-name {
+    font-family: 'Cinzel', serif; font-size: 0.78rem;
+    letter-spacing: 0.15em; color: var(--gold); text-decoration: none; white-space: nowrap;
+  }
+  nav .nav-links {
+    display: flex; flex-wrap: wrap; gap: 0.2rem 1rem;
+    font-size: 0.72rem; letter-spacing: 0.08em; font-family: 'Cinzel', serif;
+  }
+  nav .nav-links a { color: var(--ink3); text-decoration: none; transition: color 0.2s; }
+  nav .nav-links a:hover { color: var(--gold); }
+
+  header { max-width: 900px; margin: 0 auto; padding: 4.5rem 2rem 2.5rem; text-align: center; }
+  .header-label {
+    font-family: 'Cinzel', serif; font-size: 0.7rem;
+    letter-spacing: 0.28em; color: var(--gold); text-transform: uppercase; margin-bottom: 1.1rem;
+  }
+  h1 {
+    font-family: 'Cinzel', serif; font-size: clamp(1.7rem, 3.5vw, 2.5rem);
+    font-weight: 500; color: var(--ink); line-height: 1.2; margin-bottom: 0.9rem;
+  }
+  .header-subtitle { font-style: italic; color: var(--ink2); font-size: 1rem; max-width: 620px; margin: 0 auto 2rem; }
+
+  .editorial-note {
+    max-width: 820px; margin: 0 auto 3rem; padding: 1.5rem 2rem;
+    border: 1px solid var(--border); border-left: 3px solid var(--gold2);
+    background: var(--bg2); font-size: 0.93rem; color: var(--ink2); font-style: italic; line-height: 1.7;
+  }
+
+  main { max-width: 1500px; margin: 0 auto; padding: 0 1.5rem 6rem; }
+
+  .parte-label {
+    font-family: 'Cinzel', serif; font-size: 0.66rem;
+    letter-spacing: 0.3em; color: var(--gold2); text-transform: uppercase; margin-bottom: 0.5rem;
+  }
+  h2 {
+    font-family: 'Cinzel', serif; font-size: clamp(1.2rem, 2vw, 1.6rem);
+    font-weight: 500; color: var(--ink); margin-bottom: 0.4rem;
+  }
+  h2 em {
+    display: block; font-family: 'Cormorant Garamond', serif;
+    font-size: 0.86rem; font-style: italic; color: var(--ink3);
+    font-weight: 300; margin-top: 0.3rem; margin-bottom: 1.4rem;
+  }
+  .triple-ornament { text-align: center; color: var(--gold); font-size: 1rem; margin: 3.5rem 0; letter-spacing: 0.5em; }
+  p { margin-bottom: 1.1em; } strong { color: var(--gold-light); font-weight: 500; }
+
+  .leyenda-intro { max-width: 820px; margin: 0 auto 2rem; font-size: 0.96rem; color: var(--ink2); }
+  .leyenda-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 1rem; margin: 0 0 3rem; }
+  @media(max-width:1100px){ .leyenda-grid { grid-template-columns: repeat(3,1fr); } }
+  @media(max-width:800px){ .leyenda-grid { grid-template-columns: 1fr 1fr; } }
+  @media(max-width:520px){ .leyenda-grid { grid-template-columns: 1fr; } }
+  .leyenda-card {
+    background: var(--bg2); border: 1px solid var(--border); border-top: 2px solid var(--gold2); padding: 1.1rem 1.3rem;
+  }
+  .leyenda-card .lc-num { font-family:'Cinzel',serif; font-size:0.6rem; letter-spacing:0.25em; color:var(--gold2); text-transform:uppercase; margin-bottom:0.3rem; }
+  .leyenda-card .lc-title { font-family:'Cinzel',serif; font-size:0.8rem; letter-spacing:0.08em; color:var(--gold); margin-bottom:0.55rem; }
+  .leyenda-card p { font-size:0.85rem; color:var(--ink2); margin-bottom:0.5em; line-height:1.6; }
+  .leyenda-card p:last-child { margin-bottom:0; }
+
+  .leyenda-campo { background:var(--bg2); border:1px solid var(--border); border-left:3px solid var(--gold2); padding:1.3rem 1.6rem; margin-bottom:1.3rem; }
+  .leyenda-campo__cabecera { display:flex; align-items:baseline; gap:0.7rem; margin-bottom:0.9rem; flex-wrap:wrap; }
+  .leyenda-campo__col { font-family:'Cinzel',serif; font-size:0.6rem; letter-spacing:0.22em; color:var(--gold2); text-transform:uppercase; }
+  .leyenda-campo__nombre { font-family:'Cinzel',serif; font-size:0.92rem; letter-spacing:0.06em; color:var(--gold-light); }
+  .leyenda-campo p { font-size:0.9rem; color:var(--ink2); margin-bottom:0.65em; line-height:1.65; }
+  .leyenda-campo p:last-child { margin-bottom:0; }
+  .leyenda-campo p strong { display:block; font-family:'Cinzel',serif; font-size:0.66rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--gold); margin-bottom:0.2rem; }
+
+  .filtros-wrap { display:flex; flex-wrap:wrap; gap:0.4rem; margin-bottom:1rem; align-items:center; }
+  .filtros-label { font-family:'Cinzel',serif; font-size:0.66rem; letter-spacing:0.2em; color:var(--ink3); text-transform:uppercase; margin-right:0.3rem; }
+  .btn-filtro {
+    font-family:'Cinzel',serif; font-size:0.65rem; letter-spacing:0.1em; text-transform:uppercase;
+    padding:0.3rem 0.85rem; background:var(--bg3); border:1px solid var(--border); color:var(--ink3); cursor:pointer; transition:all 0.18s;
+  }
+  .btn-filtro:hover { color:var(--gold); border-color:var(--gold2); }
+  .btn-filtro.activo { background:var(--gold2); border-color:var(--gold); color:var(--bg); }
+
+  .orientacion-wrap { display:flex; flex-wrap:wrap; gap:0.4rem; margin-bottom:1.4rem; align-items:center; }
+  .btn-orient {
+    font-family:'Cinzel',serif; font-size:0.65rem; letter-spacing:0.1em; text-transform:uppercase;
+    padding:0.3rem 0.95rem; background:var(--bg3); border:1px solid var(--border); color:var(--ink3); cursor:pointer; transition:all 0.18s;
+  }
+  .btn-orient:hover { color:var(--gold-light); border-color:var(--gold2); }
+  .btn-orient.activo-recta { background:var(--tierra); border-color:var(--tierra); color:var(--bg); }
+  .btn-orient.activo-inv { background:var(--fuego); border-color:var(--fuego); color:var(--bg); }
+
+  .tabla-outer { overflow-x:auto; margin-bottom:3rem; }
+  table.maestro { width:100%; border-collapse:collapse; font-size:0.8rem; min-width:2100px; }
+  table.maestro thead th {
+    background:var(--bg3); color:var(--gold); font-family:'Cinzel',serif;
+    font-size:0.6rem; letter-spacing:0.09em; padding:0.6rem 0.65rem;
+    text-align:left; border-bottom:1px solid var(--gold2); white-space:nowrap;
+  }
+  table.maestro thead th abbr { text-decoration:none; border-bottom:1px dotted var(--gold2); }
+  table.maestro tbody tr { transition:background 0.15s; }
+  table.maestro tbody tr:hover { background:rgba(201,169,110,0.06) !important; }
+  table.maestro tbody td {
+    padding:0.55rem 0.65rem; border-bottom:1px solid var(--border2);
+    vertical-align:top; color:var(--ink2); line-height:1.4;
+  }
+  table.maestro tbody td:first-child { color:var(--gold-light); font-family:'Cinzel',serif; font-size:0.74rem; white-space:nowrap; }
+  table.maestro tbody td:nth-child(2) { color:var(--ink); font-style:italic; white-space:nowrap; }
+
+  .badge-cell { display:flex; flex-direction:column; gap:0.2rem; min-width:150px; max-width:220px; }
+  .badge-cell .bc-desc { font-size:0.76rem; color:var(--ink3); line-height:1.45; }
+  .cell-med { min-width:130px; max-width:190px; }
+  .cell-kw { min-width:200px; max-width:270px; }
+  .cell-wide { min-width:240px; max-width:320px; }
+  .empty-dash { color:var(--ink3); }
+
+  tr.grupo-sep td {
+    background:var(--bg3) !important; color:var(--gold) !important;
+    font-family:'Cinzel',serif !important; font-size:0.65rem !important;
+    font-style:normal !important; letter-spacing:0.25em; text-transform:uppercase;
+    padding:0.55rem 0.7rem !important;
+    border-top:1px solid var(--gold2) !important; border-bottom:1px solid var(--gold2) !important;
+  }
+
+  .badge { display:inline-block; font-family:'Cinzel',serif; font-size:0.6rem; letter-spacing:0.08em; padding:0.12rem 0.45rem; border:1px solid; width:fit-content; }
+  .elem-fuego      { color:var(--fuego);   border-color:var(--fuego);   background:var(--fuego-bg); }
+  .elem-agua       { color:var(--agua);    border-color:var(--agua);    background:var(--agua-bg); }
+  .elem-aire       { color:var(--aire);    border-color:var(--aire);    background:var(--aire-bg); }
+  .elem-tierra     { color:var(--tierra);  border-color:var(--tierra);  background:var(--tierra-bg); }
+  .elem-eter       { color:var(--espiritu);border-color:var(--espiritu);background:var(--espiritu-bg); }
+  .elem-luz        { color:var(--gold-light); border-color:var(--gold2); background:rgba(201,169,110,0.1); }
+  .elem-conciencia { color:var(--ink);     border-color:var(--ink3);    background:rgba(184,176,164,0.08); }
+  .elem-mixto      { color:var(--ink3);    border-color:var(--ink3);    background:transparent; }
+
+  .tipo-mayor     { color:var(--gold-light); border-color:var(--gold2);  background:rgba(201,169,110,0.1); }
+  .tipo-as        { color:var(--ink);        border-color:var(--ink3);   background:rgba(184,176,164,0.08); }
+  .tipo-numeral   { color:var(--ink3);       border-color:var(--ink3);   background:transparent; }
+  .tipo-rey       { color:var(--fuego);      border-color:var(--fuego);  background:var(--fuego-bg); }
+  .tipo-reina     { color:var(--agua);       border-color:var(--agua);   background:var(--agua-bg); }
+  .tipo-caballero { color:var(--aire);       border-color:var(--aire);   background:var(--aire-bg); }
+  .tipo-paje      { color:var(--tierra);     border-color:var(--tierra); background:var(--tierra-bg); }
+
+  .badge-numvib { color:var(--gold-light); border-color:var(--gold2); background:rgba(201,169,110,0.1); }
+
+  tr.oculto { display:none; }
+
+  .modos-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1.2rem; margin:2rem 0 4rem; }
+  @media(max-width:750px){ .modos-grid { grid-template-columns:1fr; } }
+  .modo-box { background:var(--bg2); border:1px solid var(--border); border-top:2px solid var(--gold); padding:1.4rem 1.5rem; }
+  .modo-box .modo-num { font-family:'Cinzel',serif; font-size:0.6rem; letter-spacing:0.3em; color:var(--gold2); margin-bottom:0.3rem; }
+  .modo-box .modo-title { font-family:'Cinzel',serif; font-size:0.9rem; letter-spacing:0.1em; color:var(--gold-light); margin-bottom:0.7rem; }
+  .modo-box p { font-size:0.88rem; color:var(--ink2); margin-bottom:0.6em; line-height:1.6; }
+  .modo-box p:last-child { margin-bottom:0; }
+  .modo-box .modo-ejemplo { font-size:0.8rem; color:var(--ink3); font-style:italic; border-top:1px solid var(--border2); margin-top:0.8rem; padding-top:0.8rem; }
+
+  footer { border-top:1px solid var(--border); padding:2rem; text-align:center; font-family:'Cinzel',serif; font-size:0.68rem; letter-spacing:0.12em; color:var(--ink3); }
+
+  /* NUEVO 17/9/2026: pie de página — mapa libre de todos los estudios +
+     tablas de referencia. Estas 4 páginas no tenían nada acá abajo. */
+  /* FIX 29/9/2026: se revierte el fijo del 17/9/2026 — en móvil ocupaba
+     demasiada pantalla y quedaba superpuesto sobre el contenido. Vuelve
+     a ser un pie de página normal. */
+  .tabla-pie {
+    max-width: 1100px; margin: 0 auto; padding: 1.2rem 2rem;
+    border-top: 1px solid var(--border);
+    background: var(--bg);
+  }
+  .tabla-pie__mapa, .tabla-pie__tablas { display: flex; flex-wrap: wrap; gap: 0.9rem 1.4rem; }
+  .tabla-pie__mapa a, .tabla-pie__tablas a {
+    color: var(--ink2); text-decoration: none; font-size: 1rem;
+    font-family: 'EB Garamond', serif;
+  }
+  .tabla-pie__mapa a:hover, .tabla-pie__tablas a:hover { color: var(--gold-light); }
+  .tabla-pie__tablas { margin-top: 1.2rem; padding-top: 1.2rem; border-top: 1px solid var(--border2); }
+  .tabla-pie__tablas-titulo {
+    width: 100%; font-family: 'Cinzel', serif; font-size: 0.72rem;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold);
+    margin-bottom: 0.3rem;
+  }
+</style>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0A0A0A">
+  <link rel="icon" type="image/png" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <script src="js/pwa.js" defer></script>
+</head>
+<body>
+
+<nav>
+  <a class="site-name" href="index.html">Academia · El Código de las Cartas</a>
+  <div class="nav-links">
+    <a href="introduccion.html">Consultas</a>
+    <a href="arcanos.html">Arcanos</a>
+    <a href="combinaciones-rws.html">Combinaciones</a>
+    <a href="estudios.html">Estudios</a>
+  </div>
+</nav>
+
+<header>
+  <div class="header-label">Base NEW_ERA.cartas · Anexo de Referencia</div>
+  <h1>Tabla Maestra de los 78 Arcanos</h1>
+  <p class="header-subtitle">15 columnas de correspondencias Nueva Era: numerología reducida, chakra, cristales, aromas, mantra, color y planta. Las palabras clave cambian según la orientación de la carta.</p>
+</header>
+
+<main>
+
+  <div class="editorial-note">
+    <strong>Cómo usar este anexo.</strong> Esta tabla condensa, fila por fila, las correspondencias holísticas de la hoja NEW_ERA.cartas: a qué número vibracional reduce la carta, qué chakra, piedra, aroma, aceite, mantra, color y planta le corresponden. Solo la columna <strong>Palabras clave</strong> cambia con la orientación — usa el selector Recta / Invertida para alternarla. El resto de las columnas describe una correspondencia fija, igual en ambas posiciones.
+    <br><br>
+    <strong>Nota sobre el número vibracional.</strong> No es un principio fijo como la letra hebrea en Golden Dawn: es el resultado de reducir por suma progresiva el número de la carta (o el número maestro 11/22/33 si aparece antes de completarse la reducción). Dos cartas sin relación esotérica entre sí pueden compartir vibración por pura coincidencia numérica de su posición en la secuencia.
+  </div>
+
+  <div class="parte-label">I · Antes de Consultar</div>
+  <h2>Leyenda de Columnas<em>Qué es cada campo y cómo influye en la lectura</em></h2>
+
+  <p class="leyenda-intro">Cada columna responde a una pregunta distinta sobre la carta, tal como está definida en la base NEW_ERA.cartas. Para cada una: qué es, para qué sirve, y cómo cambia lo que leés según su valor.</p>
+
+  <div class="leyenda-campo">
+    <div class="leyenda-campo__cabecera"><span class="leyenda-campo__col">Col. 1</span><span class="leyenda-campo__nombre">Nº</span></div>
+    <p><strong>Qué es</strong>El número tal como aparece impreso en la carta: romano en los Mayores, As o número arábigo en los Menores, ausente en las figuras de corte.</p>
+    <p><strong>Para qué sirve</strong>Identifica la carta sin ambigüedad — y es también el dato de entrada para el cálculo del Número vibracional.</p>
+    <p><strong>Cómo influye</strong>No es un principio fijo en Nueva Era, como sí lo es en Golden Dawn: aquí es solo la materia prima de un cálculo posterior. La Templanza es XIV en la secuencia, pero su dato de entrada para la reducción es 14 → 1+4 = 5, no el catorce en sí.</p>
+  </div>
+
+  <div class="leyenda-campo">
+    <div class="leyenda-campo__cabecera"><span class="leyenda-campo__col">Col. 2</span><span class="leyenda-campo__nombre">Nombre</span></div>
+    <p><strong>Qué es</strong>El nombre en inglés de la carta, siguiendo el mismo sistema Golden Dawn / Rider-Waite-Smith que el resto de las bases.</p>
+    <p><strong>Para qué sirve</strong>Se conserva en inglés porque la numerología de Nueva Era también se articuló en esa lengua — sus autoras fundacionales escribieron y nombraron sus correspondencias en inglés, y traducir antes de tiempo puede ocultar de qué carta habla cada fuente.</p>
+    <p><strong>Cómo influye</strong>No tiene peso interpretativo — ancla visualmente la fila.</p>
+  </div>
+
+  <div class="leyenda-campo">
+    <div class="leyenda-campo__cabecera"><span class="leyenda-campo__col">Col. 3</span><span class="leyenda-campo__nombre">Tipo de Arcano</span></div>
+    <p><strong>Qué es</strong>La primera gran división del mazo: Mayor, o dentro de los Menores, As, Numeral o una de las cuatro figuras de corte.</p>
+    <p><strong>Para qué sirve</strong>Marca de entrada qué clase de energía trae la carta, igual que en las demás bases del sitio.</p>
+    <p><strong>Cómo influye</strong>Condiciona qué tan literal conviene tomar el Número vibracional: en un Numeral, el número vibracional resume bien la carta entera; en un Mayor o una figura de corte, es solo una capa más entre varias.</p>
+  </div>
+
+  <div class="leyenda-campo">
+    <div class="leyenda-campo__cabecera"><span class="leyenda-campo__col">Col. 4</span><span class="leyenda-campo__nombre">Palo</span></div>
+    <p><strong>Qué es</strong>El terreno elemental al que pertenece un naipe menor. Los Mayores no llevan palo.</p>
+    <p><strong>Para qué sirve</strong>Sitúa la carta en uno de los cuatro ámbitos de vida del mazo.</p>
+    <p><strong>Cómo influye</strong>Junto con Elemento, permite agrupar mentalmente las cartas por terreno de vida al usar los filtros de la tabla.</p>
+  </div>
+
+  <div class="leyenda-campo">
+    <div class="leyenda-campo__cabecera"><span class="leyenda-campo__col">Col. 5</span><span class="leyenda-campo__nombre">Elemento</span></div>
+    <p><strong>Qué es</strong>Fuego, agua, aire o tierra en los Menores. En varios Mayores, Nueva Era usa categorías propias más allá de los cuatro clásicos — Luz, Éter, Conciencia pura — para las cartas que no encajan en ningún elemento material.</p>
+    <p><strong>Para qué sirve</strong>Es la cualidad energética de base de la carta.</p>
+    <p><strong>Cómo influye</strong>Un valor como «Conciencia pura» o «Luz» en vez de un elemento clásico señala que esa carta opera en un registro que Nueva Era considera anterior o superior a lo puramente elemental — no es un dato incompleto, es la propia lógica del sistema.</p>
+  </div>
+
+  <div class="leyenda-campo">
+    <div class="leyenda-campo__cabecera"><span class="leyenda-campo__col">Col. 6</span><span class="leyenda-campo__nombre">Palabras clave</span></div>
+    <p><strong>Qué es</strong>Un puñado de términos que capturan la energía de la carta de un solo vistazo.</p>
+    <p><strong>Para qué sirve</strong>Lecturas rápidas, o tiradas con muchas cartas donde no hay tiempo de leer un párrafo por carta.</p>
+    <p><strong>Cómo influye</strong>Es la única columna de esta tabla que cambia con la orientación — usá el toggle Recta/Invertida para alternarla. El resto de las correspondencias (chakra, piedra, mantra…) son del arquetipo, no de su polaridad, y no se ven afectadas.</p>
+  </div>
+
+  <div class="leyenda-campo">
+    <div class="leyenda-campo__cabecera"><span class="leyenda-campo__col">Col. 7</span><span class="leyenda-campo__nombre">Número vibracional</span></div>
+    <p><strong>Qué es</strong>El dígito resultante de reducir por suma progresiva el número de la carta, o el número maestro (11, 22, 33) si aparece antes de completar la reducción y no se destruye.</p>
+    <p><strong>Para qué sirve</strong>Es la unidad simbólica base de Nueva Era, equivalente en función —aunque no en naturaleza— a la letra hebrea en Golden Dawn: todo lo demás se construye sobre este dato.</p>
+    <p><strong>Cómo influye</strong>A diferencia de la letra hebrea, que es una asignación fija y categórica, el número vibracional es aritmético: se calcula, no se consulta. Dos cartas sin relación esotérica entre sí pueden compartir vibración por pura coincidencia numérica de su posición en la secuencia — no implica un parentesco simbólico real entre ellas.</p>
+  </div>
+
+  <div class="leyenda-campo">
+    <div class="leyenda-campo__cabecera"><span class="leyenda-campo__col">Col. 8</span><span class="leyenda-campo__nombre">Influencia numerológica</span></div>
+    <p><strong>Qué es</strong>La cualidad simbólica de ese número vibracional aplicada a esta carta en concreto.</p>
+    <p><strong>Para qué sirve</strong>Traduce el dígito de la columna anterior en una lectura concreta, en vez de dejarlo como un número abstracto.</p>
+    <p><strong>Cómo influye</strong>Es la columna que conecta el cálculo aritmético del Número vibracional con el resto de la interpretación de la carta — el puente entre el dato y su sentido.</p>
+  </div>
+
+  <div class="leyenda-campo">
+    <div class="leyenda-campo__cabecera"><span class="leyenda-campo__col">Col. 9</span><span class="leyenda-campo__nombre">Chakra</span></div>
+    <p><strong>Qué es</strong>El centro energético del sistema de chakras con el que resuena la carta.</p>
+    <p><strong>Para qué sirve</strong>Sitúa la energía de la carta dentro del cuerpo sutil, útil para trabajo somático o meditativo.</p>
+    <p><strong>Cómo influye</strong>Es una correspondencia fija: no cambia con la orientación de la carta.</p>
+  </div>
+
+  <div class="leyenda-campo">
+    <div class="leyenda-campo__cabecera"><span class="leyenda-campo__col">Col. 10</span><span class="leyenda-campo__nombre">Piedras y cristales</span></div>
+    <p><strong>Qué es</strong>Los minerales asociados a la energía de la carta.</p>
+    <p><strong>Para qué sirve</strong>Trabajos de meditación o altar centrados en la carta.</p>
+    <p><strong>Cómo influye</strong>Correspondencia fija, igual que Chakra — describe el arquetipo, no su polaridad.</p>
+  </div>
+
+  <div class="leyenda-campo">
+    <div class="leyenda-campo__cabecera"><span class="leyenda-campo__col">Col. 11</span><span class="leyenda-campo__nombre">Aroma / Incienso</span></div>
+    <p><strong>Qué es</strong>Los aromas que acompañan y refuerzan la energía de la carta en un ritual o meditación.</p>
+    <p><strong>Para qué sirve</strong>Trabajo sensorial asociado a la carta, para preparar un espacio de meditación o ritual.</p>
+    <p><strong>Cómo influye</strong>Correspondencia fija.</p>
+  </div>
+
+  <div class="leyenda-campo">
+    <div class="leyenda-campo__cabecera"><span class="leyenda-campo__col">Col. 12</span><span class="leyenda-campo__nombre">Aceites y hierbas</span></div>
+    <p><strong>Qué es</strong>Los aceites esenciales y plantas asociados a la carta.</p>
+    <p><strong>Para qué sirve</strong>Ungir velas, difundir en el ambiente o preparar infusiones rituales relacionadas con la energía de la carta.</p>
+    <p><strong>Cómo influye</strong>Correspondencia fija — complementa a Aroma/Incienso con una aplicación más física (aceites, infusiones) en vez de solo olfativa.</p>
+  </div>
+
+  <div class="leyenda-campo">
+    <div class="leyenda-campo__cabecera"><span class="leyenda-campo__col">Col. 13</span><span class="leyenda-campo__nombre">Mantra</span></div>
+    <p><strong>Qué es</strong>La palabra, sílaba o frase que se recita para sintonizar con la energía de la carta.</p>
+    <p><strong>Para qué sirve</strong>Trabajo de repetición vocal o mental, típico de una práctica de meditación centrada en la carta.</p>
+    <p><strong>Cómo influye</strong>Correspondencia fija. En varias filas coincide con el mantra semilla (bija) del chakra asociado en la columna Chakra, cuando la carta resuena con un centro energético específico.</p>
+  </div>
+
+  <div class="leyenda-campo">
+    <div class="leyenda-campo__cabecera"><span class="leyenda-campo__col">Col. 14</span><span class="leyenda-campo__nombre">Color</span></div>
+    <p><strong>Qué es</strong>El color asociado a la carta.</p>
+    <p><strong>Para qué sirve</strong>Elegir velas, telas o elementos visuales en un altar o ritual centrado en la carta.</p>
+    <p><strong>Cómo influye</strong>Correspondencia fija.</p>
+  </div>
+
+  <div class="leyenda-campo">
+    <div class="leyenda-campo__cabecera"><span class="leyenda-campo__col">Col. 15</span><span class="leyenda-campo__nombre">Planta</span></div>
+    <p><strong>Qué es</strong>La planta o flor que simboliza la energía de la carta.</p>
+    <p><strong>Para qué sirve</strong>Cierra el conjunto de correspondencias rituales de la carta, junto a piedra, aroma, aceite, mantra y color.</p>
+    <p><strong>Cómo influye</strong>Correspondencia fija — no cambia con la orientación de la carta.</p>
+  </div>
+
+  <div class="triple-ornament">✦ ✦ ✦</div>
+
+  <div class="parte-label">II · Consulta</div>
+  <h2>Tabla Maestra · 78 Arcanos<em>Base NEW_ERA.cartas — filtra por grupo y orientación</em></h2>
+
+  <div class="filtros-wrap">
+    <span class="filtros-label">Ver:</span>
+    <button class="btn-filtro activo" onclick="filtrar(this,'todos')">Todos</button>
+    <button class="btn-filtro" onclick="filtrar(this,'mayor')">Arcanos Mayores</button>
+    <button class="btn-filtro" onclick="filtrar(this,'bastos')">Bastos</button>
+    <button class="btn-filtro" onclick="filtrar(this,'copas')">Copas</button>
+    <button class="btn-filtro" onclick="filtrar(this,'espadas')">Espadas</button>
+    <button class="btn-filtro" onclick="filtrar(this,'oros')">Oros</button>
+    <button class="btn-filtro" onclick="filtrar(this,'figuras')">Solo Figuras</button>
+  </div>
+
+  <div class="orientacion-wrap">
+    <span class="filtros-label">Orientación:</span>
+    <button class="btn-orient activo-recta" id="btnRecta" onclick="orientar('recta')">Recta</button>
+    <button class="btn-orient" id="btnInv" onclick="orientar('inv')">Invertida</button>
+  </div>
+
+  <div class="tabla-outer">
+  <table class="maestro">
+    <thead>
+      <tr>
+        <th><abbr title="Número o rango">Nº</abbr></th>
+        <th><abbr title="Nombre de la carta en inglés">Nombre</abbr></th>
+        <th><abbr title="Mayor, As, Numeral o figura de corte">Tipo de Arcano</abbr></th>
+        <th><abbr title="Palo del naipe menor (vacío en los mayores)">Palo</abbr></th>
+        <th><abbr title="Elemento clásico o categoría Nueva Era">Elemento</abbr></th>
+        <th><abbr title="Términos que capturan la energía de la carta — cambia con la orientación">Palabras clave</abbr></th>
+        <th><abbr title="Dígito reducido o número maestro">Núm. vibracional</abbr></th>
+        <th><abbr title="Cualidad simbólica del número vibracional en esta carta">Influencia numerológica</abbr></th>
+        <th><abbr title="Centro energético asociado">Chakra</abbr></th>
+        <th><abbr title="Minerales asociados">Piedras y cristales</abbr></th>
+        <th><abbr title="Aromas para ritual o meditación">Aroma / Incienso</abbr></th>
+        <th><abbr title="Aceites esenciales y plantas rituales">Aceites y hierbas</abbr></th>
+        <th><abbr title="Palabra o frase para sintonizar con la carta">Mantra</abbr></th>
+        <th><abbr title="Color asociado">Color</abbr></th>
+        <th><abbr title="Planta o flor simbólica">Planta</abbr></th>
+      </tr>
+    </thead>
+    <tbody id="cuerpoTabla"></tbody>
+  </table>
+  </div>
+
+  <div class="triple-ornament">✦ ✦ ✦</div>
+
+  <div class="parte-label">III · Cómo Trabajar con esta Tabla</div>
+  <h2>Tres Modos de Uso<em>Consulta por carta · por grupo · por orientación</em></h2>
+
+  <div class="modos-grid">
+    <div class="modo-box">
+      <div class="modo-num">Modo I</div>
+      <div class="modo-title">Consulta por Carta</div>
+      <p>Localiza una carta y lee su fila completa: identificación y elemento primero, palabras clave y número vibracional después, y cierra con las correspondencias rituales — chakra, piedra, aroma, aceite, mantra, color y planta.</p>
+      <div class="modo-ejemplo">Ideal para preparar un altar o una meditación centrada en una carta concreta.</div>
+    </div>
+    <div class="modo-box">
+      <div class="modo-num">Modo II</div>
+      <div class="modo-title">Consulta por Grupo</div>
+      <p>Filtra un palo y recorre sus catorce cartas en orden. Verás cómo el número vibracional avanza junto al chakra y el color, formando una progresión reconocible dentro del mismo elemento.</p>
+      <p>«Solo Figuras» aísla las dieciséis cartas de corte, útiles para comparar sus correspondencias rituales entre los cuatro palos.</p>
+      <div class="modo-ejemplo">Ideal para estudiar un palo como progresión ritual completa, no carta a carta.</div>
+    </div>
+    <div class="modo-box">
+      <div class="modo-num">Modo III</div>
+      <div class="modo-title">Consulta por Orientación</div>
+      <p>Alterna entre Recta e Invertida para ver cómo cambian las palabras clave de cada carta, mientras el resto de la fila —chakra, piedra, aroma, mantra— permanece fijo: son correspondencias del arquetipo, no de su polaridad.</p>
+      <div class="modo-ejemplo">Ideal para practicar la lectura de invertidas sin perder de vista la correspondencia ritual base.</div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <div>Academia · El Código de las Cartas</div>
+  <div style="margin-top:0.4rem;">Tabla Maestra · 78 Arcanos · Base NEW_ERA.cartas</div>
+</footer>
+
+<script>
+const arcanos = [
+  {n:'0',nombre:'THE FOOL',slug:'the-fool',grupo:'mayor',figura:false,tipoB:'MAYOR',tipoD:'Fuerza arquetípica universal. Representa etapas del ciclo vital que operan como marco trascendental de la experiencia. Indica que lo que ocurre responde a un patrón mayor del destino.',tipoClass:'mayor',paloB:'',paloD:'',paloClass:'',elem:'Conciencia pura',elemClass:'conciencia',kwR:'espontaneidad, apertura, comienzo, fe, libertad',kwI:'imprudencia, dispersión, ingenuidad, indecisión, caos',numVib:'0',influencia:'Potencial puro previo a toda manifestación; el vacío fértil que antecede al Uno (síntesis a partir de la propia descripción de chakras.html: "el espíritu puro antes de toda manifestación") [0 no forma parte de la tabla de los nueve números de la fuente; tratamiento por síntesis, no lookup directo]',chakra:'Corona',piedras:'Amatista, cuarzo cristal de roca, selenita',aroma:'Olíbano, loto, sándalo',aceites:'Aceite de olíbano o sándalo; flor de loto',mantra:'Silencio / OM completo',color:'Violeta',planta:'Loto'},
+  {n:'I',nombre:'THE MAGICIAN',slug:'the-magician',grupo:'mayor',figura:false,tipoB:'MAYOR',tipoD:'Fuerza arquetípica universal. Representa etapas del ciclo vital que operan como marco trascendental de la experiencia. Indica que lo que ocurre responde a un patrón mayor del destino.',tipoClass:'mayor',paloB:'',paloD:'',paloClass:'',elem:'Éter',elemClass:'eter',kwR:'voluntad, manifestación, habilidad, iniciativa, foco',kwI:'manipulación, dispersión, engaño, bloqueo, potencial desaprovechado',numVib:'1',influencia:'Voluntad creadora, inicio consciente',chakra:'Garganta',piedras:'Aguamarina, lapislázuli, turquesa',aroma:'Eucalipto, menta, manzanilla azul',aceites:'Aceite de eucalipto o menta; hierba de salvia',mantra:'HAM',color:'Azul',planta:'Eucalipto'},
+  {n:'II',nombre:'THE HIGH PRIESTESS',slug:'the-high-priestess',grupo:'mayor',figura:false,tipoB:'MAYOR',tipoD:'Fuerza arquetípica universal. Representa etapas del ciclo vital que operan como marco trascendental de la experiencia. Indica que lo que ocurre responde a un patrón mayor del destino.',tipoClass:'mayor',paloB:'',paloD:'',paloClass:'',elem:'Luz',elemClass:'luz',kwR:'intuición, misterio, quietud, sabiduría interior, receptividad',kwI:'secretos ocultos, desconexión, superficialidad, negación de la intuición',numVib:'2',influencia:'Intuición, receptividad, lo oculto',chakra:'Tercer Ojo',piedras:'Amatista, lapislázuli, fluorita',aroma:'Lavanda, salvia blanca, olíbano',aceites:'Aceite de lavanda o salvia; hierba de artemisa',mantra:'OM (AUM)',color:'Índigo',planta:'Lavanda'},
+  {n:'III',nombre:'THE EMPRESS',slug:'the-empress',grupo:'mayor',figura:false,tipoB:'MAYOR',tipoD:'Fuerza arquetípica universal. Representa etapas del ciclo vital que operan como marco trascendental de la experiencia. Indica que lo que ocurre responde a un patrón mayor del destino.',tipoClass:'mayor',paloB:'',paloD:'',paloClass:'',elem:'Agua',elemClass:'agua',kwR:'abundancia, fertilidad, sensualidad, creatividad, nutrición',kwI:'bloqueo creativo, dependencia, exceso, descuido de sí misma',numVib:'3',influencia:'Creatividad, abundancia, expresión',chakra:'Sacro',piedras:'Cornalina, piedra luna, ámbar',aroma:'Naranja dulce, ylang-ylang, sándalo',aceites:'Aceite de naranja dulce o jazmín; hierba de canela',mantra:'VAM',color:'Naranja',planta:'Caléndula'},
+  {n:'IV',nombre:'THE EMPEROR',slug:'the-emperor',grupo:'mayor',figura:false,tipoB:'MAYOR',tipoD:'Fuerza arquetípica universal. Representa etapas del ciclo vital que operan como marco trascendental de la experiencia. Indica que lo que ocurre responde a un patrón mayor del destino.',tipoClass:'mayor',paloB:'',paloD:'',paloClass:'',elem:'Tierra',elemClass:'tierra',kwR:'estructura, autoridad, disciplina, protección, orden',kwI:'rigidez, control excesivo, autoritarismo, inseguridad disfrazada de dureza',numVib:'4',influencia:'Estructura, autoridad, orden',chakra:'Raíz',piedras:'Jaspe rojo, hematita, granate',aroma:'Pachulí, cedro, vetiver',aceites:'Aceite de vetiver o jengibre; hierba de raíz de jengibre',mantra:'LAM',color:'Rojo',planta:'Roble'},
+  {n:'V',nombre:'THE HIEROPHANT',slug:'the-hierophant',grupo:'mayor',figura:false,tipoB:'MAYOR',tipoD:'Fuerza arquetípica universal. Representa etapas del ciclo vital que operan como marco trascendental de la experiencia. Indica que lo que ocurre responde a un patrón mayor del destino.',tipoClass:'mayor',paloB:'',paloD:'',paloClass:'',elem:'Éter',elemClass:'eter',kwR:'tradición, enseñanza, guía espiritual, conformidad estructurada, institución',kwI:'dogmatismo, rebeldía, cuestionamiento de normas, ruptura con lo establecido',numVib:'5',influencia:'Tradición, enseñanza, estructura espiritual establecida (tensión doctrinal señalada en la fuente: NE lee el 5 como cambio/libertad, en tensión con El Hierofante)',chakra:'Garganta',piedras:'Aguamarina, lapislázuli, turquesa',aroma:'Eucalipto, menta, manzanilla azul',aceites:'Aceite de eucalipto o menta; hierba de salvia',mantra:'HAM',color:'Azul',planta:'Eucalipto'},
+  {n:'VI',nombre:'THE LOVERS',slug:'the-lovers',grupo:'mayor',figura:false,tipoB:'MAYOR',tipoD:'Fuerza arquetípica universal. Representa etapas del ciclo vital que operan como marco trascendental de la experiencia. Indica que lo que ocurre responde a un patrón mayor del destino.',tipoClass:'mayor',paloB:'',paloD:'',paloClass:'',elem:'Agua',elemClass:'agua',kwR:'elección, unión, alineación de valores, atracción, armonía',kwI:'desalineación, indecisión, conflicto de valores, ruptura, tentación',numVib:'6',influencia:'Armonía, elección desde el amor',chakra:'Sacro',piedras:'Cornalina, piedra luna, ámbar',aroma:'Naranja dulce, ylang-ylang, sándalo',aceites:'Aceite de naranja dulce o jazmín; hierba de canela',mantra:'VAM',color:'Naranja',planta:'Caléndula'},
+  {n:'VII',nombre:'THE CHARIOT',slug:'the-chariot',grupo:'mayor',figura:false,tipoB:'MAYOR',tipoD:'Fuerza arquetípica universal. Representa etapas del ciclo vital que operan como marco trascendental de la experiencia. Indica que lo que ocurre responde a un patrón mayor del destino.',tipoClass:'mayor',paloB:'',paloD:'',paloClass:'',elem:'Fuego',elemClass:'fuego',kwR:'determinación, voluntad, avance, autocontrol, victoria',kwI:'dirección perdida, agresividad, dispersión de fuerzas, estancamiento',numVib:'7',influencia:'Búsqueda, determinación, misterio',chakra:'Plexo Solar',piedras:'Citrino, ojo de tigre, ámbar',aroma:'Limón, bergamota, romero',aceites:'Aceite de limón o romero; hierba de manzanilla',mantra:'RAM',color:'Amarillo',planta:'Girasol'},
+  {n:'VIII',nombre:'STRENGTH',slug:'strength',grupo:'mayor',figura:false,tipoB:'MAYOR',tipoD:'Fuerza arquetípica universal. Representa etapas del ciclo vital que operan como marco trascendental de la experiencia. Indica que lo que ocurre responde a un patrón mayor del destino.',tipoClass:'mayor',paloB:'',paloD:'',paloClass:'',elem:'Aire',elemClass:'aire',kwR:'fortaleza interior, compasión, paciencia, coraje suave, dominio de sí',kwI:'duda de sí, autoexigencia dura, pérdida de confianza, fuerza mal dirigida',numVib:'8',influencia:'Poder consciente, equilibrio activo [fuente empareja Strength y Justice bajo la misma vibración 8, independientemente de si ocupan VIII o XI]',chakra:'Corazón',piedras:'Cuarzo rosa, aventurina verde, jade',aroma:'Rosa, geranio, bergamota',aceites:'Aceite de rosa o geranio; hierba de espino blanco',mantra:'YAM',color:'Verde',planta:'Rosa'},
+  {n:'IX',nombre:'THE HERMIT',slug:'the-hermit',grupo:'mayor',figura:false,tipoB:'MAYOR',tipoD:'Fuerza arquetípica universal. Representa etapas del ciclo vital que operan como marco trascendental de la experiencia. Indica que lo que ocurre responde a un patrón mayor del destino.',tipoClass:'mayor',paloB:'',paloD:'',paloClass:'',elem:'Luz',elemClass:'luz',kwR:'introspección, guía interior, soledad elegida, sabiduría, retiro',kwI:'aislamiento, soledad no deseada, retraimiento excesivo, evasión',numVib:'9',influencia:'Sabiduría interior, guía compasiva',chakra:'Tercer Ojo',piedras:'Amatista, lapislázuli, fluorita',aroma:'Lavanda, salvia blanca, olíbano',aceites:'Aceite de lavanda o salvia; hierba de artemisa',mantra:'OM (AUM)',color:'Índigo',planta:'Lavanda'},
+  {n:'X',nombre:'WHEEL OF FORTUNE',slug:'wheel-of-fortune',grupo:'mayor',figura:false,tipoB:'MAYOR',tipoD:'Fuerza arquetípica universal. Representa etapas del ciclo vital que operan como marco trascendental de la experiencia. Indica que lo que ocurre responde a un patrón mayor del destino.',tipoClass:'mayor',paloB:'',paloD:'',paloClass:'',elem:'Fuego',elemClass:'fuego',kwR:'ciclos, cambio de fortuna, destino, giro inesperado, oportunidad',kwI:'resistencia al cambio, mala racha, pérdida de control, ciclo que se repite',numVib:'1',influencia:'El Iniciador: impulso pionero, capacidad de abrir camino en solitario [reducción 10→1 sobre el propio ordinal de la carta, aplicando la regla general de la fuente] La fuente también asocia esta carta, de forma adicional, con el número maestro 11 ("iluminación, intuición maestra") en la tabla de correspondencias NE.',chakra:'Plexo Solar',piedras:'Citrino, ojo de tigre, ámbar',aroma:'Limón, bergamota, romero',aceites:'Aceite de limón o romero; hierba de manzanilla',mantra:'RAM',color:'Amarillo',planta:'Girasol'},
+  {n:'XI',nombre:'JUSTICE',slug:'justice',grupo:'mayor',figura:false,tipoB:'MAYOR',tipoD:'Fuerza arquetípica universal. Representa etapas del ciclo vital que operan como marco trascendental de la experiencia. Indica que lo que ocurre responde a un patrón mayor del destino.',tipoClass:'mayor',paloB:'',paloD:'',paloClass:'',elem:'Luz',elemClass:'luz',kwR:'equidad, verdad, consecuencia, equilibrio, claridad legal',kwI:'injusticia, desequilibrio, evasión de responsabilidad, parcialidad',numVib:'8',influencia:'Poder consciente, equilibrio activo [fuente empareja Strength y Justice bajo la misma vibración 8, independientemente de si ocupan VIII o XI]',chakra:'Tercer Ojo',piedras:'Amatista, lapislázuli, fluorita',aroma:'Lavanda, salvia blanca, olíbano',aceites:'Aceite de lavanda o salvia; hierba de artemisa',mantra:'OM (AUM)',color:'Índigo',planta:'Lavanda'},
+  {n:'XII',nombre:'THE HANGED MAN',slug:'the-hanged-man',grupo:'mayor',figura:false,tipoB:'MAYOR',tipoD:'Fuerza arquetípica universal. Representa etapas del ciclo vital que operan como marco trascendental de la experiencia. Indica que lo que ocurre responde a un patrón mayor del destino.',tipoClass:'mayor',paloB:'',paloD:'',paloClass:'',elem:'Fuego',elemClass:'fuego',kwR:'pausa, nueva perspectiva, rendición consciente, espera activa, sacrificio con sentido',kwI:'estancamiento, resistencia inútil, sacrificio sin propósito, victimismo',numVib:'3',influencia:'El Creador: expresión, entusiasmo, forma que se comparte [reducción 12→3 sobre el propio ordinal de la carta, aplicando la regla general de la fuente]',chakra:'Plexo Solar *',piedras:'Citrino, ojo de tigre, ámbar',aroma:'Limón, bergamota, romero',aceites:'Aceite de limón o romero; hierba de manzanilla',mantra:'RAM',color:'Amarillo',planta:'Girasol'},
+  {n:'XIII',nombre:'DEATH',slug:'death',grupo:'mayor',figura:false,tipoB:'MAYOR',tipoD:'Fuerza arquetípica universal. Representa etapas del ciclo vital que operan como marco trascendental de la experiencia. Indica que lo que ocurre responde a un patrón mayor del destino.',tipoClass:'mayor',paloB:'',paloD:'',paloClass:'',elem:'Tierra',elemClass:'tierra',kwR:'transformación, cierre de ciclo, liberación, renacimiento, final necesario',kwI:'resistencia al final, estancamiento, miedo al cambio, ciclo prolongado innecesariamente',numVib:'4',influencia:'El Constructor: orden, disciplina, estructura que sostiene [reducción 13→4 sobre el propio ordinal de la carta, aplicando la regla general de la fuente]',chakra:'Raíz *',piedras:'Jaspe rojo, hematita, granate',aroma:'Pachulí, cedro, vetiver',aceites:'Aceite de vetiver o jengibre; hierba de raíz de jengibre',mantra:'LAM',color:'Rojo',planta:'Roble'},
+  {n:'XIV',nombre:'TEMPERANCE',slug:'temperance',grupo:'mayor',figura:false,tipoB:'MAYOR',tipoD:'Fuerza arquetípica universal. Representa etapas del ciclo vital que operan como marco trascendental de la experiencia. Indica que lo que ocurre responde a un patrón mayor del destino.',tipoClass:'mayor',paloB:'',paloD:'',paloClass:'',elem:'Aire',elemClass:'aire',kwR:'equilibrio, paciencia, moderación, síntesis, sanación gradual',kwI:'desequilibrio, exceso, impaciencia, extremos, desajuste interior',numVib:'5',influencia:'El Explorador: ruptura de estructura, cambio, exposición al riesgo [reducción 14→5 sobre el propio ordinal de la carta, aplicando la regla general de la fuente]',chakra:'Corazón',piedras:'Cuarzo rosa, aventurina verde, jade',aroma:'Rosa, geranio, bergamota',aceites:'Aceite de rosa o geranio; hierba de espino blanco',mantra:'YAM',color:'Verde',planta:'Rosa'},
+  {n:'XV',nombre:'THE DEVIL',slug:'the-devil',grupo:'mayor',figura:false,tipoB:'MAYOR',tipoD:'Fuerza arquetípica universal. Representa etapas del ciclo vital que operan como marco trascendental de la experiencia. Indica que lo que ocurre responde a un patrón mayor del destino.',tipoClass:'mayor',paloB:'',paloD:'',paloClass:'',elem:'Tierra',elemClass:'tierra',kwR:'atadura, materialismo, deseo intenso, dependencia, sombra propia',kwI:'liberación, ruptura de patrones, reconocimiento de la sombra, recuperación de poder',numVib:'6',influencia:'El Armonizador: cuidado, responsabilidad, equilibrio entre dar y recibir [reducción 15→6 sobre el propio ordinal de la carta, aplicando la regla general de la fuente]',chakra:'Raíz',piedras:'Jaspe rojo, hematita, granate',aroma:'Pachulí, cedro, vetiver',aceites:'Aceite de vetiver o jengibre; hierba de raíz de jengibre',mantra:'LAM',color:'Rojo',planta:'Roble'},
+  {n:'XVI',nombre:'THE TOWER',slug:'the-tower',grupo:'mayor',figura:false,tipoB:'MAYOR',tipoD:'Fuerza arquetípica universal. Representa etapas del ciclo vital que operan como marco trascendental de la experiencia. Indica que lo que ocurre responde a un patrón mayor del destino.',tipoClass:'mayor',paloB:'',paloD:'',paloClass:'',elem:'Tierra',elemClass:'tierra',kwR:'ruptura súbita, revelación, crisis necesaria, colapso de lo falso, despertar',kwI:'crisis evitada, cambio postergado, colapso interno silencioso, resistencia al despertar',numVib:'7',influencia:'El Buscador: introspección, revisión, resistencia estratégica [reducción 16→7 sobre el propio ordinal de la carta, aplicando la regla general de la fuente]',chakra:'Raíz',piedras:'Jaspe rojo, hematita, granate',aroma:'Pachulí, cedro, vetiver',aceites:'Aceite de vetiver o jengibre; hierba de raíz de jengibre',mantra:'LAM',color:'Rojo',planta:'Roble'},
+  {n:'XVII',nombre:'THE STAR',slug:'the-star',grupo:'mayor',figura:false,tipoB:'MAYOR',tipoD:'Fuerza arquetípica universal. Representa etapas del ciclo vital que operan como marco trascendental de la experiencia. Indica que lo que ocurre responde a un patrón mayor del destino.',tipoClass:'mayor',paloB:'',paloD:'',paloClass:'',elem:'Conciencia pura',elemClass:'conciencia',kwR:'esperanza, sanación, inspiración, fe renovada, serenidad',kwI:'desesperanza, desconexión de la fe, agotamiento, pérdida de inspiración',numVib:'8',influencia:'El Realizador: capacidad ejecutiva, velocidad, resultado tangible [reducción 17→8 sobre el propio ordinal de la carta, aplicando la regla general de la fuente]',chakra:'Corona',piedras:'Amatista, cuarzo cristal de roca, selenita',aroma:'Olíbano, loto, sándalo',aceites:'Aceite de olíbano o sándalo; flor de loto',mantra:'Silencio / OM completo',color:'Violeta',planta:'Loto'},
+  {n:'XVIII',nombre:'THE MOON',slug:'the-moon',grupo:'mayor',figura:false,tipoB:'MAYOR',tipoD:'Fuerza arquetípica universal. Representa etapas del ciclo vital que operan como marco trascendental de la experiencia. Indica que lo que ocurre responde a un patrón mayor del destino.',tipoClass:'mayor',paloB:'',paloD:'',paloClass:'',elem:'Agua',elemClass:'agua',kwR:'incertidumbre, inconsciente, intuición confusa, miedo difuso, ilusión',kwI:'claridad progresiva, engaño revelado, miedo superado, confusión que se disipa',numVib:'9',influencia:'El Humanista: culminación, fuerza acumulada, cierre de ciclo [reducción 18→9 sobre el propio ordinal de la carta, aplicando la regla general de la fuente]',chakra:'Sacro',piedras:'Cornalina, piedra luna, ámbar',aroma:'Naranja dulce, ylang-ylang, sándalo',aceites:'Aceite de naranja dulce o jazmín; hierba de canela',mantra:'VAM',color:'Naranja',planta:'Caléndula'},
+  {n:'XIX',nombre:'THE SUN',slug:'the-sun',grupo:'mayor',figura:false,tipoB:'MAYOR',tipoD:'Fuerza arquetípica universal. Representa etapas del ciclo vital que operan como marco trascendental de la experiencia. Indica que lo que ocurre responde a un patrón mayor del destino.',tipoClass:'mayor',paloB:'',paloD:'',paloClass:'',elem:'Fuego',elemClass:'fuego',kwR:'alegría, vitalidad, éxito, claridad, autenticidad',kwI:'éxito parcial, optimismo forzado, retraso momentáneo, falta de reconocimiento',numVib:'1',influencia:'El Iniciador: impulso pionero, capacidad de abrir camino en solitario [reducción 19→1 sobre el propio ordinal de la carta, aplicando la regla general de la fuente]',chakra:'Plexo Solar',piedras:'Citrino, ojo de tigre, ámbar',aroma:'Limón, bergamota, romero',aceites:'Aceite de limón o romero; hierba de manzanilla',mantra:'RAM',color:'Amarillo',planta:'Girasol'},
+  {n:'XX',nombre:'JUDGEMENT',slug:'judgement',grupo:'mayor',figura:false,tipoB:'MAYOR',tipoD:'Fuerza arquetípica universal. Representa etapas del ciclo vital que operan como marco trascendental de la experiencia. Indica que lo que ocurre responde a un patrón mayor del destino.',tipoClass:'mayor',paloB:'',paloD:'',paloClass:'',elem:'Éter',elemClass:'eter',kwR:'llamado interior, renacimiento, evaluación honesta, absolución, despertar',kwI:'autojuicio severo, negación del llamado, arrepentimiento paralizante, indecisión',numVib:'2',influencia:'El Cooperador: sensibilidad y necesidad de construir en pareja o alianza [reducción 20→2 sobre el propio ordinal de la carta, aplicando la regla general de la fuente]',chakra:'Garganta',piedras:'Aguamarina, lapislázuli, turquesa',aroma:'Eucalipto, menta, manzanilla azul',aceites:'Aceite de eucalipto o menta; hierba de salvia',mantra:'HAM',color:'Azul',planta:'Eucalipto'},
+  {n:'XXI',nombre:'THE WORLD',slug:'the-world',grupo:'mayor',figura:false,tipoB:'MAYOR',tipoD:'Fuerza arquetípica universal. Representa etapas del ciclo vital que operan como marco trascendental de la experiencia. Indica que lo que ocurre responde a un patrón mayor del destino.',tipoClass:'mayor',paloB:'',paloD:'',paloClass:'',elem:'Conciencia pura',elemClass:'conciencia',kwR:'culminación, integración, logro, plenitud, cierre exitoso de ciclo',kwI:'cierre incompleto, atajos, sensación de estancamiento antes de la meta, aplazamiento',numVib:'3',influencia:'El Creador: expresión, entusiasmo, forma que se comparte [reducción 21→3 sobre el propio ordinal de la carta, aplicando la regla general de la fuente] La fuente también asocia esta carta, de forma adicional, con el número maestro 22 (total de Arcanos Mayores) como símbolo de integración completa.',chakra:'Corona',piedras:'Amatista, cuarzo cristal de roca, selenita',aroma:'Olíbano, loto, sándalo',aceites:'Aceite de olíbano o sándalo; flor de loto',mantra:'Silencio / OM completo',color:'Violeta',planta:'Loto'},
+  {n:'AS',nombre:'ACE OF WANDS',slug:'ace-of-wands',grupo:'bastos',figura:false,tipoB:'AS',tipoD:'Potencial puro y semilla elemental. Es el punto de origen donde una energía se condensa por primera vez, antes de cualquier desarrollo o consecuencia.',tipoClass:'as',paloB:'WANDS',paloD:'Campo de la acción, la creatividad y la voluntad. Aquí operan el impulso, la inspiración y la fuerza expansiva que impulsa hacia adelante.',paloClass:'fuego',elem:'Fuego',elemClass:'fuego',kwR:'chispa creativa, nuevo proyecto, entusiasmo, potencial de acción, inspiración',kwI:'impulso frenado, falta de dirección, entusiasmo apagado, retraso del inicio',numVib:'1',influencia:'El Iniciador: impulso pionero, capacidad de abrir camino en solitario, en el dominio de la acción y la voluntad (Bastos)',chakra:'Plexo Solar',piedras:'Citrino, ojo de tigre, ámbar',aroma:'Limón, bergamota, romero',aceites:'Aceite de limón o romero; hierba de manzanilla',mantra:'RAM',color:'Amarillo',planta:'Girasol'},
+  {n:'2',nombre:'TWO OF WANDS',slug:'two-of-wands',grupo:'bastos',figura:false,tipoB:'NUMERAL',tipoD:'Desarrollo progresivo del elemento a través del número. Cada cifra añade complejidad, desafío o maduración a la fuerza que el palo representa.',tipoClass:'numeral',paloB:'WANDS',paloD:'Campo de la acción, la creatividad y la voluntad. Aquí operan el impulso, la inspiración y la fuerza expansiva que impulsa hacia adelante.',paloClass:'fuego',elem:'Fuego',elemClass:'fuego',kwR:'planificación, visión a futuro, decisión de expansión, dominio inicial, ambición',kwI:'miedo a lo desconocido, planes estancados, falta de visión, comodidad excesiva',numVib:'2',influencia:'El Cooperador: sensibilidad y necesidad de construir en pareja o alianza, en el dominio de la acción y la voluntad (Bastos)',chakra:'Plexo Solar',piedras:'Citrino, ojo de tigre, ámbar',aroma:'Limón, bergamota, romero',aceites:'Aceite de limón o romero; hierba de manzanilla',mantra:'RAM',color:'Amarillo',planta:'Girasol'},
+  {n:'3',nombre:'THREE OF WANDS',slug:'three-of-wands',grupo:'bastos',figura:false,tipoB:'NUMERAL',tipoD:'Desarrollo progresivo del elemento a través del número. Cada cifra añade complejidad, desafío o maduración a la fuerza que el palo representa.',tipoClass:'numeral',paloB:'WANDS',paloD:'Campo de la acción, la creatividad y la voluntad. Aquí operan el impulso, la inspiración y la fuerza expansiva que impulsa hacia adelante.',paloClass:'fuego',elem:'Fuego',elemClass:'fuego',kwR:'expansión en curso, resultados esperados, visión a largo plazo, colaboración',kwI:'retrasos, obstáculos externos, expectativas frustradas, falta de apoyo',numVib:'3',influencia:'El Creador: expresión, entusiasmo, forma que se comparte, en el dominio de la acción y la voluntad (Bastos)',chakra:'Plexo Solar',piedras:'Citrino, ojo de tigre, ámbar',aroma:'Limón, bergamota, romero',aceites:'Aceite de limón o romero; hierba de manzanilla',mantra:'RAM',color:'Amarillo',planta:'Girasol'},
+  {n:'4',nombre:'FOUR OF WANDS',slug:'four-of-wands',grupo:'bastos',figura:false,tipoB:'NUMERAL',tipoD:'Desarrollo progresivo del elemento a través del número. Cada cifra añade complejidad, desafío o maduración a la fuerza que el palo representa.',tipoClass:'numeral',paloB:'WANDS',paloD:'Campo de la acción, la creatividad y la voluntad. Aquí operan el impulso, la inspiración y la fuerza expansiva que impulsa hacia adelante.',paloClass:'fuego',elem:'Fuego',elemClass:'fuego',kwR:'celebración, estabilidad temporal, comunidad, logro compartido, armonía hogareña',kwI:'celebración pospuesta, tensión en el hogar, inestabilidad temporal, falta de cierre',numVib:'4',influencia:'El Constructor: orden, disciplina, estructura que sostiene, en el dominio de la acción y la voluntad (Bastos)',chakra:'Plexo Solar',piedras:'Citrino, ojo de tigre, ámbar',aroma:'Limón, bergamota, romero',aceites:'Aceite de limón o romero; hierba de manzanilla',mantra:'RAM',color:'Amarillo',planta:'Girasol'},
+  {n:'5',nombre:'FIVE OF WANDS',slug:'five-of-wands',grupo:'bastos',figura:false,tipoB:'NUMERAL',tipoD:'Desarrollo progresivo del elemento a través del número. Cada cifra añade complejidad, desafío o maduración a la fuerza que el palo representa.',tipoClass:'numeral',paloB:'WANDS',paloD:'Campo de la acción, la creatividad y la voluntad. Aquí operan el impulso, la inspiración y la fuerza expansiva que impulsa hacia adelante.',paloClass:'fuego',elem:'Fuego',elemClass:'fuego',kwR:'competencia, conflicto menor, tensión creativa, desacuerdo, rivalidad',kwI:'conflicto resuelto, evitación del enfrentamiento, tensión acumulada, competencia interna',numVib:'5',influencia:'El Explorador: ruptura de estructura, cambio, exposición al riesgo, en el dominio de la acción y la voluntad (Bastos)',chakra:'Plexo Solar',piedras:'Citrino, ojo de tigre, ámbar',aroma:'Limón, bergamota, romero',aceites:'Aceite de limón o romero; hierba de manzanilla',mantra:'RAM',color:'Amarillo',planta:'Girasol'},
+  {n:'6',nombre:'SIX OF WANDS',slug:'six-of-wands',grupo:'bastos',figura:false,tipoB:'NUMERAL',tipoD:'Desarrollo progresivo del elemento a través del número. Cada cifra añade complejidad, desafío o maduración a la fuerza que el palo representa.',tipoClass:'numeral',paloB:'WANDS',paloD:'Campo de la acción, la creatividad y la voluntad. Aquí operan el impulso, la inspiración y la fuerza expansiva que impulsa hacia adelante.',paloClass:'fuego',elem:'Fuego',elemClass:'fuego',kwR:'reconocimiento, éxito visible, confianza, validación externa, victoria',kwI:'reconocimiento retrasado, arrogancia, éxito no compartido, necesidad excesiva de aprobación',numVib:'6',influencia:'El Armonizador: cuidado, responsabilidad, equilibrio entre dar y recibir, en el dominio de la acción y la voluntad (Bastos)',chakra:'Plexo Solar',piedras:'Citrino, ojo de tigre, ámbar',aroma:'Limón, bergamota, romero',aceites:'Aceite de limón o romero; hierba de manzanilla',mantra:'RAM',color:'Amarillo',planta:'Girasol'},
+  {n:'7',nombre:'SEVEN OF WANDS',slug:'seven-of-wands',grupo:'bastos',figura:false,tipoB:'NUMERAL',tipoD:'Desarrollo progresivo del elemento a través del número. Cada cifra añade complejidad, desafío o maduración a la fuerza que el palo representa.',tipoClass:'numeral',paloB:'WANDS',paloD:'Campo de la acción, la creatividad y la voluntad. Aquí operan el impulso, la inspiración y la fuerza expansiva que impulsa hacia adelante.',paloClass:'fuego',elem:'Fuego',elemClass:'fuego',kwR:'defensa de posición, perseverancia, desafío sostenido, firmeza ante presión',kwI:'agotamiento por defenderse, ceder terreno, sensación de estar superado, rendición prematura',numVib:'7',influencia:'El Buscador: introspección, revisión, resistencia estratégica, en el dominio de la acción y la voluntad (Bastos)',chakra:'Plexo Solar',piedras:'Citrino, ojo de tigre, ámbar',aroma:'Limón, bergamota, romero',aceites:'Aceite de limón o romero; hierba de manzanilla',mantra:'RAM',color:'Amarillo',planta:'Girasol'},
+  {n:'8',nombre:'EIGHT OF WANDS',slug:'eight-of-wands',grupo:'bastos',figura:false,tipoB:'NUMERAL',tipoD:'Desarrollo progresivo del elemento a través del número. Cada cifra añade complejidad, desafío o maduración a la fuerza que el palo representa.',tipoClass:'numeral',paloB:'WANDS',paloD:'Campo de la acción, la creatividad y la voluntad. Aquí operan el impulso, la inspiración y la fuerza expansiva que impulsa hacia adelante.',paloClass:'fuego',elem:'Fuego',elemClass:'fuego',kwR:'velocidad, avance rápido, noticias inminentes, movimiento sin obstáculos, alineación',kwI:'retrasos, frustración por lentitud, dispersión de esfuerzos, precipitación',numVib:'8',influencia:'El Realizador: capacidad ejecutiva, velocidad, resultado tangible, en el dominio de la acción y la voluntad (Bastos)',chakra:'Plexo Solar',piedras:'Citrino, ojo de tigre, ámbar',aroma:'Limón, bergamota, romero',aceites:'Aceite de limón o romero; hierba de manzanilla',mantra:'RAM',color:'Amarillo',planta:'Girasol'},
+  {n:'9',nombre:'NINE OF WANDS',slug:'nine-of-wands',grupo:'bastos',figura:false,tipoB:'NUMERAL',tipoD:'Desarrollo progresivo del elemento a través del número. Cada cifra añade complejidad, desafío o maduración a la fuerza que el palo representa.',tipoClass:'numeral',paloB:'WANDS',paloD:'Campo de la acción, la creatividad y la voluntad. Aquí operan el impulso, la inspiración y la fuerza expansiva que impulsa hacia adelante.',paloClass:'fuego',elem:'Fuego',elemClass:'fuego',kwR:'resiliencia, última reserva de fuerza, vigilancia, resistencia ante la adversidad',kwI:'agotamiento extremo, desconfianza excesiva, rendición cercana, necesidad urgente de descanso',numVib:'9',influencia:'El Humanista: culminación, fuerza acumulada, cierre de ciclo, en el dominio de la acción y la voluntad (Bastos)',chakra:'Plexo Solar',piedras:'Citrino, ojo de tigre, ámbar',aroma:'Limón, bergamota, romero',aceites:'Aceite de limón o romero; hierba de manzanilla',mantra:'RAM',color:'Amarillo',planta:'Girasol'},
+  {n:'10',nombre:'TEN OF WANDS',slug:'ten-of-wands',grupo:'bastos',figura:false,tipoB:'NUMERAL',tipoD:'Desarrollo progresivo del elemento a través del número. Cada cifra añade complejidad, desafío o maduración a la fuerza que el palo representa.',tipoClass:'numeral',paloB:'WANDS',paloD:'Campo de la acción, la creatividad y la voluntad. Aquí operan el impulso, la inspiración y la fuerza expansiva que impulsa hacia adelante.',paloClass:'fuego',elem:'Fuego',elemClass:'fuego',kwR:'sobrecarga, exceso de responsabilidad, cercanía de la meta, carga autoimpuesta',kwI:'delegación, alivio de carga, agotamiento por exceso, necesidad de soltar responsabilidades',numVib:'1',influencia:'El Iniciador (10→1): impulso pionero, capacidad de abrir camino en solitario, en el dominio de la acción y la voluntad (Bastos)',chakra:'Plexo Solar',piedras:'Citrino, ojo de tigre, ámbar',aroma:'Limón, bergamota, romero',aceites:'Aceite de limón o romero; hierba de manzanilla',mantra:'RAM',color:'Amarillo',planta:'Girasol'},
+  {n:'',nombre:'PAGE OF WANDS',slug:'page-of-wands',grupo:'bastos',figura:true,tipoB:'PAJE',tipoD:'Mensajero y explorador incipiente. Encarna el aprendizaje práctico, la curiosidad sin maestría y el primer contacto con la energía del palo.',tipoClass:'paje',paloB:'WANDS',paloD:'Campo de la acción, la creatividad y la voluntad. Aquí operan el impulso, la inspiración y la fuerza expansiva que impulsa hacia adelante.',paloClass:'fuego',elem:'Fuego',elemClass:'fuego',kwR:'curiosidad, entusiasmo juvenil, mensaje inspirador, exploración, ganas de aprender',kwI:'impaciencia, entusiasmo disperso, falta de dirección, ideas sin ejecutar',numVib:'11',influencia:'El Iluminador (número maestro, no se reduce), en el dominio de la acción y la voluntad (Bastos)',chakra:'Plexo Solar',piedras:'Citrino, ojo de tigre, ámbar',aroma:'Limón, bergamota, romero',aceites:'Aceite de limón o romero; hierba de manzanilla',mantra:'RAM',color:'Amarillo',planta:'Girasol'},
+  {n:'',nombre:'KNIGHT OF WANDS',slug:'knight-of-wands',grupo:'bastos',figura:true,tipoB:'CABALLERO',tipoD:'Impulso de acción y búsqueda dirigida. Simboliza el movimiento con propósito, la energía en tránsito y el impulso que busca concretar algo.',tipoClass:'caballero',paloB:'WANDS',paloD:'Campo de la acción, la creatividad y la voluntad. Aquí operan el impulso, la inspiración y la fuerza expansiva que impulsa hacia adelante.',paloClass:'fuego',elem:'Fuego',elemClass:'fuego',kwR:'acción impulsiva, aventura, pasión, movimiento audaz, confianza',kwI:'impulsividad descontrolada, arrogancia, proyectos abandonados, precipitación',numVib:'3',influencia:'El Creador (12 → 1+2=3), en el dominio de la acción y la voluntad (Bastos)',chakra:'Plexo Solar',piedras:'Citrino, ojo de tigre, ámbar',aroma:'Limón, bergamota, romero',aceites:'Aceite de limón o romero; hierba de manzanilla',mantra:'RAM',color:'Amarillo',planta:'Girasol'},
+  {n:'',nombre:'QUEEN OF WANDS',slug:'queen-of-wands',grupo:'bastos',figura:true,tipoB:'REINA',tipoD:'Dominio interior y madurez receptiva. Expresa la energía del palo en su forma más íntima, protectora y emocionalmente desarrollada.',tipoClass:'reina',paloB:'WANDS',paloD:'Campo de la acción, la creatividad y la voluntad. Aquí operan el impulso, la inspiración y la fuerza expansiva que impulsa hacia adelante.',paloClass:'fuego',elem:'Fuego',elemClass:'fuego',kwR:'confianza magnética, independencia, calidez, determinación, carisma',kwI:'inseguridad oculta, celos, necesidad de control, agotamiento por sobreexigencia',numVib:'4',influencia:'El Constructor (13 → 1+3=4), en el dominio de la acción y la voluntad (Bastos)',chakra:'Plexo Solar',piedras:'Citrino, ojo de tigre, ámbar',aroma:'Limón, bergamota, romero',aceites:'Aceite de limón o romero; hierba de manzanilla',mantra:'RAM',color:'Amarillo',planta:'Girasol'},
+  {n:'',nombre:'KING OF WANDS',slug:'king-of-wands',grupo:'bastos',figura:true,tipoB:'REY',tipoD:'Autoridad consolidada y manifestación externa. Representa la maestría plena del elemento, capaz de dirigirla con control y responsabilidad.',tipoClass:'rey',paloB:'WANDS',paloD:'Campo de la acción, la creatividad y la voluntad. Aquí operan el impulso, la inspiración y la fuerza expansiva que impulsa hacia adelante.',paloClass:'fuego',elem:'Fuego',elemClass:'fuego',kwR:'liderazgo visionario, carisma, decisión firme, dominio de la propia dirección',kwI:'autoritarismo, impaciencia con otros, decisiones precipitadas, ego inflado',numVib:'5',influencia:'El Explorador (14 → 1+4=5), en el dominio de la acción y la voluntad (Bastos)',chakra:'Plexo Solar',piedras:'Citrino, ojo de tigre, ámbar',aroma:'Limón, bergamota, romero',aceites:'Aceite de limón o romero; hierba de manzanilla',mantra:'RAM',color:'Amarillo',planta:'Girasol'},
+  {n:'AS',nombre:'ACE OF CUPS',slug:'ace-of-cups',grupo:'copas',figura:false,tipoB:'AS',tipoD:'Potencial puro y semilla elemental. Es el punto de origen donde una energía se condensa por primera vez, antes de cualquier desarrollo o consecuencia.',tipoClass:'as',paloB:'CUPS',paloD:'Esfera de las emociones, los vínculos y el mundo afectivo. Gobernado por la receptividad, la intuición y la capacidad de conectar con otros.',paloClass:'agua',elem:'Agua',elemClass:'agua',kwR:'apertura emocional, amor nuevo, plenitud afectiva, intuición fluida, receptividad',kwI:'bloqueo emocional, amor no correspondido, represión de sentimientos, vacío afectivo',numVib:'1',influencia:'El Iniciador: impulso pionero, capacidad de abrir camino en solitario, en el dominio de el vínculo y la emoción (Copas)',chakra:'Sacro',piedras:'Cornalina, piedra luna, ámbar',aroma:'Naranja dulce, ylang-ylang, sándalo',aceites:'Aceite de naranja dulce o jazmín; hierba de canela',mantra:'VAM',color:'Naranja',planta:'Caléndula'},
+  {n:'2',nombre:'TWO OF CUPS',slug:'two-of-cups',grupo:'copas',figura:false,tipoB:'NUMERAL',tipoD:'Desarrollo progresivo del elemento a través del número. Cada cifra añade complejidad, desafío o maduración a la fuerza que el palo representa.',tipoClass:'numeral',paloB:'CUPS',paloD:'Esfera de las emociones, los vínculos y el mundo afectivo. Gobernado por la receptividad, la intuición y la capacidad de conectar con otros.',paloClass:'agua',elem:'Agua',elemClass:'agua',kwR:'conexión mutua, reciprocidad, atracción, alianza, unión armoniosa',kwI:'desequilibrio en la relación, ruptura de reciprocidad, desconexión, tensión en la pareja',numVib:'2',influencia:'El Cooperador: sensibilidad y necesidad de construir en pareja o alianza, en el dominio de el vínculo y la emoción (Copas)',chakra:'Sacro',piedras:'Cornalina, piedra luna, ámbar',aroma:'Naranja dulce, ylang-ylang, sándalo',aceites:'Aceite de naranja dulce o jazmín; hierba de canela',mantra:'VAM',color:'Naranja',planta:'Caléndula'},
+  {n:'3',nombre:'THREE OF CUPS',slug:'three-of-cups',grupo:'copas',figura:false,tipoB:'NUMERAL',tipoD:'Desarrollo progresivo del elemento a través del número. Cada cifra añade complejidad, desafío o maduración a la fuerza que el palo representa.',tipoClass:'numeral',paloB:'CUPS',paloD:'Esfera de las emociones, los vínculos y el mundo afectivo. Gobernado por la receptividad, la intuición y la capacidad de conectar con otros.',paloClass:'agua',elem:'Agua',elemClass:'agua',kwR:'celebración, amistad, comunidad, alegría compartida, apoyo mutuo',kwI:'exclusión, conflictos grupales, exceso de socialización, celebración vacía',numVib:'3',influencia:'El Creador: expresión, entusiasmo, forma que se comparte, en el dominio de el vínculo y la emoción (Copas)',chakra:'Sacro',piedras:'Cornalina, piedra luna, ámbar',aroma:'Naranja dulce, ylang-ylang, sándalo',aceites:'Aceite de naranja dulce o jazmín; hierba de canela',mantra:'VAM',color:'Naranja',planta:'Caléndula'},
+  {n:'4',nombre:'FOUR OF CUPS',slug:'four-of-cups',grupo:'copas',figura:false,tipoB:'NUMERAL',tipoD:'Desarrollo progresivo del elemento a través del número. Cada cifra añade complejidad, desafío o maduración a la fuerza que el palo representa.',tipoClass:'numeral',paloB:'CUPS',paloD:'Esfera de las emociones, los vínculos y el mundo afectivo. Gobernado por la receptividad, la intuición y la capacidad de conectar con otros.',paloClass:'agua',elem:'Agua',elemClass:'agua',kwR:'apatía, insatisfacción, introspección, oportunidad ignorada, hastío',kwI:'apertura renovada, salida del estancamiento emocional, reconocimiento de oportunidades',numVib:'4',influencia:'El Constructor: orden, disciplina, estructura que sostiene, en el dominio de el vínculo y la emoción (Copas)',chakra:'Sacro',piedras:'Cornalina, piedra luna, ámbar',aroma:'Naranja dulce, ylang-ylang, sándalo',aceites:'Aceite de naranja dulce o jazmín; hierba de canela',mantra:'VAM',color:'Naranja',planta:'Caléndula'},
+  {n:'5',nombre:'FIVE OF CUPS',slug:'five-of-cups',grupo:'copas',figura:false,tipoB:'NUMERAL',tipoD:'Desarrollo progresivo del elemento a través del número. Cada cifra añade complejidad, desafío o maduración a la fuerza que el palo representa.',tipoClass:'numeral',paloB:'CUPS',paloD:'Esfera de las emociones, los vínculos y el mundo afectivo. Gobernado por la receptividad, la intuición y la capacidad de conectar con otros.',paloClass:'agua',elem:'Agua',elemClass:'agua',kwR:'duelo, pérdida, decepción, enfoque en lo negativo, dolor emocional',kwI:'aceptación, superación del duelo, perspectiva recuperada, perdón',numVib:'5',influencia:'El Explorador: ruptura de estructura, cambio, exposición al riesgo, en el dominio de el vínculo y la emoción (Copas)',chakra:'Corazón *',piedras:'Cuarzo rosa, aventurina verde, jade',aroma:'Rosa, geranio, bergamota',aceites:'Aceite de rosa o geranio; hierba de espino blanco',mantra:'YAM',color:'Verde',planta:'Rosa'},
+  {n:'6',nombre:'SIX OF CUPS',slug:'six-of-cups',grupo:'copas',figura:false,tipoB:'NUMERAL',tipoD:'Desarrollo progresivo del elemento a través del número. Cada cifra añade complejidad, desafío o maduración a la fuerza que el palo representa.',tipoClass:'numeral',paloB:'CUPS',paloD:'Esfera de las emociones, los vínculos y el mundo afectivo. Gobernado por la receptividad, la intuición y la capacidad de conectar con otros.',paloClass:'agua',elem:'Agua',elemClass:'agua',kwR:'nostalgia, reencuentro, inocencia, memoria afectiva, ternura del pasado',kwI:'idealización del pasado, dificultad para avanzar, reencuentro incómodo, apego excesivo a lo antiguo',numVib:'6',influencia:'El Armonizador: cuidado, responsabilidad, equilibrio entre dar y recibir, en el dominio de el vínculo y la emoción (Copas)',chakra:'Corazón',piedras:'Cuarzo rosa, aventurina verde, jade',aroma:'Rosa, geranio, bergamota',aceites:'Aceite de rosa o geranio; hierba de espino blanco',mantra:'YAM',color:'Verde',planta:'Rosa'},
+  {n:'7',nombre:'SEVEN OF CUPS',slug:'seven-of-cups',grupo:'copas',figura:false,tipoB:'NUMERAL',tipoD:'Desarrollo progresivo del elemento a través del número. Cada cifra añade complejidad, desafío o maduración a la fuerza que el palo representa.',tipoClass:'numeral',paloB:'CUPS',paloD:'Esfera de las emociones, los vínculos y el mundo afectivo. Gobernado por la receptividad, la intuición y la capacidad de conectar con otros.',paloClass:'agua',elem:'Agua',elemClass:'agua',kwR:'ilusiones, multitud de opciones, fantasía, confusión de deseos, indecisión',kwI:'claridad de elección, ilusión desmontada, decisión enfocada, realismo recuperado',numVib:'7',influencia:'El Buscador: introspección, revisión, resistencia estratégica, en el dominio de el vínculo y la emoción (Copas)',chakra:'Corazón',piedras:'Cuarzo rosa, aventurina verde, jade',aroma:'Rosa, geranio, bergamota',aceites:'Aceite de rosa o geranio; hierba de espino blanco',mantra:'YAM',color:'Verde',planta:'Rosa'},
+  {n:'8',nombre:'EIGHT OF CUPS',slug:'eight-of-cups',grupo:'copas',figura:false,tipoB:'NUMERAL',tipoD:'Desarrollo progresivo del elemento a través del número. Cada cifra añade complejidad, desafío o maduración a la fuerza que el palo representa.',tipoClass:'numeral',paloB:'CUPS',paloD:'Esfera de las emociones, los vínculos y el mundo afectivo. Gobernado por la receptividad, la intuición y la capacidad de conectar con otros.',paloClass:'agua',elem:'Agua',elemClass:'agua',kwR:'alejamiento consciente, búsqueda de sentido, abandono necesario, introspección profunda',kwI:'regreso a lo abandonado, miedo a dejar ir, estancamiento por indecisión, evasión',numVib:'8',influencia:'El Realizador: capacidad ejecutiva, velocidad, resultado tangible, en el dominio de el vínculo y la emoción (Copas)',chakra:'Corazón',piedras:'Cuarzo rosa, aventurina verde, jade',aroma:'Rosa, geranio, bergamota',aceites:'Aceite de rosa o geranio; hierba de espino blanco',mantra:'YAM',color:'Verde',planta:'Rosa'},
+  {n:'9',nombre:'NINE OF CUPS',slug:'nine-of-cups',grupo:'copas',figura:false,tipoB:'NUMERAL',tipoD:'Desarrollo progresivo del elemento a través del número. Cada cifra añade complejidad, desafío o maduración a la fuerza que el palo representa.',tipoClass:'numeral',paloB:'CUPS',paloD:'Esfera de las emociones, los vínculos y el mundo afectivo. Gobernado por la receptividad, la intuición y la capacidad de conectar con otros.',paloClass:'agua',elem:'Agua',elemClass:'agua',kwR:'satisfacción, deseo cumplido, comodidad, gratitud, bienestar personal',kwI:'satisfacción superficial, complacencia excesiva, deseo insatisfecho pese a lo logrado',numVib:'9',influencia:'El Humanista: culminación, fuerza acumulada, cierre de ciclo, en el dominio de el vínculo y la emoción (Copas)',chakra:'Corazón',piedras:'Cuarzo rosa, aventurina verde, jade',aroma:'Rosa, geranio, bergamota',aceites:'Aceite de rosa o geranio; hierba de espino blanco',mantra:'YAM',color:'Verde',planta:'Rosa'},
+  {n:'10',nombre:'TEN OF CUPS',slug:'ten-of-cups',grupo:'copas',figura:false,tipoB:'NUMERAL',tipoD:'Desarrollo progresivo del elemento a través del número. Cada cifra añade complejidad, desafío o maduración a la fuerza que el palo representa.',tipoClass:'numeral',paloB:'CUPS',paloD:'Esfera de las emociones, los vínculos y el mundo afectivo. Gobernado por la receptividad, la intuición y la capacidad de conectar con otros.',paloClass:'agua',elem:'Agua',elemClass:'agua',kwR:'plenitud familiar, armonía duradera, felicidad compartida, realización emocional',kwI:'desarmonía familiar, felicidad idealizada, conflicto de valores en el hogar, desconexión afectiva',numVib:'1',influencia:'El Iniciador (10→1): impulso pionero, capacidad de abrir camino en solitario, en el dominio de el vínculo y la emoción (Copas)',chakra:'Corazón',piedras:'Cuarzo rosa, aventurina verde, jade',aroma:'Rosa, geranio, bergamota',aceites:'Aceite de rosa o geranio; hierba de espino blanco',mantra:'YAM',color:'Verde',planta:'Rosa'},
+  {n:'',nombre:'PAGE OF CUPS',slug:'page-of-cups',grupo:'copas',figura:true,tipoB:'PAJE',tipoD:'Mensajero y explorador incipiente. Encarna el aprendizaje práctico, la curiosidad sin maestría y el primer contacto con la energía del palo.',tipoClass:'paje',paloB:'CUPS',paloD:'Esfera de las emociones, los vínculos y el mundo afectivo. Gobernado por la receptividad, la intuición y la capacidad de conectar con otros.',paloClass:'agua',elem:'Agua',elemClass:'agua',kwR:'sensibilidad, mensaje emocional, creatividad intuitiva, sorpresa afectiva, apertura al sentir',kwI:'inmadurez emocional, bloqueo creativo, mensajes malinterpretados, hipersensibilidad',numVib:'11',influencia:'El Iluminador (número maestro, no se reduce), en el dominio de el vínculo y la emoción (Copas)',chakra:'Corazón *',piedras:'Cuarzo rosa, aventurina verde, jade',aroma:'Rosa, geranio, bergamota',aceites:'Aceite de rosa o geranio; hierba de espino blanco',mantra:'YAM',color:'Verde',planta:'Rosa'},
+  {n:'',nombre:'KNIGHT OF CUPS',slug:'knight-of-cups',grupo:'copas',figura:true,tipoB:'CABALLERO',tipoD:'Impulso de acción y búsqueda dirigida. Simboliza el movimiento con propósito, la energía en tránsito y el impulso que busca concretar algo.',tipoClass:'caballero',paloB:'CUPS',paloD:'Esfera de las emociones, los vínculos y el mundo afectivo. Gobernado por la receptividad, la intuición y la capacidad de conectar con otros.',paloClass:'agua',elem:'Agua',elemClass:'agua',kwR:'propuesta romántica, idealismo, encanto, invitación emocional, sensibilidad refinada',kwI:'promesas vacías, idealización excesiva, decepción romántica, indecisión emocional',numVib:'3',influencia:'El Creador (12 → 1+2=3), en el dominio de el vínculo y la emoción (Copas)',chakra:'Corazón *',piedras:'Cuarzo rosa, aventurina verde, jade',aroma:'Rosa, geranio, bergamota',aceites:'Aceite de rosa o geranio; hierba de espino blanco',mantra:'YAM',color:'Verde',planta:'Rosa'},
+  {n:'',nombre:'QUEEN OF CUPS',slug:'queen-of-cups',grupo:'copas',figura:true,tipoB:'REINA',tipoD:'Dominio interior y madurez receptiva. Expresa la energía del palo en su forma más íntima, protectora y emocionalmente desarrollada.',tipoClass:'reina',paloB:'CUPS',paloD:'Esfera de las emociones, los vínculos y el mundo afectivo. Gobernado por la receptividad, la intuición y la capacidad de conectar con otros.',paloClass:'agua',elem:'Agua',elemClass:'agua',kwR:'empatía profunda, intuición emocional, compasión, estabilidad afectiva, cuidado',kwI:'sobreinvolucramiento emocional, dependencia afectiva, inestabilidad, exceso de sacrificio por otros',numVib:'4',influencia:'El Constructor (13 → 1+3=4), en el dominio de el vínculo y la emoción (Copas)',chakra:'Corazón *',piedras:'Cuarzo rosa, aventurina verde, jade',aroma:'Rosa, geranio, bergamota',aceites:'Aceite de rosa o geranio; hierba de espino blanco',mantra:'YAM',color:'Verde',planta:'Rosa'},
+  {n:'',nombre:'KING OF CUPS',slug:'king-of-cups',grupo:'copas',figura:true,tipoB:'REY',tipoD:'Autoridad consolidada y manifestación externa. Representa la maestría plena del elemento, capaz de dirigirla con control y responsabilidad.',tipoClass:'rey',paloB:'CUPS',paloD:'Esfera de las emociones, los vínculos y el mundo afectivo. Gobernado por la receptividad, la intuición y la capacidad de conectar con otros.',paloClass:'agua',elem:'Agua',elemClass:'agua',kwR:'madurez emocional, calma bajo presión, sabiduría afectiva, diplomacia, equilibrio interior',kwI:'represión emocional, manipulación afectiva, inestabilidad oculta tras la calma, frialdad',numVib:'5',influencia:'El Explorador (14 → 1+4=5), en el dominio de el vínculo y la emoción (Copas)',chakra:'Corazón *',piedras:'Cuarzo rosa, aventurina verde, jade',aroma:'Rosa, geranio, bergamota',aceites:'Aceite de rosa o geranio; hierba de espino blanco',mantra:'YAM',color:'Verde',planta:'Rosa'},
+  {n:'AS',nombre:'ACE OF SWORDS',slug:'ace-of-swords',grupo:'espadas',figura:false,tipoB:'AS',tipoD:'Potencial puro y semilla elemental. Es el punto de origen donde una energía se condensa por primera vez, antes de cualquier desarrollo o consecuencia.',tipoClass:'as',paloB:'SWORDS',paloD:'Territorio de la mente, las decisiones y la verdad. Aquí se gestan los conflictos, los análisis y los juicios que cortan o clarifican.',paloClass:'aire',elem:'Aire',elemClass:'aire',kwR:'claridad mental, verdad revelada, decisión precisa, nueva idea, corte necesario',kwI:'confusión mental, verdad distorsionada, decisión precipitada, exceso de análisis',numVib:'1',influencia:'El Iniciador: impulso pionero, capacidad de abrir camino en solitario, en el dominio de el pensamiento y la palabra (Espadas)',chakra:'Tercer Ojo',piedras:'Amatista, lapislázuli, fluorita',aroma:'Lavanda, salvia blanca, olíbano',aceites:'Aceite de lavanda o salvia; hierba de artemisa',mantra:'OM (AUM)',color:'Índigo',planta:'Lavanda'},
+  {n:'2',nombre:'TWO OF SWORDS',slug:'two-of-swords',grupo:'espadas',figura:false,tipoB:'NUMERAL',tipoD:'Desarrollo progresivo del elemento a través del número. Cada cifra añade complejidad, desafío o maduración a la fuerza que el palo representa.',tipoClass:'numeral',paloB:'SWORDS',paloD:'Territorio de la mente, las decisiones y la verdad. Aquí se gestan los conflictos, los análisis y los juicios que cortan o clarifican.',paloClass:'aire',elem:'Aire',elemClass:'aire',kwR:'indecisión, bloqueo emocional, evitación consciente, tregua tensa, dilema',kwI:'decisión forzada, verdad que ya no se puede evitar, resolución del dilema, sobrecarga informativa',numVib:'2',influencia:'El Cooperador: sensibilidad y necesidad de construir en pareja o alianza, en el dominio de el pensamiento y la palabra (Espadas)',chakra:'Tercer Ojo',piedras:'Amatista, lapislázuli, fluorita',aroma:'Lavanda, salvia blanca, olíbano',aceites:'Aceite de lavanda o salvia; hierba de artemisa',mantra:'OM (AUM)',color:'Índigo',planta:'Lavanda'},
+  {n:'3',nombre:'THREE OF SWORDS',slug:'three-of-swords',grupo:'espadas',figura:false,tipoB:'NUMERAL',tipoD:'Desarrollo progresivo del elemento a través del número. Cada cifra añade complejidad, desafío o maduración a la fuerza que el palo representa.',tipoClass:'numeral',paloB:'SWORDS',paloD:'Territorio de la mente, las decisiones y la verdad. Aquí se gestan los conflictos, los análisis y los juicios que cortan o clarifican.',paloClass:'aire',elem:'Aire',elemClass:'aire',kwR:'dolor emocional, traición, ruptura, tristeza profunda, verdad dolorosa',kwI:'sanación del dolor, perdón, superación de una ruptura, alivio gradual',numVib:'3',influencia:'El Creador: expresión, entusiasmo, forma que se comparte, en el dominio de el pensamiento y la palabra (Espadas)',chakra:'Tercer Ojo',piedras:'Amatista, lapislázuli, fluorita',aroma:'Lavanda, salvia blanca, olíbano',aceites:'Aceite de lavanda o salvia; hierba de artemisa',mantra:'OM (AUM)',color:'Índigo',planta:'Lavanda'},
+  {n:'4',nombre:'FOUR OF SWORDS',slug:'four-of-swords',grupo:'espadas',figura:false,tipoB:'NUMERAL',tipoD:'Desarrollo progresivo del elemento a través del número. Cada cifra añade complejidad, desafío o maduración a la fuerza que el palo representa.',tipoClass:'numeral',paloB:'SWORDS',paloD:'Territorio de la mente, las decisiones y la verdad. Aquí se gestan los conflictos, los análisis y los juicios que cortan o clarifican.',paloClass:'aire',elem:'Aire',elemClass:'aire',kwR:'descanso necesario, recuperación, pausa mental, retiro consciente, quietud reparadora',kwI:'agotamiento no resuelto, regreso forzado a la actividad, descanso insuficiente, inquietud mental',numVib:'4',influencia:'El Constructor: orden, disciplina, estructura que sostiene, en el dominio de el pensamiento y la palabra (Espadas)',chakra:'Tercer Ojo',piedras:'Amatista, lapislázuli, fluorita',aroma:'Lavanda, salvia blanca, olíbano',aceites:'Aceite de lavanda o salvia; hierba de artemisa',mantra:'OM (AUM)',color:'Índigo',planta:'Lavanda'},
+  {n:'5',nombre:'FIVE OF SWORDS',slug:'five-of-swords',grupo:'espadas',figura:false,tipoB:'NUMERAL',tipoD:'Desarrollo progresivo del elemento a través del número. Cada cifra añade complejidad, desafío o maduración a la fuerza que el palo representa.',tipoClass:'numeral',paloB:'SWORDS',paloD:'Territorio de la mente, las decisiones y la verdad. Aquí se gestan los conflictos, los análisis y los juicios que cortan o clarifican.',paloClass:'aire',elem:'Aire',elemClass:'aire',kwR:'conflicto ganado a costa de algo, victoria vacía, tensión interpersonal, egoísmo',kwI:'reconciliación, reparación del daño, aprendizaje del conflicto, disposición a ceder',numVib:'5',influencia:'El Explorador: ruptura de estructura, cambio, exposición al riesgo, en el dominio de el pensamiento y la palabra (Espadas)',chakra:'Garganta *',piedras:'Aguamarina, lapislázuli, turquesa',aroma:'Eucalipto, menta, manzanilla azul',aceites:'Aceite de eucalipto o menta; hierba de salvia',mantra:'HAM',color:'Azul',planta:'Eucalipto'},
+  {n:'6',nombre:'SIX OF SWORDS',slug:'six-of-swords',grupo:'espadas',figura:false,tipoB:'NUMERAL',tipoD:'Desarrollo progresivo del elemento a través del número. Cada cifra añade complejidad, desafío o maduración a la fuerza que el palo representa.',tipoClass:'numeral',paloB:'SWORDS',paloD:'Territorio de la mente, las decisiones y la verdad. Aquí se gestan los conflictos, los análisis y los juicios que cortan o clarifican.',paloClass:'aire',elem:'Aire',elemClass:'aire',kwR:'transición, alejamiento de la dificultad, avance gradual, sanación en movimiento',kwI:'dificultad para dejar el pasado atrás, transición estancada, resistencia al cambio necesario',numVib:'6',influencia:'El Armonizador: cuidado, responsabilidad, equilibrio entre dar y recibir, en el dominio de el pensamiento y la palabra (Espadas)',chakra:'Garganta',piedras:'Aguamarina, lapislázuli, turquesa',aroma:'Eucalipto, menta, manzanilla azul',aceites:'Aceite de eucalipto o menta; hierba de salvia',mantra:'HAM',color:'Azul',planta:'Eucalipto'},
+  {n:'7',nombre:'SEVEN OF SWORDS',slug:'seven-of-swords',grupo:'espadas',figura:false,tipoB:'NUMERAL',tipoD:'Desarrollo progresivo del elemento a través del número. Cada cifra añade complejidad, desafío o maduración a la fuerza que el palo representa.',tipoClass:'numeral',paloB:'SWORDS',paloD:'Territorio de la mente, las decisiones y la verdad. Aquí se gestan los conflictos, los análisis y los juicios que cortan o clarifican.',paloClass:'aire',elem:'Aire',elemClass:'aire',kwR:'estrategia, sigilo, evasión, autonomía, cálculo cuidadoso',kwI:'engaño descubierto, culpa, deshonestidad expuesta, necesidad de transparencia',numVib:'7',influencia:'El Buscador: introspección, revisión, resistencia estratégica, en el dominio de el pensamiento y la palabra (Espadas)',chakra:'Garganta',piedras:'Aguamarina, lapislázuli, turquesa',aroma:'Eucalipto, menta, manzanilla azul',aceites:'Aceite de eucalipto o menta; hierba de salvia',mantra:'HAM',color:'Azul',planta:'Eucalipto'},
+  {n:'8',nombre:'EIGHT OF SWORDS',slug:'eight-of-swords',grupo:'espadas',figura:false,tipoB:'NUMERAL',tipoD:'Desarrollo progresivo del elemento a través del número. Cada cifra añade complejidad, desafío o maduración a la fuerza que el palo representa.',tipoClass:'numeral',paloB:'SWORDS',paloD:'Territorio de la mente, las decisiones y la verdad. Aquí se gestan los conflictos, los análisis y los juicios que cortan o clarifican.',paloClass:'aire',elem:'Aire',elemClass:'aire',kwR:'sensación de atrapamiento, autolimitación, miedo paralizante, percepción distorsionada',kwI:'liberación mental, reconocimiento de opciones, recuperación de la autonomía, claridad recuperada',numVib:'8',influencia:'El Realizador: capacidad ejecutiva, velocidad, resultado tangible, en el dominio de el pensamiento y la palabra (Espadas)',chakra:'Garganta',piedras:'Aguamarina, lapislázuli, turquesa',aroma:'Eucalipto, menta, manzanilla azul',aceites:'Aceite de eucalipto o menta; hierba de salvia',mantra:'HAM',color:'Azul',planta:'Eucalipto'},
+  {n:'9',nombre:'NINE OF SWORDS',slug:'nine-of-swords',grupo:'espadas',figura:false,tipoB:'NUMERAL',tipoD:'Desarrollo progresivo del elemento a través del número. Cada cifra añade complejidad, desafío o maduración a la fuerza que el palo representa.',tipoClass:'numeral',paloB:'SWORDS',paloD:'Territorio de la mente, las decisiones y la verdad. Aquí se gestan los conflictos, los análisis y los juicios que cortan o clarifican.',paloClass:'aire',elem:'Aire',elemClass:'aire',kwR:'angustia, insomnio, ansiedad, culpa nocturna, sufrimiento mental',kwI:'alivio de la ansiedad, procesamiento del miedo, ayuda buscada, esperanza recuperada',numVib:'9',influencia:'El Humanista: culminación, fuerza acumulada, cierre de ciclo, en el dominio de el pensamiento y la palabra (Espadas)',chakra:'Garganta',piedras:'Aguamarina, lapislázuli, turquesa',aroma:'Eucalipto, menta, manzanilla azul',aceites:'Aceite de eucalipto o menta; hierba de salvia',mantra:'HAM',color:'Azul',planta:'Eucalipto'},
+  {n:'10',nombre:'TEN OF SWORDS',slug:'ten-of-swords',grupo:'espadas',figura:false,tipoB:'NUMERAL',tipoD:'Desarrollo progresivo del elemento a través del número. Cada cifra añade complejidad, desafío o maduración a la fuerza que el palo representa.',tipoClass:'numeral',paloB:'SWORDS',paloD:'Territorio de la mente, las decisiones y la verdad. Aquí se gestan los conflictos, los análisis y los juicios que cortan o clarifican.',paloClass:'aire',elem:'Aire',elemClass:'aire',kwR:'final doloroso, tocar fondo, cierre definitivo, agotamiento total, punto de inflexión',kwI:'recuperación lenta, resistencia a aceptar el final, renacimiento tras la crisis, alivio gradual',numVib:'1',influencia:'El Iniciador (10→1): impulso pionero, capacidad de abrir camino en solitario, en el dominio de el pensamiento y la palabra (Espadas)',chakra:'Garganta',piedras:'Aguamarina, lapislázuli, turquesa',aroma:'Eucalipto, menta, manzanilla azul',aceites:'Aceite de eucalipto o menta; hierba de salvia',mantra:'HAM',color:'Azul',planta:'Eucalipto'},
+  {n:'',nombre:'PAGE OF SWORDS',slug:'page-of-swords',grupo:'espadas',figura:true,tipoB:'PAJE',tipoD:'Mensajero y explorador incipiente. Encarna el aprendizaje práctico, la curiosidad sin maestría y el primer contacto con la energía del palo.',tipoClass:'paje',paloB:'SWORDS',paloD:'Territorio de la mente, las decisiones y la verdad. Aquí se gestan los conflictos, los análisis y los juicios que cortan o clarifican.',paloClass:'aire',elem:'Aire',elemClass:'aire',kwR:'curiosidad mental, alerta, comunicación directa, aprendizaje activo, vigilancia',kwI:'chismes, palabras hirientes impulsivas, información mal verificada, inquietud mental excesiva',numVib:'11',influencia:'El Iluminador (número maestro, no se reduce), en el dominio de el pensamiento y la palabra (Espadas)',chakra:'Tercer Ojo *',piedras:'Amatista, lapislázuli, fluorita',aroma:'Lavanda, salvia blanca, olíbano',aceites:'Aceite de lavanda o salvia; hierba de artemisa',mantra:'OM (AUM)',color:'Índigo',planta:'Lavanda'},
+  {n:'',nombre:'KNIGHT OF SWORDS',slug:'knight-of-swords',grupo:'espadas',figura:true,tipoB:'CABALLERO',tipoD:'Impulso de acción y búsqueda dirigida. Simboliza el movimiento con propósito, la energía en tránsito y el impulso que busca concretar algo.',tipoClass:'caballero',paloB:'SWORDS',paloD:'Territorio de la mente, las decisiones y la verdad. Aquí se gestan los conflictos, los análisis y los juicios que cortan o clarifican.',paloClass:'aire',elem:'Aire',elemClass:'aire',kwR:'acción decidida, determinación mental, confrontación directa, velocidad de pensamiento',kwI:'impulsividad verbal, agresividad innecesaria, decisiones apresuradas, agotamiento por exceso de urgencia',numVib:'3',influencia:'El Creador (12 → 1+2=3), en el dominio de el pensamiento y la palabra (Espadas)',chakra:'Tercer Ojo *',piedras:'Amatista, lapislázuli, fluorita',aroma:'Lavanda, salvia blanca, olíbano',aceites:'Aceite de lavanda o salvia; hierba de artemisa',mantra:'OM (AUM)',color:'Índigo',planta:'Lavanda'},
+  {n:'',nombre:'QUEEN OF SWORDS',slug:'queen-of-swords',grupo:'espadas',figura:true,tipoB:'REINA',tipoD:'Dominio interior y madurez receptiva. Expresa la energía del palo en su forma más íntima, protectora y emocionalmente desarrollada.',tipoClass:'reina',paloB:'SWORDS',paloD:'Territorio de la mente, las decisiones y la verdad. Aquí se gestan los conflictos, los análisis y los juicios que cortan o clarifican.',paloClass:'aire',elem:'Aire',elemClass:'aire',kwR:'claridad de juicio, independencia, honestidad directa, límites claros, perspectiva objetiva',kwI:'frialdad excesiva, dureza en el juicio, aislamiento emocional, crítica hiriente',numVib:'4',influencia:'El Constructor (13 → 1+3=4), en el dominio de el pensamiento y la palabra (Espadas)',chakra:'Tercer Ojo *',piedras:'Amatista, lapislázuli, fluorita',aroma:'Lavanda, salvia blanca, olíbano',aceites:'Aceite de lavanda o salvia; hierba de artemisa',mantra:'OM (AUM)',color:'Índigo',planta:'Lavanda'},
+  {n:'',nombre:'KING OF SWORDS',slug:'king-of-swords',grupo:'espadas',figura:true,tipoB:'REY',tipoD:'Autoridad consolidada y manifestación externa. Representa la maestría plena del elemento, capaz de dirigirla con control y responsabilidad.',tipoClass:'rey',paloB:'SWORDS',paloD:'Territorio de la mente, las decisiones y la verdad. Aquí se gestan los conflictos, los análisis y los juicios que cortan o clarifican.',paloClass:'aire',elem:'Aire',elemClass:'aire',kwR:'autoridad intelectual, justicia imparcial, claridad estratégica, liderazgo racional',kwI:'rigidez mental, abuso de autoridad, frialdad extrema, manipulación intelectual',numVib:'5',influencia:'El Explorador (14 → 1+4=5), en el dominio de el pensamiento y la palabra (Espadas)',chakra:'Tercer Ojo *',piedras:'Amatista, lapislázuli, fluorita',aroma:'Lavanda, salvia blanca, olíbano',aceites:'Aceite de lavanda o salvia; hierba de artemisa',mantra:'OM (AUM)',color:'Índigo',planta:'Lavanda'},
+  {n:'AS',nombre:'ACE OF PENTACLES',slug:'ace-of-pentacles',grupo:'oros',figura:false,tipoB:'AS',tipoD:'Potencial puro y semilla elemental. Es el punto de origen donde una energía se condensa por primera vez, antes de cualquier desarrollo o consecuencia.',tipoClass:'as',paloB:'PENTACLES',paloD:'Ámbito de la materia, el trabajo y los recursos. Comprende el cuerpo físico, la salud, la estabilidad económica y todo resultado tangible.',paloClass:'tierra',elem:'Tierra',elemClass:'tierra',kwR:'nueva oportunidad material, estabilidad naciente, prosperidad potencial, semilla concreta',kwI:'oportunidad perdida, inestabilidad financiera, planificación deficiente, retraso material',numVib:'1',influencia:'El Iniciador: impulso pionero, capacidad de abrir camino en solitario, en el dominio de el cuerpo y los recursos (Pentáculos)',chakra:'Raíz',piedras:'Jaspe rojo, hematita, granate',aroma:'Pachulí, cedro, vetiver',aceites:'Aceite de vetiver o jengibre; hierba de raíz de jengibre',mantra:'LAM',color:'Rojo',planta:'Roble'},
+  {n:'2',nombre:'TWO OF PENTACLES',slug:'two-of-pentacles',grupo:'oros',figura:false,tipoB:'NUMERAL',tipoD:'Desarrollo progresivo del elemento a través del número. Cada cifra añade complejidad, desafío o maduración a la fuerza que el palo representa.',tipoClass:'numeral',paloB:'PENTACLES',paloD:'Ámbito de la materia, el trabajo y los recursos. Comprende el cuerpo físico, la salud, la estabilidad económica y todo resultado tangible.',paloClass:'tierra',elem:'Tierra',elemClass:'tierra',kwR:'malabarismo de prioridades, adaptabilidad, equilibrio dinámico, gestión de recursos',kwI:'sobrecarga de compromisos, desorganización financiera, desequilibrio entre áreas de vida',numVib:'2',influencia:'El Cooperador: sensibilidad y necesidad de construir en pareja o alianza, en el dominio de el cuerpo y los recursos (Pentáculos)',chakra:'Raíz',piedras:'Jaspe rojo, hematita, granate',aroma:'Pachulí, cedro, vetiver',aceites:'Aceite de vetiver o jengibre; hierba de raíz de jengibre',mantra:'LAM',color:'Rojo',planta:'Roble'},
+  {n:'3',nombre:'THREE OF PENTACLES',slug:'three-of-pentacles',grupo:'oros',figura:false,tipoB:'NUMERAL',tipoD:'Desarrollo progresivo del elemento a través del número. Cada cifra añade complejidad, desafío o maduración a la fuerza que el palo representa.',tipoClass:'numeral',paloB:'PENTACLES',paloD:'Ámbito de la materia, el trabajo y los recursos. Comprende el cuerpo físico, la salud, la estabilidad económica y todo resultado tangible.',paloClass:'tierra',elem:'Tierra',elemClass:'tierra',kwR:'colaboración, trabajo en equipo, reconocimiento profesional, maestría en desarrollo',kwI:'falta de colaboración, trabajo no reconocido, desalineación de equipo, mediocridad aceptada',numVib:'3',influencia:'El Creador: expresión, entusiasmo, forma que se comparte, en el dominio de el cuerpo y los recursos (Pentáculos)',chakra:'Raíz',piedras:'Jaspe rojo, hematita, granate',aroma:'Pachulí, cedro, vetiver',aceites:'Aceite de vetiver o jengibre; hierba de raíz de jengibre',mantra:'LAM',color:'Rojo',planta:'Roble'},
+  {n:'4',nombre:'FOUR OF PENTACLES',slug:'four-of-pentacles',grupo:'oros',figura:false,tipoB:'NUMERAL',tipoD:'Desarrollo progresivo del elemento a través del número. Cada cifra añade complejidad, desafío o maduración a la fuerza que el palo representa.',tipoClass:'numeral',paloB:'PENTACLES',paloD:'Ámbito de la materia, el trabajo y los recursos. Comprende el cuerpo físico, la salud, la estabilidad económica y todo resultado tangible.',paloClass:'tierra',elem:'Tierra',elemClass:'tierra',kwR:'control financiero, apego a la seguridad, conservadurismo, protección de recursos',kwI:'avaricia, miedo a la escasez, apertura financiera necesaria, control excesivo soltado',numVib:'4',influencia:'El Constructor: orden, disciplina, estructura que sostiene, en el dominio de el cuerpo y los recursos (Pentáculos)',chakra:'Raíz',piedras:'Jaspe rojo, hematita, granate',aroma:'Pachulí, cedro, vetiver',aceites:'Aceite de vetiver o jengibre; hierba de raíz de jengibre',mantra:'LAM',color:'Rojo',planta:'Roble'},
+  {n:'5',nombre:'FIVE OF PENTACLES',slug:'five-of-pentacles',grupo:'oros',figura:false,tipoB:'NUMERAL',tipoD:'Desarrollo progresivo del elemento a través del número. Cada cifra añade complejidad, desafío o maduración a la fuerza que el palo representa.',tipoClass:'numeral',paloB:'PENTACLES',paloD:'Ámbito de la materia, el trabajo y los recursos. Comprende el cuerpo físico, la salud, la estabilidad económica y todo resultado tangible.',paloClass:'tierra',elem:'Tierra',elemClass:'tierra',kwR:'dificultad económica, exclusión, sensación de carencia, apoyo no visto',kwI:'recuperación financiera, apoyo recibido, salida de una crisis material, esperanza renovada',numVib:'5',influencia:'El Explorador: ruptura de estructura, cambio, exposición al riesgo, en el dominio de el cuerpo y los recursos (Pentáculos)',chakra:'Raíz',piedras:'Jaspe rojo, hematita, granate',aroma:'Pachulí, cedro, vetiver',aceites:'Aceite de vetiver o jengibre; hierba de raíz de jengibre',mantra:'LAM',color:'Rojo',planta:'Roble'},
+  {n:'6',nombre:'SIX OF PENTACLES',slug:'six-of-pentacles',grupo:'oros',figura:false,tipoB:'NUMERAL',tipoD:'Desarrollo progresivo del elemento a través del número. Cada cifra añade complejidad, desafío o maduración a la fuerza que el palo representa.',tipoClass:'numeral',paloB:'PENTACLES',paloD:'Ámbito de la materia, el trabajo y los recursos. Comprende el cuerpo físico, la salud, la estabilidad económica y todo resultado tangible.',paloClass:'tierra',elem:'Tierra',elemClass:'tierra',kwR:'generosidad, equilibrio económico, dar y recibir, reciprocidad, ayuda concreta',kwI:'dependencia financiera, generosidad condicionada, desequilibrio de poder, deuda no reconocida',numVib:'6',influencia:'El Armonizador: cuidado, responsabilidad, equilibrio entre dar y recibir, en el dominio de el cuerpo y los recursos (Pentáculos)',chakra:'Raíz',piedras:'Jaspe rojo, hematita, granate',aroma:'Pachulí, cedro, vetiver',aceites:'Aceite de vetiver o jengibre; hierba de raíz de jengibre',mantra:'LAM',color:'Rojo',planta:'Roble'},
+  {n:'7',nombre:'SEVEN OF PENTACLES',slug:'seven-of-pentacles',grupo:'oros',figura:false,tipoB:'NUMERAL',tipoD:'Desarrollo progresivo del elemento a través del número. Cada cifra añade complejidad, desafío o maduración a la fuerza que el palo representa.',tipoClass:'numeral',paloB:'PENTACLES',paloD:'Ámbito de la materia, el trabajo y los recursos. Comprende el cuerpo físico, la salud, la estabilidad económica y todo resultado tangible.',paloClass:'tierra',elem:'Tierra',elemClass:'tierra',kwR:'evaluación de resultados, paciencia, inversión a largo plazo, revisión del esfuerzo',kwI:'impaciencia, resultados insuficientes, inversión mal calculada, frustración por falta de avance',numVib:'7',influencia:'El Buscador: introspección, revisión, resistencia estratégica, en el dominio de el cuerpo y los recursos (Pentáculos)',chakra:'Raíz',piedras:'Jaspe rojo, hematita, granate',aroma:'Pachulí, cedro, vetiver',aceites:'Aceite de vetiver o jengibre; hierba de raíz de jengibre',mantra:'LAM',color:'Rojo',planta:'Roble'},
+  {n:'8',nombre:'EIGHT OF PENTACLES',slug:'eight-of-pentacles',grupo:'oros',figura:false,tipoB:'NUMERAL',tipoD:'Desarrollo progresivo del elemento a través del número. Cada cifra añade complejidad, desafío o maduración a la fuerza que el palo representa.',tipoClass:'numeral',paloB:'PENTACLES',paloD:'Ámbito de la materia, el trabajo y los recursos. Comprende el cuerpo físico, la salud, la estabilidad económica y todo resultado tangible.',paloClass:'tierra',elem:'Tierra',elemClass:'tierra',kwR:'dedicación, perfeccionamiento del oficio, disciplina, aprendizaje práctico',kwI:'trabajo mecánico sin pasión, perfeccionismo excesivo, estancamiento por falta de motivación',numVib:'8',influencia:'El Realizador: capacidad ejecutiva, velocidad, resultado tangible, en el dominio de el cuerpo y los recursos (Pentáculos)',chakra:'Raíz',piedras:'Jaspe rojo, hematita, granate',aroma:'Pachulí, cedro, vetiver',aceites:'Aceite de vetiver o jengibre; hierba de raíz de jengibre',mantra:'LAM',color:'Rojo',planta:'Roble'},
+  {n:'9',nombre:'NINE OF PENTACLES',slug:'nine-of-pentacles',grupo:'oros',figura:false,tipoB:'NUMERAL',tipoD:'Desarrollo progresivo del elemento a través del número. Cada cifra añade complejidad, desafío o maduración a la fuerza que el palo representa.',tipoClass:'numeral',paloB:'PENTACLES',paloD:'Ámbito de la materia, el trabajo y los recursos. Comprende el cuerpo físico, la salud, la estabilidad económica y todo resultado tangible.',paloClass:'tierra',elem:'Tierra',elemClass:'tierra',kwR:'independencia financiera, autosuficiencia, disfrute del logro propio, refinamiento',kwI:'dependencia no deseada, aislamiento excesivo, disfrute pospuesto, inseguridad financiera pese al esfuerzo',numVib:'9',influencia:'El Humanista: culminación, fuerza acumulada, cierre de ciclo, en el dominio de el cuerpo y los recursos (Pentáculos)',chakra:'Raíz',piedras:'Jaspe rojo, hematita, granate',aroma:'Pachulí, cedro, vetiver',aceites:'Aceite de vetiver o jengibre; hierba de raíz de jengibre',mantra:'LAM',color:'Rojo',planta:'Roble'},
+  {n:'10',nombre:'TEN OF PENTACLES',slug:'ten-of-pentacles',grupo:'oros',figura:false,tipoB:'NUMERAL',tipoD:'Desarrollo progresivo del elemento a través del número. Cada cifra añade complejidad, desafío o maduración a la fuerza que el palo representa.',tipoClass:'numeral',paloB:'PENTACLES',paloD:'Ámbito de la materia, el trabajo y los recursos. Comprende el cuerpo físico, la salud, la estabilidad económica y todo resultado tangible.',paloClass:'tierra',elem:'Tierra',elemClass:'tierra',kwR:'herencia, legado familiar, estabilidad a largo plazo, prosperidad duradera',kwI:'conflictos familiares por herencia, inestabilidad patrimonial, legado no consolidado',numVib:'1',influencia:'El Iniciador (10→1): impulso pionero, capacidad de abrir camino en solitario, en el dominio de el cuerpo y los recursos (Pentáculos)',chakra:'Raíz',piedras:'Jaspe rojo, hematita, granate',aroma:'Pachulí, cedro, vetiver',aceites:'Aceite de vetiver o jengibre; hierba de raíz de jengibre',mantra:'LAM',color:'Rojo',planta:'Roble'},
+  {n:'',nombre:'PAGE OF PENTACLES',slug:'page-of-pentacles',grupo:'oros',figura:true,tipoB:'PAJE',tipoD:'Mensajero y explorador incipiente. Encarna el aprendizaje práctico, la curiosidad sin maestría y el primer contacto con la energía del palo.',tipoClass:'paje',paloB:'PENTACLES',paloD:'Ámbito de la materia, el trabajo y los recursos. Comprende el cuerpo físico, la salud, la estabilidad económica y todo resultado tangible.',paloClass:'tierra',elem:'Tierra',elemClass:'tierra',kwR:'aprendizaje práctico, nueva oportunidad de estudio, dedicación inicial, planificación cuidadosa',kwI:'procrastinación, falta de compromiso práctico, planes poco realistas, distracción del objetivo',numVib:'11',influencia:'El Iluminador (número maestro, no se reduce), en el dominio de el cuerpo y los recursos (Pentáculos)',chakra:'Raíz',piedras:'Jaspe rojo, hematita, granate',aroma:'Pachulí, cedro, vetiver',aceites:'Aceite de vetiver o jengibre; hierba de raíz de jengibre',mantra:'LAM',color:'Rojo',planta:'Roble'},
+  {n:'',nombre:'KNIGHT OF PENTACLES',slug:'knight-of-pentacles',grupo:'oros',figura:true,tipoB:'CABALLERO',tipoD:'Impulso de acción y búsqueda dirigida. Simboliza el movimiento con propósito, la energía en tránsito y el impulso que busca concretar algo.',tipoClass:'caballero',paloB:'PENTACLES',paloD:'Ámbito de la materia, el trabajo y los recursos. Comprende el cuerpo físico, la salud, la estabilidad económica y todo resultado tangible.',paloClass:'tierra',elem:'Tierra',elemClass:'tierra',kwR:'constancia, responsabilidad, trabajo metódico, fiabilidad, paciencia productiva',kwI:'estancamiento, rigidez excesiva, aburrimiento, resistencia al cambio necesario',numVib:'3',influencia:'El Creador (12 → 1+2=3), en el dominio de el cuerpo y los recursos (Pentáculos)',chakra:'Raíz',piedras:'Jaspe rojo, hematita, granate',aroma:'Pachulí, cedro, vetiver',aceites:'Aceite de vetiver o jengibre; hierba de raíz de jengibre',mantra:'LAM',color:'Rojo',planta:'Roble'},
+  {n:'',nombre:'QUEEN OF PENTACLES',slug:'queen-of-pentacles',grupo:'oros',figura:true,tipoB:'REINA',tipoD:'Dominio interior y madurez receptiva. Expresa la energía del palo en su forma más íntima, protectora y emocionalmente desarrollada.',tipoClass:'reina',paloB:'PENTACLES',paloD:'Ámbito de la materia, el trabajo y los recursos. Comprende el cuerpo físico, la salud, la estabilidad económica y todo resultado tangible.',paloClass:'tierra',elem:'Tierra',elemClass:'tierra',kwR:'abundancia práctica, cuidado material, generosidad terrenal, estabilidad hogareña',kwI:'descuido de sí misma, sobreexigencia práctica, desequilibrio entre dar y cuidarse, inseguridad material',numVib:'4',influencia:'El Constructor (13 → 1+3=4), en el dominio de el cuerpo y los recursos (Pentáculos)',chakra:'Raíz',piedras:'Jaspe rojo, hematita, granate',aroma:'Pachulí, cedro, vetiver',aceites:'Aceite de vetiver o jengibre; hierba de raíz de jengibre',mantra:'LAM',color:'Rojo',planta:'Roble'},
+  {n:'',nombre:'KING OF PENTACLES',slug:'king-of-pentacles',grupo:'oros',figura:true,tipoB:'REY',tipoD:'Autoridad consolidada y manifestación externa. Representa la maestría plena del elemento, capaz de dirigirla con control y responsabilidad.',tipoClass:'rey',paloB:'PENTACLES',paloD:'Ámbito de la materia, el trabajo y los recursos. Comprende el cuerpo físico, la salud, la estabilidad económica y todo resultado tangible.',paloClass:'tierra',elem:'Tierra',elemClass:'tierra',kwR:'prosperidad consolidada, liderazgo empresarial, generosidad estable, seguridad material',kwI:'materialismo excesivo, avaricia, rigidez financiera, obsesión con el estatus',numVib:'5',influencia:'El Explorador (14 → 1+4=5), en el dominio de el cuerpo y los recursos (Pentáculos)',chakra:'Raíz',piedras:'Jaspe rojo, hematita, granate',aroma:'Pachulí, cedro, vetiver',aceites:'Aceite de vetiver o jengibre; hierba de raíz de jengibre',mantra:'LAM',color:'Rojo',planta:'Roble'},];
+
+const GRUPO_ORDEN = ['mayor','bastos','copas','espadas','oros'];
+const GRUPO_LABEL = {mayor:'Arcanos Mayores', bastos:'Bastos', copas:'Copas', espadas:'Espadas', oros:'Oros'};
+
+let orientacion = 'recta';
+
+function dash(v){
+  return v ? v : '<span class="empty-dash">—</span>';
+}
+
+function badge(text, cls){
+  if(!text) return '<span class="empty-dash">—</span>';
+  return `<span class="badge ${cls}">${text}</span>`;
+}
+
+function badgeDesc(b, d, cls){
+  if(!b) return '<span class="empty-dash">—</span>';
+  return `<div class="badge-cell">${badge(b, cls)}${d ? `<span class="bc-desc">${d}</span>` : ''}</div>`;
+}
+
+function renderTabla(){
+  const tbody = document.getElementById('cuerpoTabla');
+  let html = '';
+  let grupoActual = null;
+
+  arcanos.forEach(c => {
+    if(c.grupo !== grupoActual){
+      grupoActual = c.grupo;
+      html += `<tr class="grupo-sep grupo-${c.grupo}"><td colspan="15">${GRUPO_LABEL[c.grupo]}</td></tr>`;
+    }
+
+    const kw = orientacion === 'recta' ? c.kwR : c.kwI;
+
+    html += `<tr class="fila-carta grupo-${c.grupo} tipo-${c.tipoClass}" data-grupo="${c.grupo}" data-figura="${c.figura}">
+      <td>${dash(c.n)}</td>
+      <td>${c.nombre}</td>
+      <td>${badgeDesc(c.tipoB, c.tipoD, 'tipo-' + c.tipoClass)}</td>
+      <td>${badgeDesc(c.paloB, c.paloD, c.paloClass ? 'elem-' + c.paloClass : '')}</td>
+      <td>${badge(c.elem, 'elem-' + c.elemClass)}</td>
+      <td class="cell-kw">${kw || '<span class="empty-dash">—</span>'}</td>
+      <td>${badge(c.numVib, 'badge-numvib')}</td>
+      <td class="cell-wide">${dash(c.influencia)}</td>
+      <td class="cell-med">${dash(c.chakra)}</td>
+      <td class="cell-med">${dash(c.piedras)}</td>
+      <td class="cell-med">${dash(c.aroma)}</td>
+      <td class="cell-med">${dash(c.aceites)}</td>
+      <td class="cell-med">${dash(c.mantra)}</td>
+      <td class="cell-med">${dash(c.color)}</td>
+      <td class="cell-med">${dash(c.planta)}</td>
+    </tr>`;
+  });
+
+  tbody.innerHTML = html;
+}
+
+function filtrar(btn, grupo){
+  document.querySelectorAll('.btn-filtro').forEach(b => b.classList.remove('activo'));
+  btn.classList.add('activo');
+
+  document.querySelectorAll('.fila-carta, .grupo-sep').forEach(row => {
+    row.classList.remove('oculto');
+  });
+
+  if(grupo === 'todos'){ return; }
+
+  if(grupo === 'figuras'){
+    document.querySelectorAll('.fila-carta').forEach(row => {
+      if(row.dataset.figura !== 'true') row.classList.add('oculto');
+    });
+    document.querySelectorAll('.grupo-sep').forEach(row => row.classList.add('oculto'));
+    return;
+  }
+
+  document.querySelectorAll('.fila-carta').forEach(row => {
+    if(row.dataset.grupo !== grupo) row.classList.add('oculto');
+  });
+  document.querySelectorAll('.grupo-sep').forEach(row => {
+    if(!row.className.includes('grupo-' + grupo)) row.classList.add('oculto');
+  });
+}
+
+function orientar(o){
+  orientacion = o;
+  document.getElementById('btnRecta').classList.toggle('activo-recta', o === 'recta');
+  document.getElementById('btnInv').classList.toggle('activo-inv', o === 'inv');
+  renderTabla();
+  const filtroActivo = document.querySelector('.btn-filtro.activo');
+  if(filtroActivo) filtrar(filtroActivo, filtroActivo.textContent === 'Todos' ? 'todos' :
+    (filtroActivo.textContent === 'Solo Figuras' ? 'figuras' :
+    (filtroActivo.textContent === 'Arcanos Mayores' ? 'mayor' : filtroActivo.textContent.toLowerCase())));
+}
+
+renderTabla();
+</script>
+<footer class="tabla-pie">
+  <div class="tabla-pie__mapa">
+    <a href="estudio-historia.html">Historia del Tarot</a>
+    <a href="estudio-el-camino-del-loco.html">El Camino del Loco</a>
+    <a href="estudio-cabala.html">Cábala</a>
+    <a href="estudio-chakras.html">Chakras</a>
+    <a href="estudio-junguiano.html">Enfoque Junguiano</a>
+    <a href="estudio-transicion.html">Transición</a>
+    <a href="estudio-golden-dawn.html">Golden Dawn</a>
+    <a href="estudio-new-age.html">New Age</a>
+    <a href="estudio-tarot-hoy.html">Tarot Hoy</a>
+    <a href="estudio-astros.html">Astros</a>
+    <a href="estudio-numerologia.html">Numerología</a>
+    <a href="estudio-terapeutico.html">Uso Terapéutico</a>
+    <a href="estudio-rituales-tarot.html">Rituales del Tarot</a>
+    <a href="estudio-rituales-esotericos.html">Rituales Esotéricos</a>
+    <a href="estudio-tarot-clasico.html">Tarot Clásico</a>
+    <a href="estudio-mujeres-en-el-tarot.html">Mujeres en el Tarot</a>
+    <a href="estudio-entorno-lectura.html">Entorno de Lectura</a>
+    <a href="estudio-protocolo.html">Protocolo de Lectura</a>
+    <a href="estudio-analisis-de-una-tirada.html">Análisis de una Tirada</a>
+  </div>
+  <div class="tabla-pie__tablas">
+    <p class="tabla-pie__tablas-titulo">Tablas de referencia (78 arcanos)</p>
+    <a href="estudio-tabla-arcanos-rws.html">Rider-Waite-Smith</a>
+    <a href="estudio-tabla-arcanos-marsella.html">Marsella</a>
+    <a href="estudio-tabla-arcanos-golden-dawn.html">Golden Dawn</a>
+    <a href="estudio-tabla-arcanos-nueva-era.html">Nueva Era</a>
+  </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <script>document.documentElement.style.visibility = "hidden";</script>
+  <script type="module" src="js/muro-login.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Detalle de tirada — El Código de las Cartas</title>
+
+  <link rel="stylesheet" href="css/icons.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/responsive.css">
+
+  <style>
+    .bloque-info {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: var(--space-3);
+      margin-bottom: var(--space-4);
+    }
+    .bloque-info__item {
+      background: var(--bg-card);
+      border: 1px solid rgba(201, 168, 76, 0.15);
+      border-radius: 8px;
+      padding: var(--space-3);
+    }
+    .bloque-info__label {
+      font-family: 'Cinzel', serif;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--secondary);
+      margin-bottom: var(--space-1);
+    }
+    .bloque-info__valor {
+      font-size: 0.9rem;
+      color: var(--text-main);
+    }
+    .grid-posiciones {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: var(--space-3);
+      margin: var(--space-3) 0 var(--space-4);
+    }
+    .posicion-card {
+      background: var(--bg-card);
+      border: 1px solid rgba(201, 168, 76, 0.15);
+      border-radius: 8px;
+      padding: var(--space-3);
+    }
+    .posicion-card__etiqueta {
+      font-family: 'Cinzel', serif;
+      color: var(--secondary);
+      font-size: 0.85rem;
+      margin-bottom: var(--space-2);
+    }
+    .posicion-card__texto {
+      font-size: 0.85rem;
+      color: var(--text-main);
+      line-height: 1.5;
+      white-space: pre-line;
+    }
+    .paso-a-paso {
+      background: var(--bg-card);
+      border: 1px solid rgba(201, 168, 76, 0.15);
+      border-radius: 8px;
+      padding: var(--space-4);
+      line-height: 1.7;
+      color: var(--text-main);
+      font-size: 0.92rem;
+    }
+    .paso-a-paso strong {
+      color: var(--secondary);
+      font-family: 'Cinzel', serif;
+    }
+  </style>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0A0A0A">
+  <link rel="icon" type="image/png" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <script src="js/pwa.js" defer></script>
+</head>
+<body data-page="detalle-tirada">
+
+  <header class="nav">
+    <a href="index.html" class="nav__logo">El Código de las Cartas</a>
+    <nav class="nav__links">
+      <a href="javascript:history.back()" class="nav__link">
+        <i class="ph ph-arrow-left" aria-hidden="true"></i>&nbsp;Volver
+      </a>
+      <a href="index.html" class="nav__link">
+        <i class="ph ph-house" aria-hidden="true"></i>&nbsp;Inicio
+      </a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="page-header">
+      <div class="container--narrow">
+        <h1 class="page-header__title" id="titulo">Cargando…</h1>
+        <p class="page-header__subtitle" id="subtitulo"></p>
+      </div>
+    </section>
+
+    <section class="section--tight">
+      <div class="container--narrow" id="contenido">
+        <p style="color: var(--text-muted); text-align:center;">
+          <i class="ph ph-spinner" aria-hidden="true"></i> Cargando tirada…
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="section--tight" style="text-align:center; color: var(--text-muted); font-size: 0.8rem;">
+    <p>El Código de las Cartas · Tarot de Marsella &amp; Rider-Waite-Smith</p>
+  </footer>
+
+  <script type="module">
+    import { getTradicion, getUrlParam, navigateTo, verificarEstadoRecovery, setTiradaActual } from './js/navigation.js';
+
+    const titulo = document.getElementById('titulo');
+    const subtitulo = document.getElementById('subtitulo');
+    const contenido = document.getElementById('contenido');
+
+    // Convierte el texto plano de paso_a_paso (formato real del JSON:
+    // "PASO 1 - Preparación: ... PASO 2 - Orden físico: ...") en párrafos
+    // separados, resaltando la etiqueta "PASO N - Nombre:". No asume una
+    // estructura de array porque el campo real es un string único.
+    function formatearPasoAPaso(texto) {
+      if (!texto) return '';
+      const partes = texto.split(/(PASO\s*\d+[^:]*:)/g).filter(Boolean);
+      let html = '';
+      for (let i = 0; i < partes.length; i++) {
+        if (/^PASO\s*\d+/.test(partes[i])) {
+          html += `<p><strong>${partes[i]}</strong>${partes[i + 1] || ''}</p>`;
+          i++;
+        } else if (partes[i].trim()) {
+          html += `<p>${partes[i]}</p>`;
+        }
+      }
+      return html || `<p>${texto}</p>`;
+    }
+
+    async function init() {
+      const check = verificarEstadoRecovery('detalle-tirada');
+      if (!check.ok) {
+        navigateTo(check.redirectTo);
+        return;
+      }
+
+      const tradicion = getTradicion();
+      if (!tradicion) {
+        navigateTo('introduccion.html');
+        return;
+      }
+
+      const id = getUrlParam('id');
+
+      try {
+        const dataModule = tradicion === 'rws'
+          ? await import('./js/data-rws.js')
+          : await import('./js/data-marsella.js');
+
+        const [tirada, posiciones] = await Promise.all([
+          dataModule.getTiradaById(id),
+          dataModule.getPosicionesByTirada(id),
+        ]);
+
+        if (!tirada) {
+          contenido.innerHTML = `
+            <p style="color: var(--text-muted); text-align:center;">
+              <i class="ph ph-warning-circle" aria-hidden="true"></i>
+              No se encontró esta tirada.
+            </p>`;
+          titulo.textContent = 'Tirada no encontrada';
+          return;
+        }
+
+        titulo.textContent = tirada.nombre_tirada;
+        subtitulo.textContent = `${tirada.num_cartas} carta${tirada.num_cartas === 1 ? '' : 's'} · tradición ${tradicion === 'rws' ? 'Rider-Waite-Smith' : 'Marsella'}`;
+
+        const posicionesOrdenadas = [...posiciones].sort((a, b) =>
+          a.posicion.localeCompare(b.posicion, undefined, { numeric: true })
+        );
+
+        contenido.innerHTML = `
+          <div class="bloque-info">
+            <div class="bloque-info__item">
+              <div class="bloque-info__label">Intención</div>
+              <div class="bloque-info__valor">${tirada.intencion || '—'}</div>
+            </div>
+            <div class="bloque-info__item">
+              <div class="bloque-info__label">Diseño</div>
+              <div class="bloque-info__valor">${tirada.diseño || tirada.diseno || '—'}</div>
+            </div>
+            <div class="bloque-info__item">
+              <div class="bloque-info__label">Vigencia</div>
+              <div class="bloque-info__valor">${tirada.tiempo_validez || '—'}</div>
+            </div>
+            <div class="bloque-info__item">
+              <div class="bloque-info__label">Cuándo repetir</div>
+              <div class="bloque-info__valor">${tirada.cuando_repetir || '—'}</div>
+            </div>
+          </div>
+
+          <h2 style="font-family:'Cinzel',serif; color: var(--secondary); font-size: 1.1rem; margin-bottom: var(--space-2);">
+            Posiciones
+          </h2>
+          <div class="grid-posiciones">
+            ${posicionesOrdenadas.map(p => `
+              <div class="posicion-card">
+                <div class="posicion-card__etiqueta">${p.posicion}</div>
+                <div class="posicion-card__texto">${p.significado || '—'}</div>
+              </div>
+            `).join('')}
+          </div>
+
+          <h2 style="font-family:'Cinzel',serif; color: var(--secondary); font-size: 1.1rem; margin-bottom: var(--space-2);">
+            Paso a paso
+          </h2>
+          <div class="paso-a-paso">
+            ${formatearPasoAPaso(tirada.paso_a_paso)}
+          </div>
+
+          <div style="text-align:center; margin-top: var(--space-4);">
+            <button class="btn btn--primary" id="btn-escoger" type="button">
+              Escoger esta tirada <i class="ph ph-arrow-right" aria-hidden="true"></i>
+            </button>
+          </div>
+        `;
+
+        document.getElementById('btn-escoger').addEventListener('click', () => {
+          setTiradaActual({
+            id_tirada: tirada.id_tirada,
+            nombre: tirada.nombre_tirada,
+            tema: tirada.tema,
+            num_cartas: tirada.num_cartas,
+            cartas: [],
+          });
+          navigateTo('indicar-cartas.html');
+        });
+
+      } catch (err) {
+        console.error('[detalle-tirada] Error cargando tirada:', err);
+        contenido.innerHTML = `
+          <p style="color: var(--text-muted); text-align:center;">
+            <i class="ph ph-warning-circle" aria-hidden="true"></i>
+            No se pudo cargar la tirada. Probá recargar la página.
+          </p>`;
+      }
+    }
+
+    init();
+  </script>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
