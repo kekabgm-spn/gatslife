@@ -44,6 +44,7 @@ Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localS
 <div class="card">
   <button class="go" id="sync">⌚ Sincronizar Huawei</button><a href="#" class="mini" id="s90">traer 90 días</a>
   <div id="estado" class="nota" style="margin-top:8px"></div>
+  <div id="aviso" class="nota" style="margin-top:6px"></div>
 </div>
 
 <div class="card"><h2 id="hTit">Último día con datos</h2><div class="grid" id="hoy"></div></div>
@@ -75,7 +76,7 @@ Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localS
 const CLIENT_ID = "235893987189-hkdej19871r8qkbkgke2dm6n971tb1q1.apps.googleusercontent.com";
 const SCOPE = "https://www.googleapis.com/auth/drive.readonly";
 const norm = s => String(s == null ? "" : s).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-const KP = p => "huaweiPasosKcalV1_" + p, KD = p => "huaweiDiaV1_" + p, KU = p => "huaweiUltimaV1_" + p, KH = p => "ejercicioHistorial_" + p;
+const KL = p => "huaweiUltimoDatoV1_" + p, KP = p => "huaweiPasosKcalV1_" + p, KD = p => "huaweiDiaV1_" + p, KU = p => "huaweiUltimaV1_" + p, KH = p => "ejercicioHistorial_" + p;
 const lj = (k, d) => { try{ const v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; }catch(e){ return d; } };
 
 // ---------- CSV ----------
@@ -100,11 +101,11 @@ const dia = min => new Date(min * 60000).toISOString().slice(0, 10);
 // ---------- Procesar texto de los CSV (funciones puras, se pueden probar fuera del navegador) ----------
 // txt = { pasos:[texto..], fc:[..], spo2:[..], sueno:[..], act:[..] }
 function procesar(txt){
-  const dias = {}, D = f => dias[f] || (dias[f] = {});
+  const dias = {}, D = f => dias[f] || (dias[f] = {}); let ultPaso = 0;
   const serie = (lista, needle) => { const m = {}; (lista || []).forEach(t => objs(parseCSV(t)).forEach(o => {
     const p = dt(get(o, "fecha")), v = parseFloat(get(o, needle)); if(p && isFinite(v)) m[p.k] = [p.f, v]; })); return m; };
   const porDia = m => { const g = {}; Object.keys(m).forEach(k => { const [f, v] = m[k]; (g[f] || (g[f] = [])).push(v); }); return g; };
-  const g1 = porDia(serie(txt.pasos, "pasos")); Object.keys(g1).forEach(f => D(f).pasos = g1[f].reduce((a, b) => a + b, 0));
+  const sP = serie(txt.pasos, "pasos"); Object.keys(sP).forEach(k => { const q = dt(k); if(q && sP[k][1] > 0 && q.min > ultPaso) ultPaso = q.min; }); const g1 = porDia(sP); Object.keys(g1).forEach(f => D(f).pasos = g1[f].reduce((a, b) => a + b, 0));
   const g2 = porDia(serie(txt.fc, "frecuencia")); Object.keys(g2).forEach(f => { const v = g2[f]; D(f).fc = { med: Math.round(v.reduce((a, b) => a + b, 0) / v.length), min: Math.min(...v), max: Math.max(...v), n: v.length }; });
   const g3 = porDia(serie(txt.spo2, "saturacion")); Object.keys(g3).forEach(f => { const v = g3[f]; D(f).spo2 = { med: Math.round(v.reduce((a, b) => a + b, 0) / v.length * 10) / 10, min: Math.min(...v), n: v.length }; });
   // Sueño: se juntan todas las filas, se agrupan en sesiones (hueco > 60 min = otra sesión) y cuentan en el día en que te despiertas.
@@ -125,9 +126,9 @@ function procesar(txt){
     const km = parseFloat(String(get(o, "distancia") || "").replace(",", ".")), kcal = parseFloat(String(get(o, "calorias") || "").replace(",", "."));
     const e = { fecha: p.f, tipo: m[0], nombre: "⌚ " + m[1] + (km > 0 ? " · " + String(Math.round(km * 100) / 100).replace(".", ",") + " km" : ""), minutos: Math.max(1, Math.round(seg / 60)), hid: "hw:" + p.k + ":" + tipoH };
     if(kcal > 0) e.kcal = Math.round(kcal);
-    const ps = parseInt(get(o, "pasos"), 10); if(ps > 0) D(p.f).actPasos = (D(p.f).actPasos || 0) + ps;
+    let ps = parseInt(get(o, "pasos"), 10); if(!(ps > 0) && km > 0 && (m[0] === "caminata" || m[0] === "corrida")) ps = Math.round(km * 1000 / (m[0] === "corrida" ? 1 : 0.75)); if(ps > 0) D(p.f).actPasos = (D(p.f).actPasos || 0) + ps;
     acts.push(e); }));
-  return { dias, acts };
+  return { dias, acts, ultPaso };
 }
 
 // ---------- Google Drive ----------
@@ -187,6 +188,7 @@ async function sincronizar(perfil, dias, progreso){
       const parte = await Promise.all(arch.slice(i, i + 6).map(f => bajar(t, f).catch(e => { if(e.status === 401 || e.status === 403) throw e; return ""; })));
       parte.forEach(x => { if(x) txt[clave].push(x); }); hechos += parte.length; progreso("Leyendo archivos… " + hechos + " de " + total); } }
   const r = procesar(txt);
+  if(r.ultPaso){ const prev = lj(KL(perfil), null); if(!prev || r.ultPaso > prev.min) localStorage.setItem(KL(perfil), JSON.stringify({ min: r.ultPaso })); }
   // Guardar resúmenes por día (solo pisa las medidas que llegaron)
   const guardados = lj(KD(perfil), {}); let nDias = 0;
   Object.keys(r.dias).forEach(f => { if(f < desde && !r.dias[f].sueno) return; guardados[f] = Object.assign(guardados[f] || {}, r.dias[f]); nDias++; });
@@ -222,7 +224,7 @@ function mensaje(e){
   if(/access_denied/i.test(m)) return "Google no dio el permiso. Si la app está en «Testing», agrega tu correo en Google Auth Platform → Público → Usuarios de prueba. Detalle: " + m;
   return m;
 }
-window.Huawei = { cargarGIS, sincronizar, procesar, aplicarPasos, pesoDe, kcalPasosDe, fmtH, NF, mensaje, KD, KU, KH, KP, lj, hoy };
+window.Huawei = { KL, cargarGIS, sincronizar, procesar, aplicarPasos, pesoDe, kcalPasosDe, fmtH, NF, mensaje, KD, KU, KH, KP, lj, hoy };
 if(typeof module !== "undefined") module.exports = { procesar, parseCSV };
 })();
 
@@ -230,8 +232,20 @@ if(typeof module !== "undefined") module.exports = { procesar, parseCSV };
 const H = window.Huawei, $ = id => document.getElementById(id);
 let perfil = "Mamy", ocupado = false;
 const m = (t, v, s) => '<div class="m"><span>' + t + '</span><b>' + v + '</b><span>' + (s || "&nbsp;") + '</span></div>';
+function avisoDatos(){
+  const el = $("aviso"), u = H.lj(H.KL(perfil), null);
+  if(!u || !u.min){ el.textContent = ""; return; }
+  const n = new Date(), ahora = Date.UTC(n.getFullYear(), n.getMonth(), n.getDate(), n.getHours(), n.getMinutes()) / 60000;
+  const dif = Math.max(0, Math.round(ahora - u.min)), iso = new Date(u.min * 60000).toISOString();
+  const hora = iso.slice(11, 16), esHoy = iso.slice(0, 10) === H.hoy();
+  const cuando = esHoy ? "hoy " + hora : iso.slice(8, 10) + "/" + iso.slice(5, 7) + " " + hora;
+  const hace = dif < 60 ? dif + " min" : dif < 1440 ? Math.floor(dif / 60) + " h " + String(dif % 60).padStart(2, "0") + " min" : Math.floor(dif / 1440) + (Math.floor(dif / 1440) === 1 ? " día" : " días");
+  const viejo = dif > 180;
+  el.style.color = viejo ? "#ff9b6b" : "";
+  el.textContent = "👣 Último dato de pasos en Drive: " + cuando + " (hace " + hace + ")." + (viejo ? " Faltan pasos recientes: 1) desbloquea el móvil y abre Huawei Health, 2) en Health Sync toca el botón verde de sincronizar con Drive, 3) vuelve aquí y pulsa «Sincronizar Huawei»." : "");
+}
 function render(){
-  if(ocupado) return; $("quien").textContent = perfil;
+  if(ocupado) return; $("quien").textContent = perfil; avisoDatos();
   const d = H.lj(H.KD(perfil), {}), ks = Object.keys(d).sort(), f = ks[ks.length - 1], x = f ? d[f] : {}, u = localStorage.getItem(H.KU(perfil));
   $("estado").textContent = u ? "Última sincronización: " + u : "Todavía no sincronizaste. Toca el botón.";
   $("hTit").textContent = f ? (f === H.hoy() ? "Hoy" : "Último día con datos: " + f.slice(8) + "/" + f.slice(5, 7)) : "Sin datos todavía";
