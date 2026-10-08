@@ -290,6 +290,9 @@
   .ing-agregado{display:flex;justify-content:space-between;align-items:center;background:var(--bg);border-radius:6px;padding:7px 10px;margin-bottom:6px;font-size:0.85rem;}
   .ing-agregado button{background:none;border:none;color:var(--muted);cursor:pointer;}
   .ing-agregado button:hover{color:var(--warn);}
+  .rf-fuentes{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 6px;}
+  .rf-btn{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:999px;padding:6px 12px;font-size:0.82rem;cursor:pointer;}
+  .rf-btn.on{border-color:var(--accent);color:var(--accent);font-weight:700;}
   .receta-builder textarea{width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:inherit;font-size:0.9rem;font-family:inherit;resize:vertical;}
   .receta-builder .rb-bloque{font-weight:700;font-size:0.82rem;color:var(--accent);margin:16px 0 6px;}
   .receta-builder .rb-tit{margin:0 0 4px;font-size:0.98rem;}
@@ -597,8 +600,7 @@
     <h2><span>📖 Mis recetas</span>
       <span style="display:flex;gap:8px">
         <button class="btn-nueva-receta" id="btnNuevaReceta">✍️ Mi receta</button>
-        <button class="btn-nueva-receta" id="btnRecetaIA" style="background:transparent;border:1px solid var(--accent);color:var(--accent)">🤖 Crear con IA</button>
-        <button class="btn-nueva-receta" id="btnRecetaReal" style="background:transparent;border:1px solid var(--accent);color:var(--accent)">🍲 Recetas reales</button>
+        <button class="btn-nueva-receta" id="btnBuscarRecetas" style="background:transparent;border:1px solid var(--accent);color:var(--accent)">🔎 Buscar recetas</button>
       </span>
     </h2>
     <label for="filtroTipoRecetas" style="margin-top:2px">Filtrar por tipo de comida</label>
@@ -1148,23 +1150,59 @@ function extraerSuper(texto){
   }
   return {tienda:"", termino:texto};
 }
-// Una página de resultados (todas las fuentes en paralelo, sin repetidos, los más escaneados primero).
-async function buscarOFFPag(termino, f, pagina, vistos){
-  const conNova = f.nova !== "todos", size = conNova ? 40 : 24;
-  const res = await Promise.allSettled(fuentesOFF(f).map(async tags=>{
-    let url = "https://world.openfoodfacts.org/cgi/search.pl?search_terms=" + encodeURIComponent(termino)
-      + "&search_simple=1&action=process&json=1&sort_by=unique_scans_n&page=" + pagina + "&page_size=" + size
-      + "&fields=code,product_name,brands,nutriments,nova_group,serving_quantity,product_quantity,unique_scans_n";
-    tags.forEach((t,i)=>{ url += "&tagtype_"+i+"="+t[0]+"&tag_contains_"+i+"=contains&tag_"+i+"="+encodeURIComponent(t[1]); });
+// OpenFoodFacts a veces responde con error o se pasa del límite de búsquedas (el navegador lo muestra como "Failed to fetch"):
+// se reintenta una vez y se recuerdan 5 minutos las búsquedas ya hechas.
+const _offCache = new Map();
+async function fetchOFFConReintento(url){
+  const c = _offCache.get(url);
+  if(c && Date.now() - c.t < 300000) return c.productos;
+  let ultimo = null;
+  for(let intento=0; intento<2; intento++){
     const ctrl = new AbortController();
     const timer = setTimeout(()=>ctrl.abort(), 20000);
     try{
       const resp = await fetch(url, {signal: ctrl.signal});
       if(!resp.ok) throw new Error("HTTP " + resp.status);
       const data = await resp.json();
-      return data.products || [];
-    } finally { clearTimeout(timer); }
-  }));
+      const productos = data.products || [];
+      _offCache.set(url, {t: Date.now(), productos});
+      return productos;
+    }catch(e){ ultimo = e; if(intento === 0) await new Promise(r => setTimeout(r, 1500)); }
+    finally{ clearTimeout(timer); }
+  }
+  throw ultimo;
+}
+// Respaldo cuando la base de datos no responde o no tiene el alimento: valores por 100 g estimados por la IA.
+async function estimarAlimentoIA(termino){
+  const prompt = 'Estima los valores nutricionales por 100 g del alimento "' + termino + '" (alimento genérico, tal como se come normalmente; ' +
+    'si es arroz, pasta o legumbres sin más datos, considera cocido). Devuelve SOLO un objeto JSON, sin texto extra ni ```, con estas claves: ' +
+    'nombre (nombre corto en español), kcal100, grasa100, carbh100, prot100 (números; gramos por 100 g). Son aproximaciones.';
+  const limpio = await IAClaves.geminiTexto(prompt);
+  const m = limpio.match(/\{[\s\S]*\}/);
+  const o = JSON.parse(m ? m[0] : limpio);
+  const kcal = parseFloat(o.kcal100);
+  if(!(kcal >= 0 && kcal <= 950)) throw new Error("La IA no devolvió un valor válido.");
+  const nombre = String(o.nombre || termino).trim();
+  return {
+    code: "ia-" + slug(nombre), nombre: nombre + " (aprox.)", marca: "estimado por IA",
+    kcal100: kcal, grasa100: parseFloat(o.grasa100) || 0, carbh100: parseFloat(o.carbh100) || 0, prot100: parseFloat(o.prot100) || 0,
+    nova: null, porcionG: null, cantidadG: null, scans: 0
+  };
+}
+// Una página de resultados (las fuentes una a una, sin repetidos, los más escaneados primero).
+async function buscarOFFPag(termino, f, pagina, vistos){
+  const conNova = f.nova !== "todos", size = conNova ? 40 : 24;
+  const res = [];
+  const fuentes = fuentesOFF(f);
+  for(let k=0; k<fuentes.length; k++){ // una detrás de otra: así no se pasa del límite de búsquedas por minuto
+    const tags = fuentes[k];
+    let url = "https://world.openfoodfacts.org/cgi/search.pl?search_terms=" + encodeURIComponent(termino)
+      + "&search_simple=1&action=process&json=1&sort_by=unique_scans_n&page=" + pagina + "&page_size=" + size
+      + "&fields=code,product_name,brands,nutriments,nova_group,serving_quantity,product_quantity,unique_scans_n";
+    tags.forEach((t,i)=>{ url += "&tagtype_"+i+"=" + t[0] + "&tag_contains_"+i+"=contains&tag_"+i+"=" + encodeURIComponent(t[1]); });
+    try{ res.push({status:"fulfilled", value: await fetchOFFConReintento(url)}); }
+    catch(e){ res.push({status:"rejected", reason:e}); }
+  }
   if(res.every(x => x.status === "rejected")) throw res[0].reason;
   let crudos = [], hayMas = false;
   res.forEach(x=>{ if(x.status==="fulfilled"){ if(x.value.length >= size) hayMas = true; crudos = crudos.concat(x.value); } });
@@ -1412,6 +1450,25 @@ function crearPanelBusqueda(opts){
   sinChk.addEventListener("change", ()=>{ filtros.sinClasificar = sinChk.checked; guardarFiltros(); });
   chips.forEach(b => b.onclick = ()=>{ filtros.nova = b.dataset.nova; guardarFiltros(); pintarFiltros(); });
 
+  function ofrecerEstimarIA(termino){
+    if(!termino) return;
+    const d = document.createElement("div");
+    d.className = "estado";
+    d.innerHTML = '<button type="button">✨ Estimar «' + esc(termino) + '» con IA</button><div class="rep-nota" style="margin:4px 0 0">Valores aproximados por 100 g, calculados por la IA. Úsalo cuando no encuentras el alimento.</div>';
+    const btn = d.querySelector("button");
+    btn.onclick = async ()=>{
+      btn.disabled = true; btn.textContent = "Calculando...";
+      try{
+        const p = await estimarAlimentoIA(termino);
+        d.remove();
+        resDiv.insertBefore(tarjetaProducto(p, "", elegir), resDiv.firstChild);
+      }catch(e){
+        btn.disabled = false; btn.textContent = "✨ Estimar «" + termino + "» con IA";
+        const n = d.querySelector(".rep-nota"); n.textContent = "No se pudo estimar: " + e.message;
+      }
+    };
+    resDiv.appendChild(d);
+  }
   async function buscar(){
     let termino = input.value.trim();
     if(fuente === "off"){
@@ -1429,8 +1486,10 @@ function crearPanelBusqueda(opts){
           resDiv.innerHTML = `<div class="estado">Sin resultados en wger para eso. Como busca en inglés, probá un término más simple o genérico (ej: "rice" en vez de "arroz integral cocido").</div>`;
         }
         productos.forEach(p => resDiv.appendChild(tarjetaProducto(p, "", elegir)));
+        if(productos.length === 0) ofrecerEstimarIA(termino);
       }catch(err){
         resDiv.innerHTML = `<div class="estado">No se pudo conectar con wger (${esc(err.message || "error desconocido")}). Probá de nuevo en unos segundos.</div>`;
+        ofrecerEstimarIA(termino);
       }
       return;
     }
@@ -1443,8 +1502,10 @@ function crearPanelBusqueda(opts){
         resDiv.innerHTML = `<div class="estado">Sin resultados con calorías${(filtros.tienda||filtros.marca||filtros.pais||filtros.nova!=="todos") ? " y esos filtros. Open Food Facts no tiene todos los productos de cada tienda: prueba a quitar algún filtro" : ". Prueba con otro nombre"}.</div>`;
       }
       pintarLote(r);
+      if(r.productos.length === 0 && !r.hayMas) ofrecerEstimarIA(termino);
     }catch(err){
-      resDiv.innerHTML = `<div class="estado">No se pudo conectar con OpenFoodFacts (${esc(err.message || "error desconocido")}). Prueba de nuevo en unos segundos.</div>`;
+      resDiv.innerHTML = `<div class="estado">No se pudo conectar con OpenFoodFacts (${esc(err.message || "error desconocido")}). Suele ser temporal (límite de búsquedas por minuto): espera un minuto y repite, o usa la estimación con IA.</div>`;
+      ofrecerEstimarIA(termino);
     }
   }
   function pintarLote(r){
@@ -1638,92 +1699,137 @@ function duplicarReceta(id){
 // ---------- Recetas con IA (Gemini, texto) ----------
 async function llamarGeminiTexto(prompt){ return IAClaves.geminiTexto(prompt); }
 
-function iniciarRecetaIA(){
-  cancelarReceta(); // no dejar el builder manual a medias
+// ---------- Buscar recetas: un solo panel (recetas reales, web con Gemini o inventadas con IA) ----------
+let bqFuente = "real";
+const BQ_INFO = {
+  real: "Recetas que ya existen (Spoonacular y TheMealDB). Se traduce tu búsqueda al inglés. Aplica tiempo, calorías y tipo de comida; no filtra por dificultad ni fría/caliente. Las recetas llegan en inglés.",
+  web:  "Gemini busca en Google y te da recetas de páginas reales, en español, con la fuente. Aplica todos los filtros. Las calorías son estimadas. Gasta 1 llamada de IA.",
+  ia:   "La IA inventa recetas a tu medida (no existen en ninguna web). Aplica todos los filtros. Las calorías son estimadas. Gasta 1 llamada de IA."
+};
+function iniciarBuscarRecetas(){
+  cancelarReceta(); // no dejar "Mi receta" a medias
   document.getElementById("realRecetaContainer").innerHTML = "";
   const cont = document.getElementById("iaRecetaContainer");
   cont.innerHTML = `
     <div class="receta-builder">
-      <label for="iaPedido">¿Qué tenés ganas de comer, o qué ingredientes tenés?</label>
-      <input type="text" id="iaPedido" placeholder="ej: algo con pollo y poco tiempo, o tengo tomate y huevo">
-      <div class="fila" style="display:flex;gap:8px;flex-wrap:wrap">
-        <div style="flex:1;min-width:120px">
-          <label for="iaTiempo">Tiempo máximo</label>
-          <select id="iaTiempo">
-            <option value="">Sin límite</option>
-            <option value="15">15 min</option>
-            <option value="30">30 min</option>
-            <option value="45">45 min</option>
-            <option value="60">60 min</option>
-          </select>
-        </div>
-        <div style="flex:1;min-width:120px">
-          <label for="iaDificultad">Dificultad</label>
-          <select id="iaDificultad">
-            <option value="">Cualquiera</option>
-            <option value="fácil">Fácil</option>
-            <option value="media">Media</option>
-            <option value="difícil">Difícil</option>
-          </select>
-        </div>
-        <div style="flex:1;min-width:120px">
-          <label for="iaTemp">Fría o caliente</label>
-          <select id="iaTemp">
-            <option value="">Cualquiera</option>
-            <option value="fría">Fría</option>
-            <option value="caliente">Caliente</option>
-          </select>
-        </div>
-        <div style="flex:1;min-width:120px">
-          <label for="iaKcal">Kcal por porción (aprox.)</label>
-          <input type="number" id="iaKcal" placeholder="ej: 400">
-        </div>
+      <h3 class="rb-tit">🔎 Buscar recetas</h3>
+      <label for="bqPedido">¿Qué te apetece cocinar, o qué ingredientes tienes?</label>
+      <input type="text" id="bqPedido" placeholder="ej: algo con pollo, o tengo tomate y huevo">
+      <label style="margin-top:8px">¿Dónde buscar?</label>
+      <div class="rf-fuentes">
+        <button type="button" class="rf-btn" data-f="real">🍲 Recetas reales</button>
+        <button type="button" class="rf-btn" data-f="web">🌐 Web con Gemini</button>
+        <button type="button" class="rf-btn" data-f="ia">🤖 Inventar con IA</button>
       </div>
-      <button type="button" class="btn-primario" id="btnBuscarRecetasIA">Buscar recetas con IA</button>
-      <div id="iaRecetasEstado" class="rep-nota" style="margin-top:8px"></div>
-      <div id="iaRecetasResultados"></div>
-      <button type="button" class="cerrar-buscador" id="btnCancelarIA" style="margin-top:8px">Cancelar</button>
+      <div class="rep-nota" id="bqFuenteInfo" style="margin-top:0"></div>
+      <div class="fila" style="display:flex;gap:8px;flex-wrap:wrap">
+        <div style="flex:1;min-width:120px"><label for="bqTiempo">Tiempo máximo</label>
+          <select id="bqTiempo"><option value="">Sin límite</option><option value="15">15 min</option><option value="30">30 min</option><option value="45">45 min</option><option value="60">60 min</option></select></div>
+        <div style="flex:1;min-width:120px"><label for="bqDificultad">Dificultad</label>
+          <select id="bqDificultad"><option value="">Cualquiera</option><option value="fácil">Fácil</option><option value="media">Media</option><option value="difícil">Difícil</option></select></div>
+        <div style="flex:1;min-width:120px"><label for="bqTemp">Fría o caliente</label>
+          <select id="bqTemp"><option value="">Cualquiera</option><option value="fría">Fría</option><option value="caliente">Caliente</option></select></div>
+        <div style="flex:1;min-width:120px"><label for="bqKcal">Kcal por porción (aprox.)</label>
+          <input type="number" id="bqKcal" min="0" placeholder="ej: 400"></div>
+        <div style="flex:1;min-width:140px"><label for="bqTipo">Tipo de comida</label>
+          <select id="bqTipo"><option value="">Cualquiera</option>${COMIDAS.map(c=>`<option value="${c.id}">${c.icono} ${c.nombre}</option>`).join("")}</select></div>
+      </div>
+      <button type="button" class="btn-primario" id="bqBuscar">Buscar</button>
+      <div id="bqEstado" class="rep-nota" style="margin-top:8px"></div>
+      <div id="bqResultados"></div>
+      <div id="bqFuentesWeb" class="rep-nota"></div>
+      <button type="button" class="cerrar-buscador" id="bqCerrar" style="margin-top:8px">Cerrar</button>
     </div>`;
-  document.getElementById("btnBuscarRecetasIA").onclick = buscarRecetasIA;
-  document.getElementById("btnCancelarIA").onclick = ()=>{ cont.innerHTML = ""; };
+  const marcar = ()=>{
+    cont.querySelectorAll(".rf-btn").forEach(b => b.classList.toggle("on", b.dataset.f === bqFuente));
+    let info = BQ_INFO[bqFuente];
+    if(bqFuente === "real" && !IAClaves.tieneSpoonacular()) info = "Spoonacular no tiene clave guardada, así que por ahora solo busca en TheMealDB (menos variedad, sin calorías ni filtros). Las recetas llegan en inglés.";
+    document.getElementById("bqFuenteInfo").textContent = info;
+    ["bqDificultad","bqTemp"].forEach(id => { const el = document.getElementById(id); el.disabled = bqFuente === "real"; if(bqFuente === "real") el.value = ""; });
+  };
+  cont.querySelectorAll(".rf-btn").forEach(b => b.onclick = ()=>{ bqFuente = b.dataset.f; marcar(); });
+  marcar();
+  document.getElementById("bqBuscar").onclick = buscarRecetas;
+  document.getElementById("bqPedido").addEventListener("keydown", ev=>{ if(ev.key === "Enter"){ ev.preventDefault(); buscarRecetas(); } });
+  document.getElementById("bqCerrar").onclick = ()=>{ cont.innerHTML = ""; };
 }
-
-async function buscarRecetasIA(){
-  const pedido = document.getElementById("iaPedido").value.trim();
-  const tiempo = document.getElementById("iaTiempo").value;
-  const dificultad = document.getElementById("iaDificultad").value;
-  const temp = document.getElementById("iaTemp").value;
-  const kcalObjetivo = document.getElementById("iaKcal").value;
-  const estado = document.getElementById("iaRecetasEstado");
-  const resultados = document.getElementById("iaRecetasResultados");
-  if(!pedido){ estado.textContent = "Escribí qué tenés ganas de comer o qué ingredientes tenés."; return; }
-
-  let condiciones = [];
-  if(tiempo) condiciones.push("que se preparen en " + tiempo + " minutos o menos");
-  if(dificultad) condiciones.push("dificultad " + dificultad);
-  if(temp) condiciones.push("de comida " + temp);
-  if(kcalObjetivo) condiciones.push("aproximadamente " + kcalObjetivo + " kcal por porción");
-
-  const prompt = "Actuá como un recetario. El pedido es: \"" + pedido + "\"." +
-    (condiciones.length ? " Condiciones: " + condiciones.join(", ") + "." : "") +
-    " Proponé entre 5 y 8 recetas distintas que encajen. " +
-    "Devolvé SOLO un array JSON (sin texto extra, sin \`\`\`), donde cada elemento tenga exactamente estas claves: " +
-    "nombre (texto), tiempoMin (número, minutos), dificultad (\"fácil\", \"media\" o \"difícil\"), tipoTemp (\"fría\" o \"caliente\"), " +
-    "porciones (número), kcalPorc (número, estimado), grasaPorc (número, gramos, estimado), carbhPorc (número, gramos, estimado), protPorc (número, gramos, estimado), " +
-    "ingredientes (array de strings, cada uno \"cantidad + nombre\"), pasos (array de strings, pasos en orden). " +
-    "Los valores nutricionales son una estimación tuya, hacela realista según los ingredientes.";
-
-  estado.textContent = "Pensando recetas...";
-  resultados.innerHTML = "";
+function bqAviso(txt){ const el = document.getElementById("bqEstado"); if(el) el.textContent = txt; }
+function tipoComidaValido(t){ const x = String(t||"").toLowerCase().trim(); return COMIDAS.some(c => c.id === x) ? x : ""; }
+function promptRecetas(f, conWeb){
+  const cond = [];
+  if(f.tiempo) cond.push("que se preparen en " + f.tiempo + " minutos o menos");
+  if(f.dificultad) cond.push("dificultad " + f.dificultad);
+  if(f.temp) cond.push("de comida " + f.temp);
+  if(f.kcal) cond.push("aproximadamente " + f.kcal + " kcal por porción");
+  const tipo = COMIDAS.find(c => c.id === f.tipo);
+  if(tipo) cond.push("adecuadas para " + tipo.nombre.toLowerCase());
+  return (conWeb
+      ? 'Busca en internet recetas reales para este pedido y escríbelas en español: "' + f.pedido + '".'
+      : 'Actúa como un recetario. El pedido es: "' + f.pedido + '".') +
+    (cond.length ? " Condiciones: " + cond.join(", ") + "." : "") +
+    " Propón entre 5 y 8 recetas distintas que encajen. " +
+    (conWeb ? "Usa solo recetas que hayas encontrado en la búsqueda y di de qué sitio web sale cada una. " : "") +
+    "Devuelve SOLO un array JSON (sin texto extra, sin ```), donde cada elemento tenga exactamente estas claves: " +
+    'nombre (texto), tiempoMin (número, minutos), dificultad ("fácil", "media" o "difícil"), tipoTemp ("fría" o "caliente"), ' +
+    'tipoComida ("desayuno", "almuerzo", "cena" o "snacks"), porciones (número), ' +
+    "kcalPorc (número, estimado), grasaPorc (número, gramos, estimado), carbhPorc (número, gramos, estimado), protPorc (número, gramos, estimado), " +
+    'ingredientes (array de strings, cada uno "cantidad + nombre"), pasos (array de strings, pasos en orden)' +
+    (conWeb ? ", fuente (nombre del sitio web de donde sale la receta)" : "") + ". " +
+    "Los valores nutricionales son una estimación tuya, hazla realista según los ingredientes.";
+}
+function jsonArrayDeTexto(t){
+  const m = String(t||"").match(/\[[\s\S]*\]/);
+  if(!m) throw new Error("Gemini no devolvió recetas en el formato esperado. Prueba de nuevo.");
+  return JSON.parse(m[0]);
+}
+async function buscarRecetas(){
+  const v = id => document.getElementById(id).value;
+  const f = {pedido: v("bqPedido").trim(), tiempo: v("bqTiempo"), dificultad: v("bqDificultad"), temp: v("bqTemp"), kcal: v("bqKcal"), tipo: v("bqTipo")};
+  const resultados = document.getElementById("bqResultados"), fuentesEl = document.getElementById("bqFuentesWeb");
+  if(!f.pedido){ bqAviso("Escribe qué te apetece cocinar o qué ingredientes tienes."); return; }
+  const btn = document.getElementById("bqBuscar"); btn.disabled = true;
+  resultados.innerHTML = ""; fuentesEl.innerHTML = "";
   try{
-    const limpio = await llamarGeminiTexto(prompt);
-    const lista = JSON.parse(limpio);
-    if(!Array.isArray(lista) || lista.length===0){ estado.textContent = "No se generaron recetas. Probá reformular el pedido."; return; }
-    estado.textContent = "";
-    lista.forEach((r,idx) => resultados.appendChild(tarjetaRecetaIA(r, idx)));
+    if(bqFuente === "real"){
+      bqAviso("Buscando recetas reales...");
+      const r = await buscarRecetasRealesFiltro(f);
+      if(r.lista.length === 0){ bqAviso("No se encontraron recetas para eso" + (r.q !== f.pedido ? " (busqué «" + r.q + "»)" : "") + ". Prueba con otra palabra o quita algún filtro."); return; }
+      bqAviso("Encontradas " + r.lista.length + (r.q !== f.pedido ? " (busqué «" + r.q + "»)" : "") + ".");
+      r.lista.forEach(x => resultados.appendChild(tarjetaRecetaReal(x)));
+    } else {
+      const conWeb = bqFuente === "web";
+      bqAviso(conWeb ? "Gemini está buscando en Google..." : "Pensando recetas...");
+      const prompt = promptRecetas(f, conWeb);
+      const body = {contents:[{parts:[{text: prompt}]}]};
+      if(conWeb) body.tools = [{google_search:{}}];
+      let data;
+      try{ data = await IAClaves.gemini(body); }
+      catch(e){
+        throw new Error(conWeb ? e.message + " (Si habla de herramientas o tools, hay que permitir la búsqueda de Google en tu Worker de Cloudflare.)" : e.message);
+      }
+      const cand = (data.candidates || [])[0] || {};
+      const texto = ((cand.content || {}).parts || []).map(p => p.text || "").join("");
+      const lista = jsonArrayDeTexto(texto);
+      if(!Array.isArray(lista) || lista.length === 0){ bqAviso("No se generaron recetas. Prueba a reformular el pedido."); return; }
+      const chunks = (((cand.groundingMetadata || {}).groundingChunks) || []).map(c => c.web).filter(w => w && /^https:\/\//i.test(w.uri || ""));
+      lista.forEach(r=>{
+        r.tipoComida = f.tipo || tipoComidaValido(r.tipoComida);
+        if(conWeb){
+          const comp = x => slug(x || "").replace(/-/g, "");
+          const k = comp(r.fuente);
+          const ch = k.length >= 4 ? chunks.find(c => { const t = comp(c.title); return t.length >= 4 && (k.includes(t) || t.includes(k)); }) : null;
+          if(ch) r.enlace = ch.uri;
+        }
+        resultados.appendChild(tarjetaRecetaIA(r, 0));
+      });
+      bqAviso("Encontradas " + lista.length + ". Revisa los datos antes de guardar: las calorías son estimadas.");
+      if(conWeb && chunks.length){
+        fuentesEl.innerHTML = "<b>Fuentes consultadas por Gemini:</b><br>" + chunks.slice(0,6).map(c => '<a href="' + esc(c.uri) + '" target="_blank" rel="noopener" style="color:var(--accent)">' + esc(c.title || c.uri) + "</a>").join(" · ");
+      }
+    }
   }catch(e){
-    estado.textContent = "No se pudo generar recetas: " + e.message;
-  }
+    bqAviso("No se pudo buscar: " + e.message);
+  }finally{ btn.disabled = false; }
 }
 
 function tarjetaRecetaIA(r, idx){
@@ -1733,6 +1839,7 @@ function tarjetaRecetaIA(r, idx){
     r.tiempoMin ? r.tiempoMin + " min" : null,
     r.dificultad || null,
     r.tipoTemp || null,
+    r.fuente ? "🌐 " + r.fuente : null,
     r.kcalPorc ? Math.round(r.kcalPorc) + " kcal/porción (estimado)" : null
   ].filter(Boolean).join(" · ");
   const ingredientesHtml = (r.ingredientes||[]).map(i=>"<li>"+esc(i)+"</li>").join("");
@@ -1741,7 +1848,7 @@ function tarjetaRecetaIA(r, idx){
     <div class="ru-fila" style="align-items:flex-start">
       <div style="flex:1">
         <b>${esc(r.nombre||"Receta")}</b>
-        <div class="item-detalle">${esc(detalles)}</div>
+        <div class="item-detalle">${esc(detalles)}${/^https:\/\//i.test(r.enlace||"") ? ' · <a href="' + esc(r.enlace) + '" target="_blank" rel="noopener" style="color:var(--accent)">🔗 ver fuente</a>' : ""}</div>
       </div>
       <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0"><button type="button" class="btn-agregar">Usar esta receta</button><button type="button" class="btn-descartar" style="background:transparent;border:1px solid var(--muted);color:var(--muted);border-radius:8px;padding:0.3rem 0.6rem;font-size:0.8rem;cursor:pointer">✕ Descartar</button></div>
     </div>
@@ -1750,7 +1857,7 @@ function tarjetaRecetaIA(r, idx){
       <div class="rep-nota" style="margin-top:6px"><b>Ingredientes</b><ul style="margin:4px 0 8px 18px">${ingredientesHtml}</ul>
       <b>Pasos</b><ol style="margin:4px 0 0 18px">${pasosHtml}</ol></div>
     </details>`;
-  div.querySelector(".btn-agregar").onclick = ()=> guardarRecetaIA(r);
+  div.querySelector(".btn-agregar").onclick = ()=>{ guardarRecetaIA(r); div.remove(); bqAviso("«" + (r.nombre || "Receta") + "» guardada en Mis recetas."); };
   div.querySelector(".btn-descartar").onclick = ()=> div.remove();
   return div;
 }
@@ -1764,6 +1871,9 @@ function guardarRecetaIA(r){
     ingredientesTexto: r.ingredientes || [],
     pasos: r.pasos || [],
     origenIA: true,
+    fuenteWeb: r.fuente || null,
+    enlace: /^https:\/\//i.test(r.enlace||"") ? r.enlace : null,
+    tipoComida: tipoComidaValido(r.tipoComida),
     tiempoMin: r.tiempoMin || null,
     dificultad: r.dificultad || null,
     tipoTemp: r.tipoTemp || null,
@@ -1777,7 +1887,6 @@ function guardarRecetaIA(r){
     protPorc: r.protPorc || 0
   });
   guardarRecetas();
-  document.getElementById("iaRecetaContainer").innerHTML = "";
   renderRecetas();
 }
 
@@ -1788,28 +1897,24 @@ function borrarReceta(id){
 }
 
 // ---------- Recetas reales (Spoonacular + TheMealDB) ----------
-function iniciarRecetaReal(){
-  cancelarReceta();
-  document.getElementById("iaRecetaContainer").innerHTML = "";
-  const cont = document.getElementById("realRecetaContainer");
-  const tieneSpoon = IAClaves.tieneSpoonacular();
-  cont.innerHTML = `
-    <div class="receta-builder">
-      <label for="realPedido">¿Qué querés cocinar, o qué ingrediente querés usar?</label>
-      <input type="text" id="realPedido" placeholder="ej: pollo, ensalada de atún, tarta de verduras">
-      <p class="rep-nota">Busca recetas reales que ya existen (con foto e instrucciones), no inventadas. ${tieneSpoon ? "Busca en Spoonacular y TheMealDB." : "Spoonacular no tiene clave guardada todavía, así que por ahora busca solo en TheMealDB (menos variedad, sin datos de calorías)."}</p>
-      <button type="button" class="btn-primario" id="btnBuscarRecetasReales">Buscar</button>
-      <div id="realRecetasEstado" class="rep-nota" style="margin-top:8px"></div>
-      <div id="realRecetasResultados"></div>
-      <button type="button" class="cerrar-buscador" id="btnCancelarReal" style="margin-top:8px">Cancelar</button>
-    </div>`;
-  document.getElementById("btnBuscarRecetasReales").onclick = buscarRecetasReales;
-  document.getElementById("btnCancelarReal").onclick = ()=>{ cont.innerHTML = ""; };
+// ---------- Recetas reales (Spoonacular + TheMealDB), usadas desde "Buscar recetas" ----------
+const SPOON_TIPO = {desayuno:"breakfast", almuerzo:"main course", cena:"main course", snacks:"snack"};
+function tipoDeDishTypes(arr){
+  const t = (arr || []).join(" ").toLowerCase();
+  if(/breakfast|brunch|morning/.test(t)) return "desayuno";
+  if(/lunch|main (course|dish)/.test(t)) return "almuerzo";
+  if(/dinner|supper/.test(t)) return "cena";
+  if(/snack|dessert|fingerfood|appetizer|antipasti|starter|side dish/.test(t)) return "snacks";
+  return "";
 }
-
-async function buscarEnSpoonacular(query){
-  const url = "https://api.spoonacular.com/recipes/complexSearch?query=" + encodeURIComponent(query) +
+async function buscarEnSpoonacular(query, f){
+  f = f || {};
+  let url = "https://api.spoonacular.com/recipes/complexSearch?query=" + encodeURIComponent(query) +
     "&number=6&addRecipeInformation=true&addRecipeNutrition=true";
+  if(f.tiempo) url += "&maxReadyTime=" + encodeURIComponent(f.tiempo);
+  if(f.tipo && SPOON_TIPO[f.tipo]) url += "&type=" + encodeURIComponent(SPOON_TIPO[f.tipo]);
+  const k = parseFloat(f.kcal);
+  if(k > 0) url += "&minCalories=" + Math.round(k*0.75) + "&maxCalories=" + Math.round(k*1.25);
   const data = await IAClaves.spoonacular(url);
   if(data.status === "failure") throw new Error(data.message || "Error de Spoonacular.");
   return (data.results || []).map(r=>{
@@ -1820,13 +1925,15 @@ async function buscarEnSpoonacular(query){
       nombre: r.title,
       porciones: r.servings || 1,
       tiempoCoccion: r.readyInMinutes || 0,
+      tipoComida: f.tipo || tipoDeDishTypes(r.dishTypes),
       ingredientesTexto: (r.extendedIngredients||[]).map(i=>i.original),
       pasos: (r.analyzedInstructions && r.analyzedInstructions[0] && r.analyzedInstructions[0].steps || []).map(s=>s.step),
       kcalPorc: buscar("Calories"), grasaPorc: buscar("Fat"), carbhPorc: buscar("Carbohydrates"), protPorc: buscar("Protein")
     };
   });
 }
-async function buscarEnMealDB(query){
+async function buscarEnMealDB(query, f){
+  f = f || {};
   const res = await fetch("https://www.themealdb.com/api/json/v1/1/search.php?s=" + encodeURIComponent(query));
   const data = await res.json();
   if(!data.meals) return [];
@@ -1837,29 +1944,24 @@ async function buscarEnMealDB(query){
       if(nombre && nombre.trim()) ingredientes.push((medida&&medida.trim() ? medida.trim()+" " : "") + nombre.trim());
     }
     const pasos = (m.strInstructions||"").split(/\r?\n/).map(p=>p.trim()).filter(Boolean);
+    const cat = String(m.strCategory || "").toLowerCase();
     return {
       fuente: "🥘 TheMealDB",
       nombre: m.strMeal, porciones: 1, tiempoCoccion: 0,
+      tipoComida: f.tipo || (cat === "breakfast" ? "desayuno" : (cat === "dessert" || cat === "starter" || cat === "side") ? "snacks" : ""),
       ingredientesTexto: ingredientes, pasos: pasos.length ? pasos : [m.strInstructions||""],
       kcalPorc: 0, grasaPorc: 0, carbhPorc: 0, protPorc: 0
     };
   });
 }
-async function buscarRecetasReales(){
-  const pedido = document.getElementById("realPedido").value.trim();
-  const estado = document.getElementById("realRecetasEstado");
-  const resultados = document.getElementById("realRecetasResultados");
-  if(!pedido){ estado.textContent = "Escribí qué querés cocinar."; return; }
-  estado.textContent = "Buscando...";
-  resultados.innerHTML = "";
-  const key = IAClaves.tieneSpoonacular();
-  const tareas = [ buscarEnMealDB(pedido).catch(e=>{ console.warn("TheMealDB:", e); return []; }) ];
-  if(key) tareas.push(buscarEnSpoonacular(pedido, key).catch(e=>{ estado.textContent = "Spoonacular: " + e.message; return []; }));
+// Las dos fuentes están en inglés: se traduce la búsqueda (si falla la traducción, se busca tal cual).
+async function buscarRecetasRealesFiltro(f){
+  const q = ((await traducirEsEn(f.pedido)) || f.pedido).trim() || f.pedido;
+  const avisos = [];
+  const tareas = [ buscarEnMealDB(q, f).catch(e=>{ console.warn("TheMealDB:", e); return []; }) ];
+  if(IAClaves.tieneSpoonacular()) tareas.push(buscarEnSpoonacular(q, f).catch(e=>{ bqAviso("Spoonacular: " + e.message); return []; }));
   const [mealdb, spoon] = await Promise.all([tareas[0], tareas[1] || Promise.resolve([])]);
-  const lista = [...spoon, ...mealdb]; // Spoonacular primero: trae datos nutricionales completos
-  if(lista.length===0){ estado.textContent = "No se encontraron recetas para eso. Probá con otra palabra."; return; }
-  estado.textContent = "";
-  lista.forEach(r => resultados.appendChild(tarjetaRecetaReal(r)));
+  return {q, lista: [...spoon, ...mealdb]}; // Spoonacular primero: trae datos nutricionales completos
 }
 function tarjetaRecetaReal(r){
   const div = document.createElement("div");
@@ -1884,7 +1986,7 @@ function tarjetaRecetaReal(r){
       <div class="rep-nota" style="margin-top:6px"><b>Ingredientes</b><ul style="margin:4px 0 8px 18px">${ingredientesHtml}</ul>
       <b>Pasos</b><ol style="margin:4px 0 0 18px">${pasosHtml}</ol></div>
     </details>`;
-  div.querySelector(".btn-agregar").onclick = ()=> guardarRecetaReal(r);
+  div.querySelector(".btn-agregar").onclick = ()=>{ guardarRecetaReal(r); div.remove(); bqAviso("«" + r.nombre + "» guardada en Mis recetas."); };
   div.querySelector(".btn-descartar").onclick = ()=> div.remove();
   return div;
 }
@@ -1892,13 +1994,12 @@ function guardarRecetaReal(r){
   recetas.push({
     id: "r" + Date.now(), nombre: r.nombre, porciones: r.porciones || 1, autor: perfilActivo,
     ingredientesTexto: r.ingredientesTexto, pasos: r.pasos,
-    origenExterno: r.fuente, tipoComida: "", tiempoPrep: 0, tiempoCoccion: r.tiempoCoccion || 0,
+    origenExterno: r.fuente, tipoComida: tipoComidaValido(r.tipoComida), tiempoPrep: 0, tiempoCoccion: r.tiempoCoccion || 0,
     kcalTotal: (r.kcalPorc||0)*(r.porciones||1), grasaTotal: (r.grasaPorc||0)*(r.porciones||1),
     carbhTotal: (r.carbhPorc||0)*(r.porciones||1), protTotal: (r.protPorc||0)*(r.porciones||1),
     kcalPorc: r.kcalPorc||0, grasaPorc: r.grasaPorc||0, carbhPorc: r.carbhPorc||0, protPorc: r.protPorc||0
   });
   guardarRecetas();
-  document.getElementById("realRecetaContainer").innerHTML = "";
   renderRecetas();
 }
 
@@ -2141,12 +2242,39 @@ function pintarIngredientesReceta(){
   e.ingredientes.forEach((i,idx)=>{
     const row = document.createElement("div");
     row.className = "ing-agregado";
-    const cal = i.sinCal ? `<small class="aviso">⚠ sin calorías</small>` : `<small>${Math.round(i.kcal||0)} kcal</small>`;
+    const cal = i.sinCal ? `<small class="aviso">⚠ sin calorías</small>` : `<small>${i.estimado ? "≈ " : ""}${Math.round(i.kcal||0)} kcal${i.estimado ? " (IA)" : ""}</small>`;
     row.innerHTML = `<span>${esc(textoIngrediente(i))}${cal}</span><button type="button" title="Quitar" data-idx="${idx}">✕</button>`;
     row.querySelector("button").onclick = ()=>{ e.ingredientes.splice(idx,1); pintarIngredientesReceta(); };
     ingCont.appendChild(row);
   });
   pintarTotalesReceta();
+}
+async function calcularCaloriasIAFaltantes(){
+  const e = recetaEnEdicion; if(!e) return;
+  const faltan = e.ingredientes.filter(i => i.sinCal);
+  if(!faltan.length) return;
+  const aviso = document.getElementById("recAvisoCal");
+  const btn = document.getElementById("btnCalcIA"); if(btn){ btn.disabled = true; btn.textContent = "Calculando..."; }
+  const lista = faltan.map((i,n) => n + ". " + textoIngrediente(i)).join("\n");
+  const prompt = "Estima las calorías y los macros de estas cantidades de ingredientes (si no se dice otra cosa, el alimento se considera tal como se usa en una receta; " +
+    "arroz, pasta y legumbres se consideran cocidos). Devuelve SOLO un array JSON, sin texto extra ni ```, con un elemento por línea y en el mismo orden, " +
+    "con las claves: n (número de la línea), kcal, grasa, carbh, prot (números; macros en gramos, de la cantidad indicada completa, no por 100 g).\n" + lista;
+  try{
+    const limpio = await IAClaves.geminiTexto(prompt);
+    const m = limpio.match(/\[[\s\S]*\]/);
+    const arr = JSON.parse(m ? m[0] : limpio);
+    let n = 0;
+    arr.forEach(o=>{
+      const i = faltan[o.n]; const k = parseFloat(o.kcal);
+      if(!i || !(k >= 0)) return;
+      Object.assign(i, {kcal:k, grasa:parseFloat(o.grasa)||0, carbh:parseFloat(o.carbh)||0, prot:parseFloat(o.prot)||0, sinCal:false, estimado:true});
+      n++;
+    });
+    if(n === 0) throw new Error("La IA no devolvió valores válidos.");
+    pintarIngredientesReceta();
+  }catch(err){
+    aviso.textContent = "No se pudo calcular con IA: " + err.message;
+  }
 }
 function pintarTotalesReceta(){
   const e = recetaEnEdicion, box = document.getElementById("recTotales"); if(!e || !box) return;
@@ -2156,9 +2284,18 @@ function pintarTotalesReceta(){
     <div class="rt-col"><div class="rt-label">Total kcal</div><div class="rt-val">${Math.round(t.kcal)}</div></div>
     <div class="rt-col"><div class="rt-label">Por porción</div><div class="rt-val">${Math.round(t.kcal/porciones)}</div></div>
     <div class="rt-col"><div class="rt-label">Prot/porc</div><div class="rt-val">${Math.round(t.prot/porciones)}g</div></div>`;
-  document.getElementById("recAvisoCal").textContent = t.sinCal
-    ? "⚠ " + t.sinCal + (t.sinCal===1 ? " ingrediente no tiene" : " ingredientes no tienen") + " calorías: el total es parcial."
-    : "";
+  const aviso = document.getElementById("recAvisoCal");
+  const nEst = e.ingredientes.filter(i => i.estimado).length;
+  aviso.innerHTML = "";
+  if(t.sinCal){
+    aviso.appendChild(document.createTextNode("⚠ " + t.sinCal + (t.sinCal===1 ? " ingrediente no tiene" : " ingredientes no tienen") + " calorías: el total es parcial. "));
+    const btn = document.createElement("button");
+    btn.type = "button"; btn.id = "btnCalcIA"; btn.textContent = "✨ Calcular con IA las que faltan";
+    btn.onclick = calcularCaloriasIAFaltantes;
+    aviso.appendChild(btn);
+  } else if(nEst){
+    aviso.textContent = "≈ Incluye calorías estimadas por IA en " + nEst + (nEst===1 ? " ingrediente." : " ingredientes.") + " Revísalas si necesitas precisión.";
+  }
 }
 
 function detalleIngredientesHtml(r){
@@ -2169,7 +2306,8 @@ function detalleIngredientesHtml(r){
   const items = esRecetaDeTexto(r)
     ? (r.ingredientesTexto||[]).map(i=>"<li>"+esc(i)+"</li>").join("")
     : (r.ingredientes||[]).map(i=>"<li>"+esc(textoIngrediente(i))+"</li>").join("");
-  return `<b>Ingredientes</b><ul style="margin:4px 0 8px 18px">${items}</ul>${pasosHtml}`;
+  const enlaceHtml = /^https:\/\//i.test(r.enlace || "") ? `<div style="margin-top:8px"><a href="${esc(r.enlace)}" target="_blank" rel="noopener" style="color:var(--accent)">🔗 Ver receta original</a></div>` : "";
+  return `<b>Ingredientes</b><ul style="margin:4px 0 8px 18px">${items}</ul>${pasosHtml}${enlaceHtml}`;
 }
 
 const LETRA_AUTOR = { Mamy:"M", Filha:"F" };
@@ -2197,7 +2335,7 @@ function renderRecetas(){
     div.className = "receta-card";
     div.style.flexDirection = "column";
     div.style.alignItems = "stretch";
-    const origenTag = r.origenIA ? ' <span style="color:var(--accent);font-size:0.72rem">🤖 IA</span>'
+    const origenTag = r.origenIA ? ' <span style="color:var(--accent);font-size:0.72rem">' + (r.fuenteWeb ? "🌐 " + esc(r.fuenteWeb) : "🤖 IA") + '</span>'
       : r.origenExterno ? ` <span style="color:var(--accent);font-size:0.72rem">${esc(r.origenExterno)}</span>` : "";
     const comidaInfo = COMIDAS.find(c=>c.id===r.tipoComida);
     const tipoTxt = comidaInfo ? comidaInfo.icono + " " + comidaInfo.nombre : "";
@@ -2984,8 +3122,7 @@ document.getElementById("quemadasInput").addEventListener("change", e=>{
 });
 
 document.getElementById("btnNuevaReceta").onclick = iniciarNuevaReceta;
-document.getElementById("btnRecetaIA").onclick = iniciarRecetaIA;
-document.getElementById("btnRecetaReal").onclick = iniciarRecetaReal;
+document.getElementById("btnBuscarRecetas").onclick = iniciarBuscarRecetas;
 document.getElementById("btnNuevaComidaGuardada").onclick = iniciarNuevaComidaGuardada;
 
 document.querySelectorAll(".agua-botones button").forEach(b=>{
