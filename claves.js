@@ -61,6 +61,14 @@
         throw e;
       }
     },
+    // Búsqueda web con Tavily (a través del Worker). Devuelve [{title,url,content}]. Lanza error si no está configurada o se agotó.
+    tavily: async function(query, n){
+      if(!proxyOn()) throw new Error("Tavily necesita el Worker.");
+      var r = await viaProxy("/tavily", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({query:query, max_results:n||8})}), d = {};
+      try{ d = await r.json(); }catch(e){}
+      if(!r.ok || d.error) throw new Error((d.error && d.error.message) || ("Error de Tavily " + r.status));
+      return d.results || [];
+    },
     usoHoy: function(){ return {usadas: conteo().n, tope: tope()}; },
     gemini: async function(body){
       var usaProxy = proxyOn(), claves = usaProxy ? [null] : lista(K.gem), modelo = leer(K.modelo) || "gemini-3.1-flash-lite";

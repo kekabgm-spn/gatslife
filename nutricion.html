@@ -1363,10 +1363,7 @@ function crearPanelBusqueda(opts){
   box.innerHTML = `
     <div class="frec-cont"></div>
     <input type="text" class="buscar-input" placeholder="Buscar alimento">
-    <div class="chips f-fuente" style="margin:6px 0">
-      <button type="button" class="fuente-btn on" data-fuente="off">Marcas (OpenFoodFacts)</button>
-      <button type="button" class="fuente-btn" data-fuente="wger">Genéricos en inglés (wger, sin marca)</button>
-    </div>
+    <div class="rep-nota" style="margin:6px 0">Busca en los alimentos genéricos en español y en los productos de supermercado. Open Food Facts es opcional (botón al final). Marca, país y fresco/procesado solo afectan a Open Food Facts.</div>
     <div class="f-tienda-fila"><select class="f-tienda" aria-label="Supermercado">${SUPERS.map(t=>`<option value="${t[0]}">${t[1]}</option>`).join("")}</select></div>
     <div class="filtros">
       <input type="text" class="f-marca" placeholder="Marca (opcional)">
@@ -1479,54 +1476,76 @@ function crearPanelBusqueda(opts){
     };
     resDiv.appendChild(d);
   }
-  async function buscar(){
-    let termino = input.value.trim();
-    if(fuente === "off"){
-      const x = extraerSuper(termino);
-      if(x.tienda){ filtros.tienda = x.tienda; guardarFiltros(); pintarFiltros(); termino = x.termino; }
+  let destOff = null, ultLoc = {gen:[], sup:[]}, limLoc = {gen:30, sup:30}, locDiv = null, offDiv = null;
+  function secLoc(t){ const d = document.createElement("div"); d.className = "frec-tit"; d.textContent = t; locDiv.appendChild(d); }
+  function estLoc(t){ const d = document.createElement("div"); d.className = "estado"; d.textContent = t; locDiv.appendChild(d); }
+  function masLoc(txt, fn){ const d = document.createElement("div"); d.className = "mas-cont"; const bt = document.createElement("button"); bt.type = "button"; bt.textContent = txt; bt.onclick = fn; d.appendChild(bt); locDiv.appendChild(d); }
+  async function pintarLocal(){
+    const B = window.BuscadorBase, tiendaSel = ultimaB.f.tienda;
+    let errores = [];
+    ultLoc = {gen:[], sup:[]};
+    if(B){ try{ const c = await B.cargar(); errores = c.errores || []; ultLoc = B.buscar(ultimaB.termino, tiendaSel); }catch(e){ errores = [(e && e.message) || "error"]; } }
+    else errores = ["buscar.js no está cargado"];
+    locDiv.innerHTML = "";
+    if(errores.length) estLoc("No se pudo cargar " + errores.join(" · ") + ". Comprueba que tengas la sesión de Google iniciada y que el Worker esté configurado con los datos.");
+    if(!tiendaSel){
+      secLoc("🥚 Alimentos genéricos (" + ultLoc.gen.length + ")");
+      if(!ultLoc.gen.length) estLoc("Sin coincidencias entre los alimentos genéricos.");
+      ultLoc.gen.slice(0, limLoc.gen).forEach(p => locDiv.appendChild(tarjetaProducto(p, "", elegir)));
+      if(ultLoc.gen.length > limLoc.gen) masLoc("Ver más genéricos", ()=>{ limLoc.gen += 30; pintarLocal(); });
     }
-    if(!termino && !(fuente === "off" && filtros.tienda)) return;
-    mas.innerHTML = ""; notaBusq.textContent = "";
-    resDiv.innerHTML = `<div class="estado">Buscando...</div>`;
-    if(fuente === "wger"){
-      try{
-        const productos = await buscarWgerAlimentos(termino);
-        resDiv.innerHTML = "";
-        if(productos.length === 0){
-          resDiv.innerHTML = `<div class="estado">Sin resultados en wger para eso. Como busca en inglés, probá un término más simple o genérico (ej: "rice" en vez de "arroz integral cocido").</div>`;
-        }
-        productos.forEach(p => resDiv.appendChild(tarjetaProducto(p, "", elegir)));
-        if(productos.length === 0) ofrecerEstimarIA(termino);
-      }catch(err){
-        resDiv.innerHTML = `<div class="estado">No se pudo conectar con wger (${esc(err.message || "error desconocido")}). Probá de nuevo en unos segundos.</div>`;
-        ofrecerEstimarIA(termino);
-      }
-      return;
-    }
+    secLoc("🛒 Productos de supermercado" + (tiendaSel ? " · " + nombreSuper(tiendaSel) : "") + " (" + ultLoc.sup.length + ")");
+    if(!ultLoc.sup.length) estLoc("Sin coincidencias en la base de productos de supermercado.");
+    ultLoc.sup.slice(0, limLoc.sup).forEach(p => locDiv.appendChild(tarjetaProducto(p, "", elegir)));
+    if(ultLoc.sup.length > limLoc.sup) masLoc("Ver más productos", ()=>{ limLoc.sup += 30; pintarLocal(); });
+  }
+  async function cargarOFF(btn){
+    btn.disabled = true; btn.textContent = "Buscando en Open Food Facts…";
+    pag = 1; ocultosTot = 0; destOff = offDiv; offDiv.innerHTML = "";
+    vistos = new Set(ultLoc.gen.concat(ultLoc.sup).map(p => p.code));
     try{
-      pag = 1; vistos = new Set(); ocultosTot = 0; ultimaB = {termino, f:{...filtros}};
-      const r = await buscarOFFPag(termino, ultimaB.f, 1, vistos);
-      resDiv.innerHTML = "";
-      if(filtros.tienda) notaBusq.textContent = "Mostrando " + (termino ? "«" + termino + "»" : "productos") + " en " + nombreSuper(filtros.tienda) + ". Cambia o quita el supermercado con el selector de arriba.";
+      const r = await buscarOFFPag(ultimaB.termino, ultimaB.f, 1, vistos);
+      btn.parentNode.style.display = "none";
       if(r.productos.length === 0 && !r.hayMas){
-        resDiv.innerHTML = `<div class="estado">Sin resultados con calorías${(filtros.tienda||filtros.marca||filtros.pais||filtros.nova!=="todos") ? " y esos filtros. Open Food Facts no tiene todos los productos de cada tienda: prueba a quitar algún filtro" : ". Prueba con otro nombre"}.</div>`;
+        offDiv.innerHTML = '<div class="estado">Open Food Facts no aporta nada nuevo para esta búsqueda.</div>';
+        if(!ultLoc.gen.length && !ultLoc.sup.length) ofrecerEstimarIA(ultimaB.termino);
+        return;
       }
       pintarLote(r);
-      if(r.productos.length === 0 && !r.hayMas) ofrecerEstimarIA(termino);
     }catch(err){
-      resDiv.innerHTML = `<div class="estado">No se pudo conectar con OpenFoodFacts (${esc(err.message || "error desconocido")}). Suele ser temporal (límite de búsquedas por minuto): espera un minuto y repite, o usa la estimación con IA.</div>`;
-      ofrecerEstimarIA(termino);
+      btn.disabled = false; btn.textContent = "🌐 Reintentar Open Food Facts";
+      offDiv.innerHTML = '<div class="estado">No se pudo conectar con Open Food Facts (' + esc(err.message || "error") + '). Suele ser temporal: espera un minuto.</div>';
     }
+  }
+  async function buscar(){
+    let termino = input.value.trim();
+    const x = extraerSuper(termino);
+    if(x.tienda){ filtros.tienda = x.tienda; guardarFiltros(); pintarFiltros(); termino = x.termino; }
+    if(!termino && !filtros.tienda) return;
+    mas.innerHTML = ""; notaBusq.textContent = "";
+    pag = 1; vistos = new Set(); ocultosTot = 0; limLoc = {gen:30, sup:30};
+    ultimaB = {termino, f:{...filtros}};
+    resDiv.innerHTML = "";
+    locDiv = document.createElement("div"); locDiv.innerHTML = '<div class="estado">Buscando...</div>';
+    const offFila = document.createElement("div"); offFila.className = "mas-cont";
+    const offBtn = document.createElement("button"); offBtn.type = "button"; offBtn.textContent = "🌐 Buscar también en Open Food Facts";
+    offBtn.onclick = ()=> cargarOFF(offBtn);
+    offFila.appendChild(offBtn);
+    offDiv = document.createElement("div"); destOff = offDiv;
+    resDiv.appendChild(locDiv); resDiv.appendChild(offFila); resDiv.appendChild(offDiv);
+    await pintarLocal();
+    if(!ultLoc.gen.length && !ultLoc.sup.length) ofrecerEstimarIA(termino);
   }
   function pintarLote(r){
     ocultosTot += r.ocultos;
-    const viejo = resDiv.querySelector(".nota-ocultos"); if(viejo) viejo.remove();
-    r.productos.forEach(p => resDiv.appendChild(tarjetaProducto(p, "", elegir)));
+    const dest = destOff || resDiv;
+    const viejo = dest.querySelector(".nota-ocultos"); if(viejo) viejo.remove();
+    r.productos.forEach(p => dest.appendChild(tarjetaProducto(p, "", elegir)));
     if(ocultosTot > 0 && ultimaB && ultimaB.f.nova !== "todos"){
       const n = document.createElement("div");
       n.className = "estado nota-ocultos";
       n.textContent = "Se ocultaron " + ocultosTot + " resultado" + (ocultosTot===1?"":"s") + " que no coinciden con el filtro fresco/procesado.";
-      resDiv.appendChild(n);
+      dest.appendChild(n);
     }
     mas.innerHTML = "";
     if(r.hayMas){
@@ -1553,8 +1572,10 @@ function crearPanelBusqueda(opts){
     abrirEscaner(async (codigo)=>{
       resDiv.innerHTML = `<div class="estado">Buscando código ${esc(codigo)}...</div>`;
       try{
-        const p = await buscarPorCodigoBarras(codigo);
-        if(!p){ resDiv.innerHTML = `<div class="estado">No se encontró ningún producto con ese código en OpenFoodFacts.</div>`; return; }
+        let p = null;
+        try{ if(window.BuscadorBase){ await BuscadorBase.cargar(); p = BuscadorBase.porCodigo(codigo); } }catch(e){}
+        if(!p) p = await buscarPorCodigoBarras(codigo);
+        if(!p){ resDiv.innerHTML = `<div class="estado">No se encontró ningún producto con ese código ni en AESAN ni en OpenFoodFacts.</div>`; return; }
         resDiv.innerHTML = "";
         resDiv.appendChild(tarjetaProducto(p, "", elegir));
       }catch(e){
@@ -1809,9 +1830,16 @@ async function buscarRecetas(){
     } else {
       const conWeb = bqFuente === "web";
       bqAviso(conWeb ? "Gemini está buscando en Google..." : "Pensando recetas...");
-      const prompt = promptRecetas(f, conWeb);
+      // Modo Web: 1) Tavily busca en internet; 2) Gemini (sin herramienta de búsqueda, gratis en cualquier modelo) ordena los resultados en recetas.
+      // Si Tavily no está configurado o falla, se usa la búsqueda de Google de Gemini como antes.
+      let tav = null;
+      if(conWeb){ try{ tav = await IAClaves.tavily("receta " + f.pedido + (f.tipo ? " " + f.tipo : ""), 8); }catch(e){ tav = null; } }
+      const hayTav = !!(tav && tav.length);
+      let prompt = promptRecetas(f, conWeb);
+      if(hayTav) prompt += "\n\nResultados de la búsqueda web (usa SOLO estas páginas; en fuente pon el nombre del sitio de la página de donde sale cada receta):\n" +
+        tav.map((x,i) => "[" + (i+1) + "] " + x.title + " — " + x.url + "\n" + x.content).join("\n\n");
       const body = {contents:[{parts:[{text: prompt}]}]};
-      if(conWeb) body.tools = [{google_search:{}}];
+      if(conWeb && !hayTav) body.tools = [{google_search:{}}];
       let data;
       try{ data = await IAClaves.gemini(body); }
       catch(e){
@@ -1821,7 +1849,7 @@ async function buscarRecetas(){
       const texto = ((cand.content || {}).parts || []).map(p => p.text || "").join("");
       const lista = jsonArrayDeTexto(texto);
       if(!Array.isArray(lista) || lista.length === 0){ bqAviso("No se generaron recetas. Prueba a reformular el pedido."); return; }
-      const chunks = (((cand.groundingMetadata || {}).groundingChunks) || []).map(c => c.web).filter(w => w && /^https:\/\//i.test(w.uri || ""));
+      const chunks = (hayTav ? tav.map(x => ({uri:x.url, title:x.title})) : (((cand.groundingMetadata || {}).groundingChunks) || []).map(c => c.web)).filter(w => w && /^https:\/\//i.test(w.uri || ""));
       lista.forEach(r=>{
         r.tipoComida = f.tipo || tipoComidaValido(r.tipoComida);
         if(conWeb){
@@ -1834,7 +1862,7 @@ async function buscarRecetas(){
       });
       bqAviso("Encontradas " + lista.length + ". Revisa los datos antes de guardar: las calorías son estimadas.");
       if(conWeb && chunks.length){
-        fuentesEl.innerHTML = "<b>Fuentes consultadas por Gemini:</b><br>" + chunks.slice(0,6).map(c => '<a href="' + esc(c.uri) + '" target="_blank" rel="noopener" style="color:var(--accent)">' + esc(c.title || c.uri) + "</a>").join(" · ");
+        fuentesEl.innerHTML = "<b>Fuentes consultadas" + (hayTav ? " (Tavily)" : " por Gemini") + ":</b><br>" + chunks.slice(0,6).map(c => '<a href="' + esc(c.uri) + '" target="_blank" rel="noopener" style="color:var(--accent)">' + esc(c.title || c.uri) + "</a>").join(" · ");
       }
     }
   }catch(e){

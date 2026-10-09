@@ -238,6 +238,13 @@
     });
   };
 
+  // Motor compartido: la pestaña Día usa exactamente la misma búsqueda local (BEDCA + AESAN) que esta pestaña.
+  window.BuscadorBase = {
+    cargar: function(){ return cargar().then(function(){ return {errores: errores.slice()}; }); },
+    buscar: function(texto, tienda){ var toks = tokens(texto); return { gen: tienda ? [] : buscarLocal(bedca, toks, null), sup: buscarLocal(aesan, toks, filtroSuper(tienda)) }; },
+    porCodigo: function(codigo){ return porEAN.get(sinCeros(codigo)) || null; }
+  };
+
   // al abrir la pestaña: precarga las bases y enseña los frecuentes
   var tabBtn = document.querySelector('#tabsSec [data-p="bus"]');
   if(tabBtn) tabBtn.addEventListener("click", function(){ fechaNota(); cargar().then(function(){ if(!q.value.trim()) pintar(); }); });
