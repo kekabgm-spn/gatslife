@@ -45,6 +45,7 @@ Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localS
   <button class="go" id="sync">⌚ Sincronizar Huawei</button><a href="#" class="mini" id="s90">traer 90 días</a>
   <div id="estado" class="nota" style="margin-top:8px"></div>
   <div id="aviso" class="nota" style="margin-top:6px"></div>
+  <div id="carpetas" class="nota" style="margin-top:6px"></div>
 </div>
 
 <div class="card"><h2 id="hTit">Último día con datos</h2><div class="grid" id="hoy"></div></div>
@@ -76,7 +77,7 @@ Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localS
 const CLIENT_ID = "235893987189-hkdej19871r8qkbkgke2dm6n971tb1q1.apps.googleusercontent.com";
 const SCOPE = "https://www.googleapis.com/auth/drive.readonly";
 const norm = s => String(s == null ? "" : s).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-const KL = p => "huaweiUltimoDatoV1_" + p, KP = p => "huaweiPasosKcalV1_" + p, KD = p => "huaweiDiaV1_" + p, KU = p => "huaweiUltimaV1_" + p, KH = p => "ejercicioHistorial_" + p;
+const KL = p => "huaweiUltimoDatoV1_" + p, KP = p => "huaweiPasosKcalV1_" + p, KD = p => "huaweiDiaV1_" + p, KU = p => "huaweiUltimaV1_" + p, KH = p => "ejercicioHistorial_" + p, KT = p => "huaweiTsV1_" + p, KC = p => "huaweiCarpetasV1_" + p;
 const lj = (k, d) => { try{ const v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; }catch(e){ return d; } };
 
 // ---------- CSV ----------
@@ -136,12 +137,12 @@ let tok = null, tokExp = 0;
 function cargarGIS(){ return new Promise((res, rej) => { if(window.google && google.accounts && google.accounts.oauth2) return res();
   let s = document.getElementById("gis-huawei"); if(!s){ s = document.createElement("script"); s.id = "gis-huawei"; s.src = "https://accounts.google.com/gsi/client"; s.async = true; document.head.appendChild(s); }
   s.addEventListener("load", () => res()); s.addEventListener("error", () => rej(new Error("No se pudo cargar el acceso de Google. ¿Hay internet?"))); }); }
-function token(){ if(tok && Date.now() < tokExp) return Promise.resolve(tok);
-  return new Promise((res, rej) => { try{
+function token(quiet){ if(tok && Date.now() < tokExp) return Promise.resolve(tok);
+  return new Promise((res, rej) => { if(quiet) setTimeout(() => rej(new Error("auto")), 15000); try{
     const c = google.accounts.oauth2.initTokenClient({ client_id: CLIENT_ID, scope: SCOPE,
       callback: r => { if(r.error) return rej(new Error(r.error_description || r.error)); tok = r.access_token; tokExp = Date.now() + ((r.expires_in || 3600) - 60) * 1000; res(tok); },
       error_callback: e => rej(new Error(e && e.type === "popup_closed" ? "Cerraste la ventana de Google antes de terminar." : (e && e.type) || "No se pudo abrir la ventana de Google.")) });
-    c.requestAccessToken();
+    c.requestAccessToken(quiet ? { prompt: "none" } : undefined);
   }catch(e){ rej(e); } }); }
 async function api(path, t, texto){
   const r = await fetch("https://www.googleapis.com/drive/v3/" + path, { headers: { Authorization: "Bearer " + t } });
@@ -153,14 +154,15 @@ const hoy = () => { const d = new Date(); return d.getFullYear() + "-" + String(
 const CARPETAS = [["actividad", "act"], ["frecuencia", "fc"], ["pasos", "pasos"], ["sueno", "sueno"], ["saturacion", "spo2"]];
 
 async function listarArchivos(t, carpetaId, desde, info){
-  const out = []; let pg = "", vistos = 0; const ej = [];
+  const out = []; let pg = "", vistos = 0, ultima = ""; const ej = [];
   do{ const q = encodeURIComponent("'" + carpetaId + "' in parents and trashed=false");
     const j = await api("files?q=" + q + "&pageSize=1000&fields=nextPageToken,files(id,name,mimeType)" + (pg ? "&pageToken=" + pg : ""), t);
     (j.files || []).forEach(f => { vistos++; if(ej.length < 2) ej.push(f.name);
-      const m = /(\d{4})[._\-\s](\d{2})[._\-\s](\d{2})/.exec(f.name); if(!m || /\.(fit|tcx|gpx|kml)$/i.test(f.name)) return;
+      const m = /(\d{4})[._\-\s](\d{2})[._\-\s](\d{2})/.exec(f.name); if(m){ const d0 = m[1] + "-" + m[2] + "-" + m[3]; if(d0 > ultima) ultima = d0; }
+      if(!m || /\.(fit|tcx|gpx|kml)$/i.test(f.name)) return;
       if(m[1] + "-" + m[2] + "-" + m[3] >= desde) out.push(f); });
     pg = j.nextPageToken || ""; } while(pg);
-  if(info) info(vistos, out.length, ej);
+  if(info) info(vistos, out.length, ej, ultima);
   return out;
 }
 async function bajar(t, f){
@@ -168,9 +170,9 @@ async function bajar(t, f){
   return api("files/" + f.id + "/export?mimeType=" + (f.mimeType.indexOf("spreadsheet") >= 0 ? "text/csv" : "text/plain"), t, true);
 }
 
-async function sincronizar(perfil, dias, progreso){
+async function sincronizar(perfil, dias, progreso, quiet){
   progreso = progreso || (() => {});
-  progreso("Pidiendo permiso a Google…"); const t = await token();
+  progreso("Pidiendo permiso a Google…"); const t = await token(quiet);
   const ult = localStorage.getItem(KU(perfil));
   const desde = dias ? sumaDias(hoy(), -dias) : (ult ? sumaDias(ult, -2) : sumaDias(hoy(), -30));
   progreso("Buscando las carpetas de Health Sync…");
@@ -178,10 +180,11 @@ async function sincronizar(perfil, dias, progreso){
   const carp = (await api("files?q=" + q + "&pageSize=100&fields=files(id,name)", t)).files || [];
   if(!carp.length) throw new Error("No encontré carpetas «Health Sync …» en este Google Drive. ¿Entraste con la misma cuenta de Health Sync?");
   const txt = { pasos: [], fc: [], spo2: [], sueno: [], act: [] }; let total = 0, hechos = 0; const lotes = [];
-  const diag = [];
+  const diag = [], ultimas = {};
   for(const [needle, clave] of CARPETAS){ const c = carp.find(x => norm(x.name).indexOf(needle) >= 0); if(!c){ diag.push("sin carpeta «" + needle + "»"); continue; }
-    const arch = await listarArchivos(t, c.id, clave === "sueno" ? sumaDias(desde, -1) : desde, (v, ok, ej) => diag.push(c.name + ": " + v + " archivos, " + ok + " recientes" + (ej.length ? " (ej: " + ej.join(" / ") + ")" : "")));
+    const arch = await listarArchivos(t, c.id, clave === "sueno" ? sumaDias(desde, -1) : desde, (v, ok, ej, ul) => { diag.push(c.name + ": " + v + " archivos, " + ok + " recientes" + (ej.length ? " (ej: " + ej.join(" / ") + ")" : "")); ultimas[clave] = ul || null; });
     total += arch.length; lotes.push([clave, arch]); }
+  localStorage.setItem(KC(perfil), JSON.stringify(Object.assign(lj(KC(perfil), {}), ultimas)));
   if(!total) throw new Error("No encontré archivos desde " + desde + ". Detalle → " + diag.join(" | "));
   for(const [clave, arch] of lotes){
     for(let i = 0; i < arch.length; i += 6){
@@ -198,7 +201,7 @@ async function sincronizar(perfil, dias, progreso){
   const hist = lj(KH(perfil), []); const vistos = {}; hist.forEach(h => { if(h && h.hid) vistos[h.hid] = 1; });
   let nuevas = 0; r.acts.forEach(a => { if(!vistos[a.hid]){ hist.push(a); vistos[a.hid] = 1; nuevas++; } });
   if(nuevas) localStorage.setItem(KH(perfil), JSON.stringify(hist));
-  localStorage.setItem(KU(perfil), hoy());
+  localStorage.setItem(KU(perfil), hoy()); localStorage.setItem(KT(perfil), String(Date.now()));
   const pk = aplicarPasos(perfil);
   return { sinPeso: pk.sinPeso, dias: nDias, nuevas, archivos: total };
 }
@@ -224,7 +227,7 @@ function mensaje(e){
   if(/access_denied/i.test(m)) return "Google no dio el permiso. Si la app está en «Testing», agrega tu correo en Google Auth Platform → Público → Usuarios de prueba. Detalle: " + m;
   return m;
 }
-window.Huawei = { KL, cargarGIS, sincronizar, procesar, aplicarPasos, pesoDe, kcalPasosDe, fmtH, NF, mensaje, KD, KU, KH, KP, lj, hoy };
+window.Huawei = { KL, cargarGIS, sincronizar, procesar, aplicarPasos, pesoDe, kcalPasosDe, fmtH, NF, mensaje, KD, KU, KH, KP, KT, KC, lj, hoy };
 if(typeof module !== "undefined") module.exports = { procesar, parseCSV };
 })();
 
@@ -244,8 +247,17 @@ function avisoDatos(){
   el.style.color = viejo ? "#ff9b6b" : "";
   el.textContent = "👣 Último dato de pasos en Drive: " + cuando + " (hace " + hace + ")." + (viejo ? " Faltan pasos recientes: 1) desbloquea el móvil y abre Huawei Health, 2) en Health Sync toca el botón verde de sincronizar con Drive, 3) vuelve aquí y pulsa «Sincronizar Huawei»." : "");
 }
+function avisoCarpetas(){
+  const el = $("carpetas"), c = H.lj(H.KC(perfil), {}), nom = { act: "Actividades", pasos: "Pasos", fc: "Pulso", sueno: "Sueño", spo2: "Oxígeno" };
+  const partes = Object.keys(nom).filter(k => k in c).map(k => nom[k] + ": " + (c[k] ? c[k].slice(8) + "/" + c[k].slice(5, 7) : "sin archivos"));
+  el.style.color = ""; if(!partes.length){ el.textContent = ""; return; }
+  let txt = "📁 Último archivo en Drive → " + partes.join(" · ");
+  const dias = (a, b) => Math.round((Date.parse(b) - Date.parse(a)) / 86400000);
+  if(c.pasos && (!c.act || dias(c.act, c.pasos) >= 3)){ txt += ". Actividades va atrasada respecto a Pasos: en Health Sync toca la fila «Actividades» y sincroniza (si no hiciste ejercicio, es normal)."; el.style.color = "#ff9b6b"; }
+  el.textContent = txt;
+}
 function render(){
-  if(ocupado) return; $("quien").textContent = perfil; avisoDatos();
+  if(ocupado) return; $("quien").textContent = perfil; avisoDatos(); avisoCarpetas();
   const d = H.lj(H.KD(perfil), {}), ks = Object.keys(d).sort(), f = ks[ks.length - 1], x = f ? d[f] : {}, u = localStorage.getItem(H.KU(perfil));
   $("estado").textContent = u ? "Última sincronización: " + u : "Todavía no sincronizaste. Toca el botón.";
   $("hTit").textContent = f ? (f === H.hoy() ? "Hoy" : "Último día con datos: " + f.slice(8) + "/" + f.slice(5, 7)) : "Sin datos todavía";
@@ -261,16 +273,21 @@ function render(){
   const t = ks.slice(-14).reverse().map(g => { const y = d[g]; return "<tr><td>" + g.slice(8) + "/" + g.slice(5, 7) + "</td><td>" + (y.pasos != null ? y.pasos : "–") + "</td><td>" + (y.sueno ? H.fmtH(y.sueno.min) : "–") + "</td><td>" + (y.fc ? y.fc.med : "–") + "</td><td>" + (y.spo2 ? H.NF(y.spo2.med) + "%" : "–") + "</td></tr>"; }).join("");
   $("tabla").innerHTML = t ? "<table><tr><th>Día</th><th>👣 Pasos</th><th>😴 Sueño</th><th>❤️ Pulso</th><th>🫁 SpO₂</th></tr>" + t + "</table>" : '<div class="nota">Aún no hay días guardados.</div>';
 }
-function lanzar(dias){ const est = $("estado"); ocupado = true; $("sync").disabled = true; est.style.color = "";
-  H.sincronizar(perfil, dias, s => est.textContent = s).then(r => { ocupado = false; $("sync").disabled = false; render();
+function lanzar(dias, quiet){ const est = $("estado"); ocupado = true; $("sync").disabled = true; est.style.color = "";
+  H.sincronizar(perfil, dias, s => est.textContent = s, quiet).then(r => { ocupado = false; $("sync").disabled = false; render();
     est.textContent = "Listo: " + r.archivos + " archivos leídos, " + r.dias + " días actualizados, " + r.nuevas + " actividad" + (r.nuevas === 1 ? "" : "es") + " nueva" + (r.nuevas === 1 ? "" : "s") + "." + (r.sinPeso ? " ⚠️ No conté los pasos: falta tu peso en Nutrición." : ""); })
-  .catch(e => { ocupado = false; $("sync").disabled = false; est.style.color = "#ff9b6b"; est.textContent = "⚠️ " + H.mensaje(e); }); }
+  .catch(e => { ocupado = false; $("sync").disabled = false; if(quiet){ render(); return; } est.style.color = "#ff9b6b"; est.textContent = "⚠️ " + H.mensaje(e); }); }
 $("sync").onclick = () => lanzar(0);
 $("s90").onclick = ev => { ev.preventDefault(); lanzar(90); };
 $("chkPasos").onchange = ev => { localStorage.setItem(H.KP(perfil), ev.target.checked ? "1" : "0"); H.aplicarPasos(perfil); render(); };
 window.elegirPerfil = p => { perfil = p; render(); };
-window.addEventListener("focus", render);
-render(); H.cargarGIS().catch(() => {});
+let ultAuto = 0;
+function auto(){ if(ocupado || document.hidden || Date.now() - ultAuto < 600000) return;
+  const ts = +localStorage.getItem(H.KT(perfil)) || 0; if(Date.now() - ts < 900000) return;
+  ultAuto = Date.now(); lanzar(0, true); }
+window.addEventListener("focus", () => { render(); auto(); });
+document.addEventListener("visibilitychange", () => { if(!document.hidden) auto(); });
+render(); H.cargarGIS().then(auto).catch(() => {});
 })();
 </script>
 <script type="module" src="nube.js" onerror="var d=document.createElement('div');d.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99998;background:#7a1f1f;color:#fff;padding:10px 14px;font:14px system-ui,sans-serif;text-align:center';d.textContent='⚠️ El archivo nube.js no se pudo descargar (revisa que esté subido a GitHub con ese nombre exacto).';document.body.appendChild(d)"></script>
