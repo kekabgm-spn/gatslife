@@ -6,6 +6,7 @@
 <link rel="manifest" href="manifest.json">
 <script src="migracion.js"></script>
 <script src="tema.js"></script>
+<script src="pasos.js" onerror="window.addEventListener('DOMContentLoaded',function(){var d=document.createElement('div');d.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99998;background:#7a1f1f;color:#fff;padding:10px 14px;font:14px system-ui,sans-serif;text-align:center';d.textContent='⚠️ El archivo pasos.js no se pudo descargar (revisa que esté subido a GitHub con ese nombre exacto).';document.body.appendChild(d)})"></script>
 <title>Huawei</title>
 <link rel="icon" type="image/png" href="icono.png">
 <meta name="theme-color" content="#10151f">
@@ -64,7 +65,7 @@ Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localS
       <li><b>El «déficit» de Huawei</b> es quemadas − consumidas. Si no anotas comida en Huawei, «consumidas» es 0 y el déficit sale igual al total quemado (1.766). <b>No es un déficit real.</b></li>
       <li><b>Esta app no usa nada de eso.</b> Nutrición calcula con tu meta diaria, lo que comiste y lo <i>extra</i> que quemaste: <code>restantes = meta − comido + quemadas extra</code>.</li>
       <li><b>Lo que sí importamos:</b> las calorías reales de cada actividad que inicias en el reloj (carrera, caminata…). Las 172 «activas» del día <b>no vienen</b> en los archivos de Health Sync.</li>
-      <li><b>Por qué los pasos van aparte y apagados:</b> los pasos de una carrera ya están contados con sus kcal; sumarlos otra vez duplica. Por eso se restan los pasos de actividades. Además, si tu meta ya incluye caminar a diario, sumar pasos cuenta lo mismo dos veces. Tampoco sumes jamás el «reposo».</li>
+      <li><b>Por qué los pasos van aparte y apagados:</b> los pasos de una carrera ya están contados con sus kcal; sumarlos otra vez duplica. Por eso se restan los pasos de actividades del reloj y también los de las caminatas o carreras que anotas a mano en Fitness (≈100 pasos por minuto caminando, ≈160 corriendo), salvo que las marques como hechas «sin reloj». Además, si tu meta ya incluye caminar a diario, sumar pasos cuenta lo mismo dos veces. Tampoco sumes jamás el «reposo».</li>
       <li>Son estimaciones del reloj. Para saber si va bien, mira la tendencia del peso por semana, no un día suelto.</li>
     </ul>
   </details>
@@ -212,16 +213,11 @@ async function sincronizar(perfil, dias, progreso, quiet){
 // ---------- Pasos -> calorías extra (opcional) ----------
 // Solo cuentan los pasos que NO pertenecen a una actividad ya registrada (esos ya van con sus kcal reales).
 // Estimación prudente: pasos x peso x 0,0003 kcal (~0,4 kcal por kg y km, sin contar el reposo).
-function pesoDe(p){ const m = lj("dietaMedidasV1_" + p, []).filter(x => x && x.peso > 0).sort((a, b) => a.fecha < b.fecha ? 1 : -1); if(m.length) return m[0].peso;
-  const pm = lj("perfilMetasV1_" + p, null); return pm && pm.pesoInicial > 0 ? pm.pesoInicial : null; }
-const esPasos = h => h && h.hid && String(h.hid).indexOf("hwp:") === 0;
-function kcalPasosDe(x, peso){ const extra = Math.max(0, (x.pasos || 0) - (x.actPasos || 0)); return { extra, kcal: Math.round(extra * peso * 0.0003) }; }
-function aplicarPasos(p){
-  const on = localStorage.getItem(KP(p)) === "1"; let h = lj(KH(p), []).filter(x => !esPasos(x)), n = 0;
-  if(on){ const peso = pesoDe(p); if(!peso) return { n: 0, sinPeso: true };
-    const d = lj(KD(p), {}); Object.keys(d).forEach(f => { const k = kcalPasosDe(d[f], peso); if(k.kcal > 0){ h.push({ fecha: f, tipo: "caminata", nombre: "👣 Pasos del día (sin actividades)", minutos: Math.round(k.extra / 100), kcal: k.kcal, hid: "hwp:" + f }); n++; } }); }
-  localStorage.setItem(KH(p), JSON.stringify(h)); return { n, sinPeso: false };
-}
+// Las reglas (pesoDe, kcalPasosDe, aplicarPasos, pasos de caminatas anotadas a mano) viven en pasos.js,
+// compartidas con Fitness, para que los dos sitios calculen igual y no se cuente nada dos veces.
+const pesoDe = p => window.Pasos.pesoDe(p);
+const kcalPasosDe = (x, peso, manuales) => window.Pasos.kcalPasosDe(x, peso, manuales);
+const aplicarPasos = p => window.Pasos.aplicar(p);
 const fmtH = m => Math.floor(m / 60) + " h " + String(Math.round(m % 60)).padStart(2, "0") + " min";
 const NF = v => String(v).replace(".", ",");
 function mensaje(e){
@@ -274,7 +270,8 @@ function render(){
     m("🫁 Oxígeno (SpO₂)", x.spo2 ? H.NF(x.spo2.med) + " %" : "–", x.spo2 ? "mínimo " + H.NF(x.spo2.min) + " %" : "") : '<div class="nota">Cuando sincronices aparecerán aquí tus datos.</div>';
   const on = localStorage.getItem(H.KP(perfil)) === "1"; $("chkPasos").checked = on;
   const hist = H.lj(H.KH(perfil), []).filter(e => e && e.fecha === f), sum = p => hist.filter(e => e.hid && String(e.hid).indexOf(p) === 0).reduce((a, e) => a + (e.kcal || 0), 0);
-  const act = sum("hw:"), pas = sum("hwp:"), peso = H.pesoDe(perfil), pot = (peso && x.pasos) ? H.kcalPasosDe(x, peso).kcal : null;
+  const man = window.Pasos.pasosManuales(H.lj(H.KH(perfil), []), f);
+  const act = sum("hw:"), pas = sum("hwp:"), peso = H.pesoDe(perfil), pot = (peso && x.pasos) ? H.kcalPasosDe(x, peso, man).kcal : null;
   $("kcal").innerHTML = f ? "<div>Actividades del reloj: <b>" + act + " kcal</b></div><div>Pasos fuera de actividades: <b>" + (on ? pas + " kcal" : "apagado" + (pot != null ? " (sumaría ≈ " + pot + " kcal)" : "")) + "</b></div><div style='margin-top:4px'>Suma a Nutrición ese día: <b>" + (act + pas) + " kcal</b></div>" : '<div class="nota">Sin datos todavía.</div>';
   $("avisoPasos").textContent = on && !peso ? "⚠️ Falta tu peso: regístralo en Nutrición para poder calcular." : "";
   const t = ks.slice(-14).reverse().map(g => { const y = d[g]; return "<tr><td>" + g.slice(8) + "/" + g.slice(5, 7) + "</td><td>" + (y.pasos != null ? y.pasos : "–") + "</td><td>" + (y.sueno ? H.fmtH(y.sueno.min) : "–") + "</td><td>" + (y.fc ? y.fc.med : "–") + "</td><td>" + (y.spo2 ? H.NF(y.spo2.med) + "%" : "–") + "</td></tr>"; }).join("");

@@ -7,6 +7,7 @@
 <script src="claves.js"></script>
 <script src="migracion.js"></script>
 <script src="tema.js"></script>
+<script src="pasos.js" onerror="window.addEventListener('DOMContentLoaded',function(){var d=document.createElement('div');d.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99998;background:#7a1f1f;color:#fff;padding:10px 14px;font:14px system-ui,sans-serif;text-align:center';d.textContent='⚠️ El archivo pasos.js no se pudo descargar (revisa que esté subido a GitHub con ese nombre exacto).';document.body.appendChild(d)})"></script>
 <title>Fitness</title>
 <style>
   :root{
@@ -159,12 +160,17 @@ Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localS
 
 <div class="pestanas" role="tablist" aria-label="Secciones de Fitness">
   <button type="button" id="tab-buscar" role="tab" class="on" aria-selected="true" onclick="mostrarPestana('buscar')">🔎 Buscar</button>
-  <button type="button" id="tab-hechos" role="tab" aria-selected="false" onclick="mostrarPestana('hechos')">✅ Hechos</button>
+  <button type="button" id="tab-hechos" role="tab" aria-selected="false" onclick="mostrarPestana('hechos')">✅ Mi rutina</button>
 </div>
 
 
 
 <div id="panel-buscar" role="tabpanel">
+
+<div style="margin:0 0 0.9rem;padding:0.7rem 0.9rem;border:1px solid var(--acc);border-radius:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:space-between">
+  <span style="font-size:0.88rem">¿Ya hiciste algo hoy (una caminata, por ejemplo)?</span>
+  <button type="button" class="secundario" style="margin:0" onclick="irAActividadManual()">➕ Anotar actividad</button>
+</div>
 
 <fieldset>
   <legend>Clave de YouTube</legend>
@@ -282,7 +288,7 @@ Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localS
 
 <fieldset>
   <legend>🎬 Videos guardados para después</legend>
-  <p class="pendiente" style="margin-top:0">Los que guardás acá son solo para mirar más tarde: no cuentan calorías ni aparecen en "Mi rutina". Cuando hagas un ejercicio de alguno de estos videos, anotalo arriba en "+ Actividad manual", con los minutos reales que hiciste.</p>
+  <p class="pendiente" style="margin-top:0">Los que guardás acá son solo para mirar más tarde: no cuentan calorías ni aparecen en "Mi rutina". Cuando hagas un ejercicio de alguno de estos videos, anotalo en la pestaña "✅ Mi rutina", en "+ Actividad manual", con los minutos reales que hiciste.</p>
   <div id="videos-guardados-lista"></div>
 </fieldset>
 
@@ -341,6 +347,7 @@ Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localS
     </div>
     <button class="secundario" style="margin-top:0" onclick="agregarActividadManual()">Agregar</button>
   </div>
+  <label class="check" id="actividad-reloj-cont" style="margin:-0.4rem 0 0.9rem"><input type="checkbox" id="actividad-reloj" checked> Llevaba el reloj puesto <span style="color:var(--gris2);font-size:0.78rem">(sus pasos ya están en el total del día: se descuentan de «pasos sueltos» para no contarlos dos veces. Si salías sin reloj, desmárcalo)</span></label>
 
   <div id="balance-kcal" style="background:#0c1210;border-radius:8px;padding:10px 14px;margin-bottom:0.9rem;font-size:0.85rem"></div>
 
@@ -350,7 +357,7 @@ Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localS
     <button type="button" class="secundario" id="fecha-reg-hoy">Hoy</button>
   </div>
   <div id="rutina-lista"></div>
-  <p class="pendiente">Lo que marques como «Hecho» pasa al historial de abajo y se suma a Nutrición.</p>
+  <p class="pendiente">Una actividad anotada con «Agregar» no cuenta todavía: cuando la hagas, toca «Marcar hecho». Entonces pasa al historial de abajo y se suma a Nutrición. Las caminatas y carreras también se descuentan de los pasos sueltos (ver «👣 Pasos» más arriba).</p>
   <button class="secundario" type="button" onclick="exportarRespaldoEjercicios()" style="margin-top:0.6rem">💾 Descargar copia de seguridad</button>
 </fieldset>
 
@@ -619,13 +626,22 @@ function hoyISO(){
 function agregarAHistorialCompartido(item){
   try{
     const hist = JSON.parse(localStorage.getItem(claveHistorialCompartido()) || '[]');
-    hist.push({ fecha: (window.fechaReg || hoyISO()), tipo: item.tipoEjercicio || 'otro', nombre: item.titulo, minutos: item.minutos });
+    const entrada = { fecha: (window.fechaReg || hoyISO()), tipo: item.tipoEjercicio || 'otro', nombre: item.titulo, minutos: item.minutos };
+    if(item.conReloj === false) entrada.reloj = false; // salió sin reloj: sus pasos no están en el total del día
+    hist.push(entrada);
     localStorage.setItem(claveHistorialCompartido(), JSON.stringify(hist));
+    recalcularPasos();
     if(typeof renderHistorial === 'function') renderHistorial();
   }catch(e){ /* si falla, no rompe la app; el "Hecho" local igual queda marcado */ }
 }
 
-const esPasosH = x => !!(x && x.hid && String(x.hid).indexOf('hwp:') === 0); // entrada automática "👣 Pasos del día" de Huawei
+// Cada vez que cambia una caminata/carrera anotada a mano hay que recalcular los "pasos sueltos" (regla en pasos.js).
+function recalcularPasos(){
+  try{ if(window.Pasos) window.Pasos.aplicar(perfil); }catch(e){}
+  if(typeof renderPasos === 'function') renderPasos();
+}
+
+const esPasosH = x =>!!(x && x.hid && String(x.hid).indexOf('hwp:') === 0); // entrada automática "👣 Pasos del día" de Huawei
 
 function kcalHoyEjercicio(fecha){ fecha = fecha || hoyISO();
   const peso = pesoDesdeDieta();
@@ -751,6 +767,13 @@ function agregarActividadManual(){
   const min = document.getElementById('actividad-min').value.trim();
   const nombre = tipo === 'otro' ? (otra || 'Actividad') : NOMBRE_ACTIVIDAD[tipo];
   if(tipo === 'otro' && !otra){ alert('Escribí el nombre de la actividad.'); return; }
+  // Aviso: si el reloj ya grabó una caminata/corrida ese día, anotarla otra vez la contaría dos veces.
+  if(tipo === 'caminata' || tipo === 'corrida'){
+    const fecha = window.fechaReg || hoyISO();
+    if(hcLeer().some(h => h && h.fecha === fecha && h.tipo === tipo && String(h.hid||'').indexOf('hw:') === 0)){
+      if(!confirm('El reloj ya registró ' + (tipo === 'caminata' ? 'una caminata' : 'una carrera') + ' ese día (la ves en "Mi historial"). Si es la misma, no hace falta anotarla: se contaría dos veces.\n\n¿Anotarla igual porque es otra distinta?')) return;
+    }
+  }
   const item = {
     id: 'manual-' + Date.now(),
     titulo: nombre + (min ? ' — ' + min + ' min' : ''),
@@ -760,14 +783,29 @@ function agregarActividadManual(){
     tipoEjercicio: tipo,
     minutos: parseFloat(min) || 10
   };
+  if(tipo === 'caminata' || tipo === 'corrida') item.conReloj = document.getElementById('actividad-reloj').checked;
   agregarARutina(item, null);
   document.getElementById('actividad-otra').value = '';
   document.getElementById('actividad-min').value = '';
 }
 
+function pintarRelojManual(){
+  const t = document.getElementById('actividad-tipo').value;
+  document.getElementById('actividad-reloj-cont').style.display = (t === 'caminata' || t === 'corrida') ? '' : 'none';
+}
 document.getElementById('actividad-tipo').addEventListener('change', e=>{
   document.getElementById('actividad-otra-cont').style.display = e.target.value==='otro' ? 'block' : 'none';
+  pintarRelojManual();
 });
+pintarRelojManual();
+
+// Atajo desde la pestaña Buscar: lleva directamente al formulario "+ Actividad manual".
+function irAActividadManual(){
+  mostrarPestana('hechos');
+  const el = document.getElementById('actividad-tipo');
+  el.scrollIntoView({behavior:'smooth', block:'center'});
+  try{ el.focus({preventScroll:true}); }catch(e){}
+}
 
 function poblarZonas(){
   const cont = document.getElementById('zonas');
@@ -932,7 +970,7 @@ function renderRutina(){
   const hechos = lista.filter(it=>it.hecho);
   const porHacer = lista.length - hechos.length;
   const tabH = document.getElementById('tab-hechos');
-  if(tabH) tabH.textContent = '✅ Hechos' + (porHacer ? ' · ' + porHacer + ' por hacer' : '');
+  if(tabH) tabH.textContent = '✅ Mi rutina' + (porHacer ? ' · ' + porHacer + ' por hacer' : '');
   if(!pesoKg){
     balanceDiv.innerHTML = '<span style="color:var(--gris2)">Falta tu peso: ponlo en ⚙️ Ajustes → Perfil para ver la estimación acá.</span>';
   } else {
@@ -1029,21 +1067,25 @@ function renderHistorial(){
     det.innerHTML = '<b>' + hcEsc(hcDiaSel) + '</b>' + (idx.length
       ? '<ul style="list-style:none;padding:0;margin:6px 0">' + idx.map(filaDet).join('') + '</ul>'
       : '<div>Sin ejercicios registrados ese día.</div>')
-      + (hcDiaSel > hoy ? '' : '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center"><select id="hc-add-tipo" style="width:auto">'+opts+'</select><input id="hc-add-otra" placeholder="Nombre" style="display:none;width:130px"><input id="hc-add-min" type="number" min="1" placeholder="Min" style="width:80px"><button type="button" class="secundario" id="hc-add-btn">+ Añadir a este día</button></div>');
+      + (hcDiaSel > hoy ? '' : '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center"><select id="hc-add-tipo" style="width:auto">'+opts+'</select><input id="hc-add-otra" placeholder="Nombre" style="display:none;width:130px"><input id="hc-add-min" type="number" min="1" placeholder="Min" style="width:80px"><label id="hc-add-reloj-cont" style="font-size:0.8rem;display:none;align-items:center;gap:4px"><input type="checkbox" id="hc-add-reloj" checked style="width:auto"> con reloj</label><button type="button" class="secundario" id="hc-add-btn">+ Añadir a este día</button></div>');
     det.querySelectorAll('[data-del]').forEach(bt=> bt.onclick = ()=>{
       if(!confirm('¿Quitar este ejercicio del día?')) return;
       const h2 = hcLeer(); h2.splice(+bt.dataset.del, 1);
-      localStorage.setItem(claveHistorialCompartido(), JSON.stringify(h2)); renderHistorial();
+      localStorage.setItem(claveHistorialCompartido(), JSON.stringify(h2)); recalcularPasos(); renderHistorial();
     });
     const sel = document.getElementById('hc-add-tipo');
     if(sel){
-      sel.onchange = ()=>{ document.getElementById('hc-add-otra').style.display = sel.value==='otro' ? 'inline-block' : 'none'; };
+      const pintarReloj = ()=>{ document.getElementById('hc-add-reloj-cont').style.display = (sel.value==='caminata' || sel.value==='corrida') ? 'inline-flex' : 'none'; };
+      pintarReloj();
+      sel.onchange = ()=>{ document.getElementById('hc-add-otra').style.display = sel.value==='otro' ? 'inline-block' : 'none'; pintarReloj(); };
       document.getElementById('hc-add-btn').onclick = ()=>{
         const tipo = sel.value, otra = document.getElementById('hc-add-otra').value.trim();
         if(tipo==='otro' && !otra){ alert('Escribe el nombre de la actividad.'); return; }
         const h2 = hcLeer();
-        h2.push({ fecha: hcDiaSel, tipo: tipo, nombre: tipo==='otro' ? otra : NOMBRE_ACTIVIDAD[tipo], minutos: parseFloat(document.getElementById('hc-add-min').value) || 10 });
-        localStorage.setItem(claveHistorialCompartido(), JSON.stringify(h2)); renderHistorial();
+        const nueva = { fecha: hcDiaSel, tipo: tipo, nombre: tipo==='otro' ? otra : NOMBRE_ACTIVIDAD[tipo], minutos: parseFloat(document.getElementById('hc-add-min').value) || 10 };
+        if((tipo==='caminata' || tipo==='corrida') && !document.getElementById('hc-add-reloj').checked) nueva.reloj = false;
+        h2.push(nueva);
+        localStorage.setItem(claveHistorialCompartido(), JSON.stringify(h2)); recalcularPasos(); renderHistorial();
       };
     }
   } else det.innerHTML = '';
@@ -1249,9 +1291,11 @@ function renderPasos(){
     return;
   }
   const f = (d[hoy] && d[hoy].pasos != null) ? hoy : conPasos[conPasos.length - 1], x = d[f];
-  const act = x.actPasos || 0, sueltos = Math.max(0, x.pasos - act);
+  const act = x.actPasos || 0;
+  const man = window.Pasos ? window.Pasos.pasosManuales(hcLeer(), f) : 0;      // pasos de caminatas/carreras anotadas a mano (con reloj)
+  const sueltos = Math.max(0, x.pasos - act - man);
   const peso = pesoDesdeDieta(), on = localStorage.getItem('huaweiPasosKcalV1_' + perfil) === '1';
-  const kPot = peso ? Math.round(sueltos * peso * 0.0003) : null; // misma fórmula que huawei.html: pasos × peso × 0,0003
+  const kPot = peso ? Math.round(sueltos * peso * 0.0003) : null; // misma fórmula que pasos.js: pasos × peso × 0,0003
   const reg = hcLeer().find(e => e && e.hid === 'hwp:' + f);
   const cuando = f === hoy ? 'Hoy' : 'Último día con datos: ' + f.slice(8) + '/' + f.slice(5, 7);
   let kTxt;
@@ -1263,10 +1307,10 @@ function renderPasos(){
   const barras = dias7.map((g, i) => '<div class="pasos-barra"><span style="width:42px">' + g.slice(8) + '/' + g.slice(5, 7) + '</span><div class="pista"><i style="width:' + (vals[i] != null ? Math.round(vals[i] / max * 100) : 0) + '%"></i></div><span style="width:58px;text-align:right">' + (vals[i] != null ? nf(vals[i]) : '–') + '</span></div>').join('');
   box.innerHTML =
     '<div class="pasos-grande">👣 ' + nf(x.pasos) + ' <span style="font-size:0.9rem;font-weight:500;color:var(--gris2)">pasos · ' + cuando + '</span></div>' +
-    '<div style="font-size:0.88rem;margin-top:4px">🏃 ' + nf(act) + ' dentro de actividades · 🚶 ' + nf(sueltos) + ' sueltos</div>' +
+    '<div style="font-size:0.88rem;margin-top:4px">🏃 ' + nf(act) + ' en actividades del reloj' + (man ? ' · ✍️ ≈' + nf(man) + ' en caminatas anotadas a mano' : '') + ' · 🚶 ' + nf(sueltos) + ' sueltos</div>' +
     '<div style="font-size:0.85rem;margin-top:4px;color:var(--gris2)">' + kTxt + '</div>' +
     '<div style="margin-top:10px;font-size:0.8rem;color:var(--gris2)">Últimos 7 días' + (media != null ? ' · media ' + nf(media) + ' pasos/día' : '') + '</div>' + barras +
-    '<p class="pendiente" style="text-align:left;margin-top:10px">Se actualizan al sincronizar en <a href="huawei.html" style="color:var(--acc)">⌚ Huawei</a>, donde también se activa «Contar también los pasos que no son de una actividad». Los pasos de una caminata o carrera ya van dentro de esa actividad y no se cuentan dos veces; si la actividad aún no llegó a Drive, sus pasos cuentan como sueltos hasta el siguiente sync. Los pasos son una estimación (pasos × peso × 0,0003), no una medición. Un día solo con pasos no se marca como «día con ejercicio».</p>';
+    '<p class="pendiente" style="text-align:left;margin-top:10px">Se actualizan al sincronizar en <a href="huawei.html" style="color:var(--acc)">⌚ Huawei</a>, donde también se activa «Contar también los pasos que no son de una actividad». Los pasos de una caminata o carrera ya van dentro de esa actividad y no se cuentan dos veces; si la actividad aún no llegó a Drive, sus pasos cuentan como sueltos hasta el siguiente sync. Lo mismo para las caminatas o carreras que anotas a mano en «Mi rutina»: se estiman con ≈100 pasos por minuto caminando y ≈160 corriendo, y se descuentan de los pasos sueltos (si marcaste «sin reloj», no se descuentan). Los pasos son una estimación (pasos × peso × 0,0003), no una medición. Un día solo con pasos no se marca como «día con ejercicio».</p>';
 }
 window.addEventListener('focus', renderPasos);
 window.addEventListener('storage', e => { if(e.key && e.key.indexOf('huawei') === 0) renderPasos(); });
