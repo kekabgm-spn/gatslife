@@ -44,8 +44,11 @@ Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localS
 <div class="card">
   <button class="go" id="sync">⌚ Sincronizar Huawei</button><a href="#" class="mini" id="s90">traer 90 días</a>
   <div id="estado" class="nota" style="margin-top:8px"></div>
-  <div id="aviso" class="nota" style="margin-top:6px"></div>
-  <div id="carpetas" class="nota" style="margin-top:6px"></div>
+  <details id="detalles" class="nota" style="margin-top:6px;display:none">
+    <summary style="cursor:pointer">Ver detalles</summary>
+    <div id="aviso" style="margin-top:6px"></div>
+    <div id="carpetas" style="margin-top:6px"></div>
+  </details>
 </div>
 
 <div class="card"><h2 id="hTit">Último día con datos</h2><div class="grid" id="hoy"></div></div>
@@ -259,7 +262,11 @@ function avisoCarpetas(){
 function render(){
   if(ocupado) return; $("quien").textContent = perfil; avisoDatos(); avisoCarpetas();
   const d = H.lj(H.KD(perfil), {}), ks = Object.keys(d).sort(), f = ks[ks.length - 1], x = f ? d[f] : {}, u = localStorage.getItem(H.KU(perfil));
-  $("estado").textContent = u ? "Última sincronización: " + u : "Todavía no sincronizaste. Toca el botón.";
+  const ts = parseInt(localStorage.getItem(H.KT(perfil)), 10), fs = ts > 0 ? new Date(ts) : null, p2 = n => String(n).padStart(2, "0");
+  const cuandoSync = fs ? p2(fs.getDate()) + "/" + p2(fs.getMonth() + 1) + "/" + fs.getFullYear() + " " + p2(fs.getHours()) + ":" + p2(fs.getMinutes())
+    : (u ? u.slice(8, 10) + "/" + u.slice(5, 7) + "/" + u.slice(0, 4) : "");
+  $("estado").textContent = cuandoSync ? "Última sincronización: " + cuandoSync : "Todavía no sincronizaste. Toca el botón.";
+  $("detalles").style.display = ($("aviso").textContent || $("carpetas").textContent) ? "" : "none"; // los detalles (fechas de Drive y avisos) quedan plegados
   $("hTit").textContent = f ? (f === H.hoy() ? "Hoy" : "Último día con datos: " + f.slice(8) + "/" + f.slice(5, 7)) : "Sin datos todavía";
   $("hoy").innerHTML = f ? m("👣 Pasos", x.pasos != null ? x.pasos.toLocaleString("es") : "–", x.actPasos ? x.actPasos + " en actividades" : "") +
     m("😴 Sueño", x.sueno ? H.fmtH(x.sueno.min) : "–", x.sueno ? "profundo " + H.fmtH(x.sueno.deep) + " · REM " + H.fmtH(x.sueno.rem) : "") +

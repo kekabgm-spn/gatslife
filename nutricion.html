@@ -599,18 +599,22 @@
 
   <div class="panel" data-panel="rec">
   <div class="recetas-sec">
-    <h2><span>📖 Mis recetas</span>
+    <h2><span>🔎 Buscar recetas</span>
       <span style="display:flex;gap:8px">
         <button class="btn-nueva-receta" id="btnNuevaReceta">✍️ Mi receta</button>
-        <button class="btn-nueva-receta" id="btnBuscarRecetas" style="background:transparent;border:1px solid var(--accent);color:var(--accent)">🔎 Buscar recetas</button>
+        <button class="btn-nueva-receta" id="btnBuscarRecetas" style="background:transparent;border:1px solid var(--accent);color:var(--accent)">🔎 Abrir buscador</button>
       </span>
     </h2>
-    <label for="filtroTipoRecetas" style="margin-top:2px">Filtrar por tipo de comida</label>
-    <select id="filtroTipoRecetas" style="margin-bottom:8px"></select>
-    <div id="listaRecetas"></div>
     <div id="builderContainer"></div>
     <div id="iaRecetaContainer"></div>
     <div id="realRecetaContainer"></div>
+  </div>
+
+  <div class="recetas-sec">
+    <h2><span>📖 Recetas guardadas</span></h2>
+    <label for="filtroTipoRecetas" style="margin-top:2px">Filtrar por tipo de comida</label>
+    <select id="filtroTipoRecetas" style="margin-bottom:8px"></select>
+    <div id="listaRecetas"></div>
   </div>
 
   <div class="recetas-sec">
@@ -1733,9 +1737,9 @@ async function llamarGeminiTexto(prompt){ return IAClaves.geminiTexto(prompt); }
 // ---------- Buscar recetas: un solo panel (recetas reales, web con Gemini o inventadas con IA) ----------
 let bqFuente = "real";
 const BQ_INFO = {
-  real: "Recetas que ya existen (Spoonacular y TheMealDB). Se traduce tu búsqueda al inglés. Aplica tiempo, calorías y tipo de comida; no filtra por dificultad ni fría/caliente. Las recetas llegan en inglés.",
-  web:  "Gemini busca en Google y te da recetas de páginas reales, en español, con la fuente. Aplica todos los filtros. Las calorías son estimadas. Gasta 1 llamada de IA.",
-  ia:   "La IA inventa recetas a tu medida (no existen en ninguna web). Aplica todos los filtros. Las calorías son estimadas. Gasta 1 llamada de IA."
+  real: "Recetas que ya existen (Spoonacular y TheMealDB), con calorías y macros cuando la fuente los trae. Si escribes varios ingredientes separados por coma, busca recetas que los usen. Llegan en inglés: cada una tiene un botón para traducirla (1 llamada IA). Aplica tiempo, calorías y tipo de comida.",
+  web:  "Busca recetas en páginas web reales (con Tavily si está configurado; si no, con la búsqueda de Google de Gemini) y Gemini las pone en español, con la fuente. Aplica todos los filtros. Las calorías y macros son estimados. Gasta 1 llamada de IA.",
+  ia:   "La IA inventa recetas a tu medida (no existen en ninguna web). Aplica todos los filtros. Las calorías y macros son estimados. Gasta 1 llamada de IA."
 };
 function iniciarBuscarRecetas(){
   cancelarReceta(); // no dejar "Mi receta" a medias
@@ -1870,23 +1874,40 @@ async function buscarRecetas(){
   }finally{ btn.disabled = false; }
 }
 
+// Calorías y macros por porción, solo los que existen.
+function macrosTxt(r){
+  const p = [], n = x => parseFloat(x) > 0;
+  if(n(r.kcalPorc)) p.push("Cal " + Math.round(r.kcalPorc));
+  if(n(r.grasaPorc)) p.push("Grasa " + Math.round(r.grasaPorc) + " g");
+  if(n(r.carbhPorc)) p.push("Carbh " + Math.round(r.carbhPorc) + " g");
+  if(n(r.protPorc)) p.push("Prot " + Math.round(r.protPorc) + " g");
+  return p.join(" · ");
+}
+// De dónde salió la receta: 🍲 Recetas reales / 🌐 Web con Gemini / 🤖 Inventar con IA / ✍️ Mi receta.
+function origenEtiqueta(r){
+  if(r.origenIA) return r.fuenteWeb ? "🌐 Web con Gemini · " + r.fuenteWeb : "🤖 Inventar con IA";
+  if(r.origenExterno) return "🍲 Recetas reales · " + String(r.origenExterno).replace(/^[^\p{L}\p{N}]+/u, "");
+  return "✍️ Mi receta";
+}
 function tarjetaRecetaIA(r, idx){
   const div = document.createElement("div");
   div.className = "receta-usar";
   const detalles = [
-    r.tiempoMin ? r.tiempoMin + " min" : null,
+    r.tiempoMin ? "⏱️ " + r.tiempoMin + " min" : null,
     r.dificultad || null,
-    r.tipoTemp || null,
-    r.fuente ? "🌐 " + r.fuente : null,
-    r.kcalPorc ? Math.round(r.kcalPorc) + " kcal/porción (estimado)" : null
+    r.tipoTemp || null
   ].filter(Boolean).join(" · ");
+  const macros = macrosTxt(r);
+  const origen = r.fuente ? "🌐 Web con Gemini · " + r.fuente : "🤖 Inventar con IA";
   const ingredientesHtml = (r.ingredientes||[]).map(i=>"<li>"+esc(i)+"</li>").join("");
   const pasosHtml = (r.pasos||[]).map(p=>"<li>"+esc(p)+"</li>").join("");
   div.innerHTML = `
     <div class="ru-fila" style="align-items:flex-start">
       <div style="flex:1">
         <b>${esc(r.nombre||"Receta")}</b>
-        <div class="item-detalle">${esc(detalles)}${/^https:\/\//i.test(r.enlace||"") ? ' · <a href="' + esc(r.enlace) + '" target="_blank" rel="noopener" style="color:var(--accent)">🔗 ver fuente</a>' : ""}</div>
+        <div class="item-detalle" style="color:var(--accent)">${esc(origen)}${/^https:\/\//i.test(r.enlace||"") ? ' · <a href="' + esc(r.enlace) + '" target="_blank" rel="noopener" style="color:var(--accent)">🔗 ver fuente</a>' : ""}</div>
+        <div class="item-detalle">${esc(detalles)}</div>
+        <div class="item-detalle">${macros ? "Por porción (estimado): " + esc(macros) : "Sin datos nutricionales"}</div>
       </div>
       <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0"><button type="button" class="btn-agregar">Usar esta receta</button><button type="button" class="btn-descartar" style="background:transparent;border:1px solid var(--muted);color:var(--muted);border-radius:8px;padding:0.3rem 0.6rem;font-size:0.8rem;cursor:pointer">✕ Descartar</button></div>
     </div>
@@ -1945,9 +1966,18 @@ function tipoDeDishTypes(arr){
   if(/snack|dessert|fingerfood|appetizer|antipasti|starter|side dish/.test(t)) return "snacks";
   return "";
 }
+// Si el pedido es una lista de ingredientes ("tomatoes, eggs") devuelve ["tomatoes","eggs"]; si no, null.
+function listaIngredientes(q){
+  const t = String(q||"").toLowerCase().replace(/^\s*(i have|i've got|something with|recipes? with|with)\s+/, "");
+  const partes = t.split(/\s*(?:,|;|\band\b|&)\s*/).map(x=>x.trim()).filter(Boolean);
+  return (partes.length >= 2 && partes.every(x => x.split(/\s+/).length <= 3)) ? partes : null;
+}
 async function buscarEnSpoonacular(query, f){
   f = f || {};
-  let url = "https://api.spoonacular.com/recipes/complexSearch?query=" + encodeURIComponent(query) +
+  const ing = listaIngredientes(query);
+  let url = "https://api.spoonacular.com/recipes/complexSearch?" +
+    (ing ? "includeIngredients=" + encodeURIComponent(ing.join(",")) + "&sort=max-used-ingredients&fillIngredients=true"
+         : "query=" + encodeURIComponent(query)) +
     "&number=6&addRecipeInformation=true&addRecipeNutrition=true";
   if(f.tiempo) url += "&maxReadyTime=" + encodeURIComponent(f.tiempo);
   if(f.tipo && SPOON_TIPO[f.tipo]) url += "&type=" + encodeURIComponent(SPOON_TIPO[f.tipo]);
@@ -1996,7 +2026,8 @@ async function buscarEnMealDB(query, f){
 async function buscarRecetasRealesFiltro(f){
   const q = ((await traducirEsEn(f.pedido)) || f.pedido).trim() || f.pedido;
   const avisos = [];
-  const tareas = [ buscarEnMealDB(q, f).catch(e=>{ console.warn("TheMealDB:", e); return []; }) ];
+  // TheMealDB solo busca por nombre de plato: con una lista de ingredientes no devuelve nada útil, así que se omite.
+  const tareas = [ listaIngredientes(q) ? Promise.resolve([]) : buscarEnMealDB(q, f).catch(e=>{ console.warn("TheMealDB:", e); return []; }) ];
   if(IAClaves.tieneSpoonacular()) tareas.push(buscarEnSpoonacular(q, f).catch(e=>{ bqAviso("Spoonacular: " + e.message); return []; }));
   const [mealdb, spoon] = await Promise.all([tareas[0], tareas[1] || Promise.resolve([])]);
   return {q, lista: [...spoon, ...mealdb]}; // Spoonacular primero: trae datos nutricionales completos
@@ -2004,28 +2035,43 @@ async function buscarRecetasRealesFiltro(f){
 function tarjetaRecetaReal(r){
   const div = document.createElement("div");
   div.className = "receta-usar";
-  const detalles = [
-    r.fuente,
-    r.tiempoCoccion ? r.tiempoCoccion + " min" : null,
-    r.kcalPorc ? Math.round(r.kcalPorc) + " kcal/porción" : "sin datos de calorías"
-  ].filter(Boolean).join(" · ");
+  const detalles = [ r.tiempoCoccion ? "⏱️ " + r.tiempoCoccion + " min" : null, r.porciones ? r.porciones + " porciones" : null ].filter(Boolean).join(" · ");
+  const macros = macrosTxt(r);
+  const origen = "🍲 Recetas reales · " + String(r.fuente || "").replace(/^[^\p{L}\p{N}]+/u, "");
   const ingredientesHtml = r.ingredientesTexto.map(i=>"<li>"+esc(i)+"</li>").join("");
   const pasosHtml = r.pasos.map(p=>"<li>"+esc(p)+"</li>").join("");
   div.innerHTML = `
     <div class="ru-fila" style="align-items:flex-start">
       <div style="flex:1">
-        <b>${esc(r.nombre)}</b>
+        <b class="rr-nombre">${esc(r.nombre)}</b>
+        <div class="item-detalle" style="color:var(--accent)">${esc(origen)}</div>
         <div class="item-detalle">${esc(detalles)}</div>
+        <div class="item-detalle">${macros ? "Por porción: " + esc(macros) : "Sin datos nutricionales (esta fuente no los trae)"}</div>
+        <button type="button" class="btn-trad" style="margin-top:6px;background:transparent;border:1px solid var(--accent);color:var(--accent);border-radius:8px;padding:0.25rem 0.6rem;font-size:0.78rem;cursor:pointer">🌐 Traducir al español (1 llamada IA)</button>
       </div>
       <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0"><button type="button" class="btn-agregar">Guardar</button><button type="button" class="btn-descartar" style="background:transparent;border:1px solid var(--muted);color:var(--muted);border-radius:8px;padding:0.3rem 0.6rem;font-size:0.8rem;cursor:pointer">✕ Descartar</button></div>
     </div>
     <details style="margin-top:6px">
       <summary style="cursor:pointer;font-size:0.82rem;color:var(--muted)">Ver ingredientes y pasos</summary>
-      <div class="rep-nota" style="margin-top:6px"><b>Ingredientes</b><ul style="margin:4px 0 8px 18px">${ingredientesHtml}</ul>
-      <b>Pasos</b><ol style="margin:4px 0 0 18px">${pasosHtml}</ol></div>
+      <div class="rep-nota" style="margin-top:6px"><b>Ingredientes</b><ul class="rr-ing" style="margin:4px 0 8px 18px">${ingredientesHtml}</ul>
+      <b>Pasos</b><ol class="rr-pasos" style="margin:4px 0 0 18px">${pasosHtml}</ol></div>
     </details>`;
   div.querySelector(".btn-agregar").onclick = ()=>{ guardarRecetaReal(r); div.remove(); bqAviso("«" + r.nombre + "» guardada en Mis recetas."); };
   div.querySelector(".btn-descartar").onclick = ()=> div.remove();
+  const bt = div.querySelector(".btn-trad");
+  bt.onclick = async ()=>{
+    bt.disabled = true; bt.textContent = "Traduciendo...";
+    try{
+      const t = await IAClaves.geminiTexto('Traduce al español esta receta. Devuelve SOLO un objeto JSON (sin texto extra, sin ```) con las claves nombre (texto), ingredientes (array de textos) y pasos (array de textos). Mantén el mismo orden y el mismo número de elementos en ingredientes y pasos, y no cambies cantidades ni unidades. Receta: ' + JSON.stringify({nombre:r.nombre, ingredientes:r.ingredientesTexto, pasos:r.pasos}));
+      const m = t.match(/\{[\s\S]*\}/), o = JSON.parse(m ? m[0] : t);
+      if(!o || !o.nombre || !Array.isArray(o.ingredientes) || !Array.isArray(o.pasos)) throw new Error("La IA no devolvió la traducción en el formato esperado.");
+      r.nombre = String(o.nombre); r.ingredientesTexto = o.ingredientes.map(String); r.pasos = o.pasos.map(String);
+      div.querySelector(".rr-nombre").textContent = r.nombre;
+      div.querySelector(".rr-ing").innerHTML = r.ingredientesTexto.map(i=>"<li>"+esc(i)+"</li>").join("");
+      div.querySelector(".rr-pasos").innerHTML = r.pasos.map(p=>"<li>"+esc(p)+"</li>").join("");
+      bt.remove();
+    }catch(e){ bt.disabled = false; bt.textContent = "🌐 Traducir al español (1 llamada IA)"; bqAviso("No se pudo traducir: " + e.message); }
+  };
   return div;
 }
 function guardarRecetaReal(r){
@@ -2373,8 +2419,8 @@ function renderRecetas(){
     div.className = "receta-card";
     div.style.flexDirection = "column";
     div.style.alignItems = "stretch";
-    const origenTag = r.origenIA ? ' <span style="color:var(--accent);font-size:0.72rem">' + (r.fuenteWeb ? "🌐 " + esc(r.fuenteWeb) : "🤖 IA") + '</span>'
-      : r.origenExterno ? ` <span style="color:var(--accent);font-size:0.72rem">${esc(r.origenExterno)}</span>` : "";
+    const enlaceHtml = /^https:\/\//i.test(r.enlace||"") ? ' · <a href="' + esc(r.enlace) + '" target="_blank" rel="noopener" style="color:var(--accent)">🔗 ver fuente</a>' : "";
+    const origenTag = ' <span style="color:var(--accent);font-size:0.72rem">' + esc(origenEtiqueta(r)) + enlaceHtml + '</span>';
     const comidaInfo = COMIDAS.find(c=>c.id===r.tipoComida);
     const tipoTxt = comidaInfo ? comidaInfo.icono + " " + comidaInfo.nombre : "";
     const tiempoTxt = (r.tiempoPrep || r.tiempoCoccion) ? `⏱️ ${(r.tiempoPrep||0)+(r.tiempoCoccion||0)} min` : "";
@@ -2383,7 +2429,7 @@ function renderRecetas(){
     div.innerHTML = `
       <div class="ru-fila">
         <div><div class="rc-nombre">${esc(r.nombre)}${origenTag}${badgeAutor(r.autor)}</div>
-        <div class="rc-detalle">${Math.round(r.kcalPorc)} kcal/porción · ${r.porciones} porciones${detalleExtra ? " · "+esc(detalleExtra) : ""}</div></div>
+        <div class="rc-detalle">${macrosTxt(r) ? "Por porción: " + esc(macrosTxt(r)) : Math.round(r.kcalPorc||0) + " kcal/porción"} · ${r.porciones} porciones${detalleExtra ? " · "+esc(detalleExtra) : ""}</div></div>
       </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
         <button type="button" class="rc-editar" style="${btn}border:1px solid var(--accent);color:var(--accent)">✎ Editar</button>
@@ -3161,6 +3207,7 @@ document.getElementById("quemadasInput").addEventListener("change", e=>{
 
 document.getElementById("btnNuevaReceta").onclick = iniciarNuevaReceta;
 document.getElementById("btnBuscarRecetas").onclick = iniciarBuscarRecetas;
+try{ iniciarBuscarRecetas(); }catch(e){ console.warn("No se pudo abrir el buscador de recetas:", e); } // el buscador queda abierto arriba al entrar en Recetas
 document.getElementById("btnNuevaComidaGuardada").onclick = iniciarNuevaComidaGuardada;
 
 document.querySelectorAll(".agua-botones button").forEach(b=>{
