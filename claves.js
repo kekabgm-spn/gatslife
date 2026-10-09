@@ -64,6 +64,8 @@
     usoHoy: function(){ return {usadas: conteo().n, tope: tope()}; },
     gemini: async function(body){
       var usaProxy = proxyOn(), claves = usaProxy ? [null] : lista(K.gem), modelo = leer(K.modelo) || "gemini-3.1-flash-lite";
+      // La búsqueda de Google NO es gratis en los modelos 3.x: si la petición lleva esa herramienta se usa un modelo 2.5 (cambiable en localStorage "dietaGeminiModeloWeb").
+      if(body && Array.isArray(body.tools) && body.tools.some(function(t){ return t && (t.google_search || t.googleSearch); })) modelo = leer("dietaGeminiModeloWeb") || "gemini-2.5-flash";
       if(enCurso && Date.now() - enCurso < 90000) throw new Error("Ya hay una petición a la IA en curso. Espera a que termine.");
       if(!usaProxy && !claves.length) throw new Error("Falta la clave de Gemini. Ponla una vez en ⚙️ Ajustes.");
       if(conteo().n >= tope()) throw new Error("Llegaste al tope diario de llamadas a la IA (" + tope() + "). Se reinicia mañana; puedes cambiarlo en ⚙️ Ajustes.");
