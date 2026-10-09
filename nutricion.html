@@ -451,7 +451,7 @@
   <div class="semana" id="semana"></div>
 
   <div class="tabs-sec" id="tabsSec">
-    <button type="button" data-p="dia">Día</button><button type="button" data-p="seg">Seguimiento</button><button type="button" data-p="rec">Recetas</button><button type="button" data-p="per">Perfil</button>
+    <button type="button" data-p="dia">Día</button><button type="button" data-p="bus">Buscar</button><button type="button" data-p="seg">Seguimiento</button><button type="button" data-p="rec">Recetas</button><button type="button" data-p="per">Perfil</button>
   </div>
 
   <div class="panel" data-panel="dia">
@@ -540,6 +540,8 @@
   </div>
 
   </div>
+
+  <div class="panel" data-panel="bus" hidden></div>
 
   <div class="panel" data-panel="seg">
   <div class="heat-sec">
@@ -754,13 +756,14 @@ const SUPERS = [["","Cualquier supermercado"],["mercadona","Mercadona"],["carref
 const SUPER_MARCAS = {mercadona:["hacendado"], carrefour:["carrefour"], dia:["dia"], alcampo:["auchan"], eroski:["eroski"], lidl:["milbona"], consum:["consum"]};
 function nombreSuper(id){ const x = SUPERS.find(t=>t[0]===id); return x ? x[1] : id; }
 // Medidas para la ficha de raciones. Las equivalencias en gramos son estimadas y se pueden corregir (se recuerdan por alimento).
-const UNIDADES = [["g","gramos (g)"],["100g","100 g"],["racion","ración del envase"],["unidad","unidad"],["loncha","loncha"],["rebanada","rebanada"],["taza","taza"],["cucharada","cucharada"],["cucharadita","cucharadita"]];
+const UNIDADES = [["g","gramos (g)"],["100g","100 g"],["mg","miligramos (mg)"],["kg","kilogramos (kg)"],["ml","mililitros (ml)"],["l","litros (l)"],["racion","ración del envase"],["unidad","unidad"],["pequena","unidad pequeña"],["mediana","unidad mediana"],["grande","unidad grande"],["loncha","loncha"],["rebanada","rebanada"],["vaso","vaso (200 ml)"],["taza","taza"],["cucharada","cucharada"],["cucharadita","cucharadita"],["punado","puñado"]];
 const REGLAS_MEDIDA = [
   [/\b(huevo|huevos)\b/, {unidad:55}],
   [/\b(pan|baguette|chapata|tostada|tostadas|molde)\b/, {rebanada:30}],
   [/\b(jamon|queso|fiambre|pavo|lomo|chorizo|salchichon|mortadela|bacon|beicon|york)\b/, {loncha:20}],
   [/\b(leche|agua|zumo|bebida|caldo|horchata|refresco|cola|cerveza|vino)\b/, {taza:240}],
-  [/\baceite\b/, {cucharada:14, cucharadita:5}],
+  [/\bleche\b/, {ml:1.03, l:1030, vaso:206}],
+  [/\baceite\b/, {cucharada:14, cucharadita:5, ml:0.92, l:920, vaso:184}],
   [/\b(azucar|sal)\b/, {cucharada:12, cucharadita:5}],
   [/\b(miel|mermelada|crema|mantequilla|margarina|tomate|salsa|mayonesa|ketchup|nutella)\b/, {cucharada:15, cucharadita:5}],
   [/\barroz\b/, {taza:185}],
@@ -768,9 +771,11 @@ const REGLAS_MEDIDA = [
   [/\b(avena|copos)\b/, {taza:90}]
 ];
 function medidasDefecto(p){
-  const d = {unidad: p.cantidadG || p.porcionG || 100, racion: p.porcionG || 100, loncha:20, rebanada:30, taza:240, cucharada:15, cucharadita:5};
+  const d = {unidad: p.cantidadG || p.porcionG || 100, racion: p.porcionG || 100, loncha:20, rebanada:30, taza:240, cucharada:15, cucharadita:5,
+    mg:0.001, kg:1000, ml:1, l:1000, vaso:200, punado:30};
   const n = " " + slug(p.nombre).replace(/-/g," ") + " ";
   REGLAS_MEDIDA.forEach(r=>{ if(r[0].test(n)) Object.assign(d, r[1]); });
+  d.mediana = d.unidad; d.pequena = Math.round(d.unidad*0.75*10)/10; d.grande = Math.round(d.unidad*1.3*10)/10; // tamaños: estimación, corregible en la ficha
   return d;
 }
 const CLAVE_EQUIV = "dietaEquivMedidasV1";
@@ -1238,7 +1243,8 @@ function topFrecuentes(n){
   return Object.values(frecuentes).sort((a,b)=> (b.veces-a.veces) || (b.ultimaVez-a.ultimaVez)).slice(0,n);
 }
 
-function tarjetaProducto(p, gramosIni, onAgregar, onQuitar){
+function comidaPorHora(){ const h = new Date().getHours(); return h < 11 ? "desayuno" : h < 16 ? "almuerzo" : h < 19 ? "snacks" : "cena"; }
+function tarjetaProducto(p, gramosIni, onAgregar, onQuitar, conComida){
   const r1 = x => Math.round(x*10)/10;
   const div = document.createElement("div");
   div.className = "resultado";
@@ -1262,7 +1268,9 @@ function tarjetaProducto(p, gramosIni, onAgregar, onQuitar){
     let uni = gramosIni ? "g" : (p.porcionG ? "racion" : "100g"), n = gramosIni ? Number(gramosIni) : 1;
     const gUni = u => u==="g" ? 1 : u==="100g" ? 100 : ((leerEquiv()[clave]||{})[u] > 0 ? leerEquiv()[clave][u] : def[u]);
     const nomUni = u => (UNIDADES.find(x=>x[0]===u)||[u,u])[1];
+    const esPeq = u => u==="g" || u==="ml" || u==="mg";
     ficha.innerHTML = `
+      ${conComida ? '<div class="fi-fila"><label>Añadir a<select class="fi-comida">' + COMIDAS.map(c=>`<option value="${c.id}">${c.icono} ${c.nombre}</option>`).join("") + '</select></label></div>' : ""}
       <div class="fi-fila">
         <label>Medida<select class="fi-uni">${UNIDADES.filter(u=>u[0]!=="racion" || p.porcionG).map(u=>`<option value="${u[0]}">${u[1]}</option>`).join("")}</select></label>
         <label>Número de raciones<div class="fi-cant"><button type="button" class="fi-menos" aria-label="Menos">−</button><input type="number" class="fi-n" inputmode="decimal" min="0" step="any"><button type="button" class="fi-mas" aria-label="Más">+</button></div></label>
@@ -1282,23 +1290,25 @@ function tarjetaProducto(p, gramosIni, onAgregar, onQuitar){
       ficha.querySelector(".fm-grasa").textContent = r1(p.grasa100*g/100) + " g";
       ficha.querySelector(".fm-carbh").textContent = r1(p.carbh100*g/100) + " g";
       ficha.querySelector(".fm-prot").textContent = r1(p.prot100*g/100) + " g";
-      const conEq = uni !== "g" && uni !== "100g";
+      const conEq = !["g","100g","mg","kg"].includes(uni);
       eqBox.style.display = conEq ? "" : "none";
       if(conEq){
-        ficha.querySelector(".fi-eq-txt").textContent = "1 " + (uni==="racion" ? "ración" : uni) + " = ";
+        ficha.querySelector(".fi-eq-txt").textContent = "1 " + nomUni(uni).replace(/ \(.*\)/, "") + " = ";
         if(document.activeElement !== eqIn) eqIn.value = r1(gUni(uni));
       }
     }
+    const selCom = ficha.querySelector(".fi-comida");
+    if(selCom){ selCom.value = window.__comidaBuscar || comidaPorHora(); selCom.onchange = ()=>{ window.__comidaBuscar = selCom.value; }; }
     sel.value = uni; inN.value = r1(n);
-    sel.onchange = ()=>{ uni = sel.value; n = uni==="g" ? 100 : 1; inN.value = n; pintar(); };
+    sel.onchange = ()=>{ uni = sel.value; n = esPeq(uni) ? 100 : 1; inN.value = n; pintar(); };
     inN.oninput = ()=>{ n = parseFloat(inN.value) || 0; pintar(); };
-    ficha.querySelector(".fi-menos").onclick = ()=>{ n = Math.max(0, r1(n - (uni==="g" ? 10 : 0.5))); inN.value = n; pintar(); };
-    ficha.querySelector(".fi-mas").onclick = ()=>{ n = r1(n + (uni==="g" ? 10 : 0.5)); inN.value = n; pintar(); };
+    ficha.querySelector(".fi-menos").onclick = ()=>{ n = Math.max(0, r1(n - (esPeq(uni) ? 10 : 0.5))); inN.value = n; pintar(); };
+    ficha.querySelector(".fi-mas").onclick = ()=>{ n = r1(n + (esPeq(uni) ? 10 : 0.5)); inN.value = n; pintar(); };
     eqIn.oninput = ()=>{ const v = parseFloat(eqIn.value); if(v > 0){ guardarEquiv(clave, uni, v); pintar(); } };
     ficha.querySelector(".btn-agregar").onclick = ()=>{
       const g = n * gUni(uni);
       if(!(g > 0)){ alert("Pon primero una cantidad."); return; }
-      onAgregar(p, r1(g), {n, uni});
+      onAgregar(p, r1(g), {n, uni, comida: selCom ? selCom.value : undefined});
     };
     pintar();
   }
@@ -3439,6 +3449,7 @@ renderComidasGuardadas();
 renderReparto();
 render();
 </script>
+<script src="buscar.js"></script>
 <script type="module" src="nube.js" onerror="var d=document.createElement('div');d.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99998;background:#7a1f1f;color:#fff;padding:10px 14px;font:14px system-ui,sans-serif;text-align:center';d.textContent='⚠️ El archivo nube.js no se pudo descargar (revisa que esté subido a GitHub con ese nombre exacto).';document.body.appendChild(d)"></script>
 <a href="ajustes.html" title="Ajustes y claves" aria-label="Ajustes y claves" style="position:fixed;bottom:14px;right:14px;z-index:50;width:42px;height:42px;border-radius:50%;border:1px solid #2a3242;background:#1b2330;display:flex;align-items:center;justify-content:center;text-decoration:none;font-size:1.2rem">⚙️</a>
 </body>
