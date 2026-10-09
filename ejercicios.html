@@ -97,6 +97,21 @@
   .hc-resumen{font-size:0.85rem;margin:0.6rem 0 0.2rem;color:var(--gris2)}
   .hc-detalle{font-size:0.85rem;margin-top:0.4rem}
   .hc-detalle ul{margin:0.3rem 0 0 1.1rem;padding:0}
+
+  input[type=number]{width:100%;padding:0.55rem 0.7rem;border-radius:8px;border:1px solid rgba(255,255,255,0.13);background:#0c1210;color:var(--creme);font-family:inherit;font-size:0.92rem}
+  /* Pestañas Buscar / Hechos */
+  .pestanas{display:flex;gap:0.6rem;margin:0 0 1.1rem}
+  .pestanas button{flex:1;margin-top:0;padding:0.8rem 0.4rem;background:var(--nuit2);border:1.5px solid rgba(255,255,255,0.15);color:var(--gris2);border-radius:10px;font-size:0.95rem}
+  .pestanas button.on{background:rgba(34,197,94,0.12);border-color:var(--acc);color:var(--acc)}
+  .check{display:flex;gap:8px;align-items:center;font-size:0.85rem;color:var(--gris2);margin-top:0.55rem}
+  .check input{width:auto;margin:0}
+  .atajos{display:flex;flex-wrap:wrap;gap:0.4rem}
+  .atajos button{margin:0;padding:0.5rem 0.8rem;font-size:0.82rem;background:#0c1210;border:1px solid rgba(34,197,94,0.35);color:var(--creme);border-radius:999px;font-weight:600}
+  .pasos-grande{font-size:1.9rem;font-weight:800;line-height:1.1}
+  .pasos-barra{display:flex;align-items:center;gap:6px;font-size:0.78rem;margin:3px 0}
+  .pasos-barra .pista{flex:1;height:10px;border-radius:6px;background:rgba(128,128,128,0.22);overflow:hidden}
+  .pasos-barra .pista i{display:block;height:10px;border-radius:6px;background:var(--acc)}
+  .hoy-fila{outline:2px solid var(--amarillo)}
 </style>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 512 512%22%3E%3Crect width=%22512%22 height=%22512%22 rx=%22104%22 fill=%22%2310151f%22/%3E%3Csvg x=%2214%22 y=%22150%22 width=%22240%22 height=%22240%22 viewBox=%220 0 48 48%22 xmlns=%22http://www.w3.org/2000/svg%22 aria-hidden=%22true%22%3E%3Cpolygon points=%227%2C26 8%2C9 21%2C17%22 fill=%22%23a9b1bf%22/%3E%3Cpolygon points=%2241%2C26 40%2C9 27%2C17%22 fill=%22%23a9b1bf%22/%3E%3Cpolygon points=%2210%2C23 11%2C13 18%2C18%22 fill=%22%23f2b8c6%22/%3E%3Cpolygon points=%2238%2C23 37%2C13 30%2C18%22 fill=%22%23f2b8c6%22/%3E%3Cellipse cx=%2224%22 cy=%2230%22 rx=%2217%22 ry=%2214%22 fill=%22%23a9b1bf%22/%3E%3Cellipse cx=%2218%22 cy=%2230%22 rx=%222.2%22 ry=%222.6%22 fill=%22%231b1b24%22/%3E%3Cellipse cx=%2230%22 cy=%2230%22 rx=%222.2%22 ry=%222.6%22 fill=%22%231b1b24%22/%3E%3Cpolygon points=%2222%2C34 26%2C34 24%2C36.5%22 fill=%22%23f08aa0%22/%3E%3Cpath d=%22M24 36.5v2M24 38.5q-2.5 2-4.5.5M24 38.5q2.5 2 4.5.5%22 stroke=%22%231b1b24%22 stroke-width=%221.1%22 fill=%22none%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M12 34l-7-1.5M12 37l-7 1.5M36 34l7-1.5M36 37l7 1.5%22 stroke=%22%231b1b24%22 stroke-width=%221%22 opacity=%22.55%22 stroke-linecap=%22round%22/%3E%3Cellipse cx=%2226%22 cy=%2215%22 rx=%2215%22 ry=%226.5%22 transform=%22rotate%28-9 26 15%29%22 fill=%22%23d93b3b%22/%3E%3Crect x=%2221.5%22 y=%226%22 width=%223.4%22 height=%223.8%22 rx=%221.4%22 fill=%22%23d93b3b%22 transform=%22rotate%28-9 23 8%29%22/%3E%3C/svg%3E%3Csvg x=%22258%22 y=%22150%22 width=%22240%22 height=%22240%22 viewBox=%220 0 48 48%22 xmlns=%22http://www.w3.org/2000/svg%22 aria-hidden=%22true%22%3E%3Cpolygon points=%227%2C26 8%2C9 21%2C17%22 fill=%22%23f4e8d4%22/%3E%3Cpolygon points=%2241%2C26 40%2C9 27%2C17%22 fill=%22%23f4e8d4%22/%3E%3Cpolygon points=%2210%2C23 11%2C13 18%2C18%22 fill=%22%23f2b8c6%22/%3E%3Cpolygon points=%2238%2C23 37%2C13 30%2C18%22 fill=%22%23f2b8c6%22/%3E%3Cellipse cx=%2224%22 cy=%2230%22 rx=%2217%22 ry=%2214%22 fill=%22%23f4e8d4%22/%3E%3Cellipse cx=%2218%22 cy=%2230%22 rx=%222.2%22 ry=%222.6%22 fill=%22%231b1b24%22/%3E%3Cellipse cx=%2230%22 cy=%2230%22 rx=%222.2%22 ry=%222.6%22 fill=%22%231b1b24%22/%3E%3Cpolygon points=%2222%2C34 26%2C34 24%2C36.5%22 fill=%22%23f08aa0%22/%3E%3Cpath d=%22M24 36.5v2M24 38.5q-2.5 2-4.5.5M24 38.5q2.5 2 4.5.5%22 stroke=%22%231b1b24%22 stroke-width=%221.1%22 fill=%22none%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M12 34l-7-1.5M12 37l-7 1.5M36 34l7-1.5M36 37l7 1.5%22 stroke=%22%231b1b24%22 stroke-width=%221%22 opacity=%22.55%22 stroke-linecap=%22round%22/%3E%3Cellipse cx=%2226%22 cy=%2215%22 rx=%2215%22 ry=%226.5%22 transform=%22rotate%28-9 26 15%29%22 fill=%22%238f5ae6%22/%3E%3Crect x=%2221.5%22 y=%226%22 width=%223.4%22 height=%223.8%22 rx=%221.4%22 fill=%22%238f5ae6%22 transform=%22rotate%28-9 23 8%29%22/%3E%3C/svg%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="icono.png">
@@ -113,14 +128,16 @@ Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localS
 <nav class="navapp" aria-label="Áreas de la app"><a href="nutricion.html">NUTRICIÓN</a><a href="ejercicios.html" aria-current="page">FITNESS</a><a href="tareas.html">TAREAS</a><a href="calendario.html">CALENDARIO</a><a href="salud.html">SALUD</a><a href="huawei.html">HUAWEI</a></nav>
 
 <h1>🏋️ Fitness</h1>
-<p class="sub">Busca videos reales en YouTube según zona, intensidad y equipo. Cada una arma su propia rutina.</p>
+<p class="sub">Busca videos reales según tu perfil (sexo, edad y objetivo) y anota lo que haces. Cada una arma su propia rutina.</p>
 
 <div class="aviso">
   Esta herramienta busca <b>videos reales que ya existen en YouTube</b>, filtrados por lo que pidas. No inventa rutinas ni indica cargas — vos elegís qué mirar y qué agregar a tu rutina. Las claves se guardan solo en <b>este navegador</b>.
 </div>
 
+
+
 <fieldset>
-  <legend>1. ¿Quién busca?</legend>
+  <legend>¿Quién eres?</legend>
   <div class="perfiles">
     <button id="perfil-papa" class="on" onclick="elegirPerfil('Mamy')">👩 Mamy</button>
     <button id="perfil-hija" onclick="elegirPerfil('Filha')">👩 Filha</button>
@@ -138,19 +155,69 @@ Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localS
   </div>
 </fieldset>
 
+
+
+<div class="pestanas" role="tablist" aria-label="Secciones de Fitness">
+  <button type="button" id="tab-buscar" role="tab" class="on" aria-selected="true" onclick="mostrarPestana('buscar')">🔎 Buscar</button>
+  <button type="button" id="tab-hechos" role="tab" aria-selected="false" onclick="mostrarPestana('hechos')">✅ Hechos</button>
+</div>
+
+
+
+<div id="panel-buscar" role="tabpanel">
+
 <fieldset>
-  <legend>2. Clave de YouTube</legend>
+  <legend>Clave de YouTube</legend>
   <p style="font-size:0.85rem;margin:0">La clave se pone una sola vez en <a href="ajustes.html">⚙️ Ajustes</a>, junto con las demás.</p>
 </fieldset>
 
+
+
 <fieldset>
-  <legend>📅 Tu rutina semanal (reparto equilibrado)</legend>
-  <p style="font-size:0.8rem;color:var(--gris2);margin:0 0 0.6rem">Cada día tiene una zona asignada, sin repetir ninguna en la semana. Si un día no querés hacer nada, simplemente no lo armás. Tocá "Buscar" en el día que quieras armar.</p>
-  <div id="rotacion-semanal"></div>
+  <legend>🎯 Tu perfil de búsqueda (<span id="pb-nombre">Mamy</span>)</legend>
+  <p style="font-size:0.8rem;color:var(--gris2);margin:0 0 0.4rem">Los videos se buscan pensando en este perfil. Sexo y edad son los mismos de Nutrición → Perfil: se cambian en cualquiera de los dos sitios.</p>
+  <div class="fila">
+    <div>
+      <label for="pb-genero">Sexo</label>
+      <select id="pb-genero"><option value="Mujer">Mujer</option><option value="Hombre">Hombre</option><option value="Otro">Otro</option></select>
+    </div>
+    <div>
+      <label for="pb-edad">Edad</label>
+      <input type="number" id="pb-edad" min="14" max="99" inputmode="numeric">
+    </div>
+    <div>
+      <label for="pb-objetivo">Objetivo</label>
+      <select id="pb-objetivo">
+        <option value="ambos">Bajar peso y tonificar</option>
+        <option value="bajar">Sobre todo bajar peso (cardio)</option>
+        <option value="tonificar">Sobre todo tonificar</option>
+        <option value="mantener">Mantenerme en movimiento (suave)</option>
+      </select>
+    </div>
+  </div>
+  <label class="check"><input type="checkbox" id="pb-impacto"> Solo bajo impacto (sin saltos ni carreras)</label>
+  <label class="check"><input type="checkbox" id="pb-musculo"> Evitar rutinas para ganar músculo (gimnasio, hipertrofia)</label>
+  <div id="pb-resumen" class="hc-resumen"></div>
 </fieldset>
 
 <fieldset>
-  <legend>3. Qué buscar</legend>
+  <legend>⚡ Búsquedas precisas</legend>
+  <p style="font-size:0.8rem;color:var(--gris2);margin:0 0 0.6rem">Un toque y busca en YouTube justo eso, ya ajustado a tu perfil. La lista cambia según tu edad y si marcaste bajo impacto.</p>
+  <div class="atajos" id="atajos"></div>
+</fieldset>
+
+
+
+<fieldset>
+  <legend>📅 Tu rutina semanal (reparto equilibrado)</legend>
+  <p style="font-size:0.8rem;color:var(--gris2);margin:0 0 0.6rem">Pensada para bajar peso y tonificar sin ganar volumen: 3 días de cardio, 3 de tonificar y 1 de estirar. Cada día trae su tipo; la intensidad, la duración y el equipo salen de los filtros de más abajo. Si un día no querés hacer nada, no lo armás. Tocá "Buscar" en el día que quieras.</p>
+  <div id="rotacion-semanal"></div>
+</fieldset>
+
+
+
+<fieldset>
+  <legend>Qué buscar (filtros)</legend>
 
   <label>Fuente</label>
   <div class="fila" style="margin-bottom:0.4rem">
@@ -192,13 +259,13 @@ Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localS
       </select>
     </div>
     <div>
-      <label for="tipo">Tipo</label>
+      <label for="tipo">Tipo (si lo dejas vacío, manda tu objetivo)</label>
       <select id="tipo">
         <option value="">Sin filtro</option>
-        <option value="fuerza">Fuerza / tonificación</option>
-        <option value="cardio">Cardio</option>
+        <option value="fuerza">Tonificar (sin hacer músculo)</option>
+        <option value="cardio">Cardio para quemar grasa</option>
         <option value="movilidad">Movilidad / estiramiento</option>
-        <option value="yoga">Yoga suave</option>
+        <option value="yoga">Pilates / yoga suave</option>
       </select>
     </div>
   </div>
@@ -207,7 +274,30 @@ Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localS
   <button class="secundario" type="button" onclick="sugerirIA()" style="margin-left:6px">✨ Pedir sugerencia a la IA</button>
 </fieldset>
 
+
+
 <div class="resultados" id="resultados"></div>
+
+
+
+<fieldset>
+  <legend>🎬 Videos guardados para después</legend>
+  <p class="pendiente" style="margin-top:0">Los que guardás acá son solo para mirar más tarde: no cuentan calorías ni aparecen en "Mi rutina". Cuando hagas un ejercicio de alguno de estos videos, anotalo arriba en "+ Actividad manual", con los minutos reales que hiciste.</p>
+  <div id="videos-guardados-lista"></div>
+</fieldset>
+
+</div>
+
+
+
+<div id="panel-hechos" role="tabpanel" hidden>
+
+<fieldset>
+  <legend>👣 Pasos (<span id="pasos-nombre">Mamy</span>)</legend>
+  <div id="pasos-box"></div>
+</fieldset>
+
+
 
 <fieldset>
   <legend>⚖️ Peso (viene de Dieta)</legend>
@@ -215,8 +305,10 @@ Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localS
   <div id="peso-desde-dieta" style="font-size:0.9rem"></div>
 </fieldset>
 
+
+
 <fieldset>
-  <legend>Mi rutina (<span id="perfil-actual-nombre">Mamy</span>)</legend>
+  <legend>Mi rutina — para hacer (<span id="perfil-actual-nombre">Mamy</span>)</legend>
 
   <div class="fila" style="align-items:flex-end;margin-bottom:0.9rem">
     <div>
@@ -258,9 +350,11 @@ Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localS
     <button type="button" class="secundario" id="fecha-reg-hoy">Hoy</button>
   </div>
   <div id="rutina-lista"></div>
-  <p class="pendiente">Acá se va a conectar más adelante con el calendario y con el módulo de dieta — por ahora, es la lista base de lo que cada una eligió.</p>
+  <p class="pendiente">Lo que marques como «Hecho» pasa al historial de abajo y se suma a Nutrición.</p>
   <button class="secundario" type="button" onclick="exportarRespaldoEjercicios()" style="margin-top:0.6rem">💾 Descargar copia de seguridad</button>
 </fieldset>
+
+
 
 <fieldset>
   <legend>📆 Mi historial</legend>
@@ -285,11 +379,7 @@ Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localS
   <div class="hc-detalle" id="hc-detalle"></div>
 </fieldset>
 
-<fieldset>
-  <legend>🎬 Videos guardados para después</legend>
-  <p class="pendiente" style="margin-top:0">Los que guardás acá son solo para mirar más tarde: no cuentan calorías ni aparecen en "Mi rutina". Cuando hagas un ejercicio de alguno de estos videos, anotalo arriba en "+ Actividad manual", con los minutos reales que hiciste.</p>
-  <div id="videos-guardados-lista"></div>
-</fieldset>
+</div>
 
 </div>
 
@@ -455,9 +545,11 @@ function gifsMusculo(m){
   return GIFS_CACHE[m];
 }
 
-async function buscarGifs(zona, cantidad){
+async function buscarGifs(zona, cantidad, tipoArg){
   cantidad = cantidad || 4;
-  const tipo = document.getElementById('tipo').value;
+  const pr = prefsBusq();
+  let tipo = tipoArg === undefined ? document.getElementById('tipo').value : tipoArg;
+  if(!tipo && pr.objetivo === 'bajar') tipo = 'cardio';
   if(tipo === 'movilidad' || tipo === 'yoga') throw new Error('esta fuente no tiene movilidad ni yoga. Usá YouTube para eso.');
   const musculos = (tipo === 'cardio' ? ['cardio'] : (ZONA_GIFS[zona] || ZONA_GIFS['cualquiera']).slice()).sort(() => Math.random() - 0.5).slice(0, 3);
   const resp = await Promise.allSettled(musculos.map(gifsMusculo));
@@ -467,7 +559,10 @@ async function buscarGifs(zona, cantidad){
   const eqSel = EQUIPO_GIFS[document.getElementById('equipo').value];
   let cand = lista;
   if(eqSel){ const f = lista.filter(e => e.equipment === eqSel); if(f.length) cand = f; }
-  else { const f = lista.filter(e => EQUIPO_CASA_GIFS.indexOf(e.equipment) >= 0); if(f.length >= cantidad) cand = f; }
+  else { const ligero = lista.filter(e => e.equipment === 'bodyweight' || e.equipment === 'band');
+    const f = lista.filter(e => EQUIPO_CASA_GIFS.indexOf(e.equipment) >= 0);
+    if(ligero.length >= cantidad) cand = ligero; else if(f.length >= cantidad) cand = f; }
+  if(pr.bajoImpacto){ const suave = cand.filter(e => !/salt|jump|burpee|sprint|pliom/i.test(e.name || '')); if(suave.length) cand = suave; }
   const vistos = {};
   cand = cand.filter(e => e && e.gifUrl && String(e.gifUrl).indexOf(GIFS_BASE) === 0 && !vistos[e.name] && (vistos[e.name] = true));
   cand.sort(() => Math.random() - 0.5);
@@ -481,10 +576,10 @@ async function buscarGifs(zona, cantidad){
   }));
 }
 
-function buscarPorFuente(zona, cantidad){
+function buscarPorFuente(zona, cantidad, tipo){
   if(fuenteActual === 'wger') return buscarWger(zona, cantidad);
-  if(fuenteActual === 'gifs') return buscarGifs(zona, cantidad);
-  return buscarYouTube(construirQuery(zona), cantidad);
+  if(fuenteActual === 'gifs') return buscarGifs(zona, cantidad, tipo);
+  return buscarYouTube(construirQuery(zona, tipo), cantidad);
 }
 
 // --- Estimación de calorías quemadas (fórmula estándar MET × peso × tiempo, no es una medición real) ---
@@ -530,12 +625,24 @@ function agregarAHistorialCompartido(item){
   }catch(e){ /* si falla, no rompe la app; el "Hecho" local igual queda marcado */ }
 }
 
+const esPasosH = x => !!(x && x.hid && String(x.hid).indexOf('hwp:') === 0); // entrada automática "👣 Pasos del día" de Huawei
+
 function kcalHoyEjercicio(fecha){ fecha = fecha || hoyISO();
   const peso = pesoDesdeDieta();
   try{ const h = JSON.parse(localStorage.getItem(claveHistorialCompartido()) || '[]').filter(x=>x && x.fecha===fecha);
-    let k = 0, sin = 0; h.forEach(x=>{ if(typeof x.kcal==='number') k+=x.kcal; else { const v = kcalQuemadasDe({tipoEjercicio:x.tipo, minutos:parseFloat(x.minutos)}, peso); if(v==null) sin++; else k+=v; } });
-    return {k:Math.round(k), n:h.length, sin};
-  }catch(err){ return {k:0,n:0,sin:0}; }
+    let k = 0, kp = 0, sin = 0, n = 0;
+    h.forEach(x=>{
+      let v = null;
+      if(typeof x.kcal==='number') v = x.kcal; else v = kcalQuemadasDe({tipoEjercicio:x.tipo, minutos:parseFloat(x.minutos)}, peso);
+      if(!esPasosH(x)) n++;
+      if(v==null){ if(!esPasosH(x)) sin++; return; }
+      if(esPasosH(x)) kp += v; else k += v;
+    });
+    return {k:Math.round(k + kp), kp:Math.round(kp), n:n, sin:sin};
+  }catch(err){ return {k:0,kp:0,n:0,sin:0}; }
+}
+function textoHoyKcal(t){
+  return '<b>' + t.k + ' kcal</b> extra por ejercicio (' + t.n + ' actividad' + (t.n===1?'':'es') + (t.kp ? ' + ' + t.kp + ' kcal de pasos' : '') + ')' + (t.sin ? ' · ' + t.sin + ' sin peso, no cuentan' : '');
 }
 function renderPesoDesdeDieta(){
   const peso = pesoDesdeDieta();
@@ -543,9 +650,8 @@ function renderPesoDesdeDieta(){
   cont.innerHTML = peso
     ? '✅ Peso encontrado en Dieta: <b>' + peso + ' kg</b>'
     : '⚠️ No hay peso cargado para ' + perfil + ' (o los dos sitios no están en el mismo dominio todavía). Ponlo en ⚙️ Ajustes → Mi perfil. Sin peso no se pueden estimar los kcal.';
-  const t = kcalHoyEjercicio();
-  cont.innerHTML += '<div style="margin-top:8px;font-size:1rem">🔥 Hoy: <b>' + t.k + ' kcal</b> extra por ejercicio (' + t.n + ' actividad' + (t.n===1?'':'es') + ')' + (t.sin ? ' · ' + t.sin + ' sin peso, no cuentan' : '') + '</div>';
-  if(window.fechaReg && window.fechaReg !== hoyISO()){ const t2 = kcalHoyEjercicio(window.fechaReg); cont.innerHTML += '<div style="margin-top:4px;font-size:1rem;color:#e0a02c">🔥 ' + window.fechaReg + ': <b>' + t2.k + ' kcal</b> extra por ejercicio (' + t2.n + ' actividad' + (t2.n===1?'':'es') + ')</div>'; }
+  cont.innerHTML += '<div style="margin-top:8px;font-size:1rem">🔥 Hoy: ' + textoHoyKcal(kcalHoyEjercicio()) + '</div>';
+  if(window.fechaReg && window.fechaReg !== hoyISO()){ cont.innerHTML += '<div style="margin-top:4px;font-size:1rem;color:#e0a02c">🔥 ' + window.fechaReg + ': ' + textoHoyKcal(kcalHoyEjercicio(window.fechaReg)) + '</div>'; }
 }
 
 function elegirPerfil(p){
@@ -555,9 +661,12 @@ function elegirPerfil(p){
   document.getElementById('bloque-animo').style.display = p==='Mamy' ? 'block' : 'none';
   document.getElementById('perfil-actual-nombre').textContent = p;
   poblarIntensidad();
+  cargarPerfilBusqueda();
+  renderAtajos();
   renderPesoDesdeDieta();
   renderRutina();
   renderVideosGuardados();
+  renderPasos();
   hcDiaSel = null;
   if(typeof renderHistorial === 'function') renderHistorial();
 }
@@ -582,50 +691,49 @@ function actualizarPorAnimo(){
   poblarIntensidad();
 }
 
-// Rotación semanal por defecto: equilibrada, cubre las 6 zonas + cuerpo completo. Todos los días iguales, sin día de descanso fijo.
+// Rotación semanal pensada para bajar peso y tonificar (sin ganar volumen): 3 días de cardio, 3 de tonificar, 1 de estirar.
+// `tipo` vacío = manda el objetivo del perfil. Los nombres de día no cambian, para no perder lo que ya estaba guardado en "Mi rutina".
 const ROTACION_SEMANAL = [
-  {dia:'Lunes', zona:'piernas'},
-  {dia:'Martes', zona:'espalda'},
-  {dia:'Miércoles', zona:'pecho'},
-  {dia:'Jueves', zona:'cuerpo completo'},
-  {dia:'Viernes', zona:'brazos'},
-  {dia:'Sábado', zona:'gluteos'},
-  {dia:'Domingo', zona:'barriga'}
+  {dia:'Lunes', zona:'cuerpo completo', tipo:'cardio', etq:'Cardio quema-grasa'},
+  {dia:'Martes', zona:'gluteos', tipo:'fuerza', etq:'Tonificar piernas y glúteos'},
+  {dia:'Miércoles', zona:'cuerpo completo', tipo:'yoga', etq:'Pilates o yoga suave'},
+  {dia:'Jueves', zona:'cuerpo completo', tipo:'cardio', etq:'Cardio: caminar o bailar'},
+  {dia:'Viernes', zona:'brazos', tipo:'fuerza', etq:'Brazos y espalda, sin volumen'},
+  {dia:'Sábado', zona:'barriga', tipo:'', etq:'Barriga y postura (core)'},
+  {dia:'Domingo', zona:'cuerpo completo', tipo:'movilidad', etq:'Estirar y soltar'}
 ];
 
 function renderRotacionSemanal(){
   const cont = document.getElementById('rotacion-semanal');
   cont.innerHTML = '';
+  const hoyNombre = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'][new Date().getDay()];
   ROTACION_SEMANAL.forEach(d=>{
     const row = document.createElement('div');
-    row.className = 'resultado';
-    if(d.zona){
-      const zLabel = ZONAS.find(z=>z[0]===d.zona)[1];
-      row.innerHTML = '<div class="txt"><a style="border:none;cursor:default">'+d.dia+'</a><p>'+zLabel+'</p></div>' +
-        '<button class="addbtn" type="button">Buscar</button>';
-      row.querySelector('.addbtn').onclick = ()=>buscarParaDia(d.dia, d.zona);
-    } else {
-      row.innerHTML = '<div class="txt"><a style="border:none;cursor:default">'+d.dia+'</a><p>Descanso / movilidad suave</p></div>';
-    }
+    row.className = 'resultado' + (d.dia===hoyNombre ? ' hoy-fila' : '');
+    const zLabel = ZONAS.find(z=>z[0]===d.zona)[1];
+    row.innerHTML = '<div class="txt"><a style="border:none;cursor:default">'+d.dia+(d.dia===hoyNombre?' · hoy':'')+'</a><p>'+d.etq+' · '+zLabel+'</p></div>' +
+      '<button class="addbtn" type="button">Buscar</button>';
+    row.querySelector('.addbtn').onclick = ()=>buscarParaDia(d.dia, d.zona, d.tipo);
     cont.appendChild(row);
   });
 }
 
-function etiquetarConTipoYMinutos(resultados){
-  const tipo = document.getElementById('tipo').value;
+function etiquetarConTipoYMinutos(resultados, tipoArg){
+  const tipo = tipoArg === undefined ? document.getElementById('tipo').value : tipoArg;
   const minutos = DURACION_MIN[document.getElementById('duracion').value] || 15;
   resultados.forEach(r => { r.tipoEjercicio = tipo; r.minutos = minutos; });
   return resultados;
 }
 
-async function buscarParaDia(dia, zona){
+async function buscarParaDia(dia, zona, tipoDia){
   document.getElementById('resultados').innerHTML = '';
+  irAResultados();
   const zLabel = ZONAS.find(z=>z[0]===zona)[1];
   const id = 'dia-' + dia;
   renderCategoria(id, '📅 ' + dia + ' — ' + zLabel);
   try{
-    const resultados = await buscarPorFuente(zona, 4);
-    etiquetarConTipoYMinutos(resultados);
+    const resultados = await buscarPorFuente(zona, 4, tipoDia);
+    etiquetarConTipoYMinutos(resultados, tipoDia);
     resultados.forEach(r => r.diaSemana = dia); // se etiqueta con el día para agruparlo en "Mi rutina"
     renderResultado(id, '📅 ' + dia + ' — ' + zLabel, resultados);
   }catch(e){
@@ -684,30 +792,45 @@ function cargarClaves(){
   const yt = localStorage.getItem('fam_ex_yt_key');
 }
 
+// Palabras de gimnasio / ganar músculo: se descartan de los resultados cuando el perfil pide evitarlas
+const RE_MUSCULO = /hipertrofia|masa muscular|volumen muscular|culturismo|bodybuilding|powerlifting|\bbulk|ganar m[uú]sculo|rutina de gimnasio|rutina de gym/i;
+const EXCLUIR_MUSCULO = ' -hipertrofia -"masa muscular" -culturismo -gimnasio';
+const OBJ_TXT = {ambos:'quemar grasa y tonificar', bajar:'quemar grasa adelgazar', tonificar:'tonificar', mantener:'suave'};
+const TIPO_TXT = {fuerza:'tonificar con peso corporal', cardio:'cardio quema grasa', movilidad:'movilidad estiramiento', yoga:'pilates yoga suave'};
+
 async function buscarYouTube(query, cantidad){
   cantidad = cantidad || 4;
-  const urlBase = 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=' + cantidad + '&safeSearch=strict&relevanceLanguage=es&q=' + encodeURIComponent(query);
+  const pedir = Math.min(cantidad * 2, 12); // se piden más para poder descartar los de gimnasio y quedarse con los que valen
+  const urlBase = 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=' + pedir + '&safeSearch=strict&relevanceLanguage=es&q=' + encodeURIComponent(query);
   const data = await IAClaves.youtube(urlBase);
   if(!data.items || data.items.length===0) throw new Error('Sin resultados.');
-  return data.items.map(item => ({
+  let items = data.items.map(item => ({
     id: item.id.videoId,
     titulo: item.snippet.title,
     canal: item.snippet.channelTitle,
     link: 'https://www.youtube.com/watch?v=' + item.id.videoId,
     thumb: item.snippet.thumbnails && item.snippet.thumbnails.medium ? item.snippet.thumbnails.medium.url : null
   }));
+  if(prefsBusq().sinMusculo){ const f = items.filter(x => !RE_MUSCULO.test(x.titulo)); if(f.length) items = f; }
+  return items.slice(0, cantidad);
 }
 
-function construirQuery(zona){
+function construirQuery(zona, tipoArg){
+  const pr = prefsBusq();
   const animo = document.getElementById('animo').value;
   const intensidad = document.getElementById('intensidad').value;
   const duracion = document.getElementById('duracion').value;
   const equipo = document.getElementById('equipo').value;
-  const tipo = document.getElementById('tipo').value;
+  const tipo = tipoArg === undefined ? document.getElementById('tipo').value : tipoArg;
   const durTxt = !duracion ? '' : duracion==='corto' ? '5 minutos' : duracion==='medio' ? '15 minutos' : '20 minutos';
-  let extra = '';
-  if(perfil==='Mamy' && animo!=='bien') extra = ' bajo impacto suave sin dolor articular';
-  return ['ejercicio',tipo,zona==='cualquiera'?'':zona,intensidad,equipo,durTxt].filter(Boolean).join(' ') + extra + ' en español';
+  const suave = perfil==='Mamy' && animo!=='bien';
+  const partes = ['ejercicio', tipo ? TIPO_TXT[tipo] : OBJ_TXT[pr.objetivo], zona==='cualquiera'?'':zona, perfilTxt(),
+    (!suave && pr.bajoImpacto) ? 'bajo impacto sin saltos' : '', intensidad, equipo, durTxt];
+  let q = partes.filter(Boolean).join(' ');
+  if(suave) q += ' bajo impacto suave sin dolor articular';
+  q += ' en casa en español';
+  if(pr.sinMusculo) q += EXCLUIR_MUSCULO;
+  return q;
 }
 
 function renderCategoria(id, titulo){
@@ -745,6 +868,7 @@ function renderError(id, titulo, msg){
 
 async function buscarEjercicios(){
   document.getElementById('resultados').innerHTML = '';
+  irAResultados();
   const lista = zonasElegidas.size ? [...zonasElegidas] : ['cualquiera'];
   for(const zona of lista){
     const zLabel = zona==='cualquiera' ? 'Cualquier zona' : ZONAS.find(z=>z[0]===zona)[1];
@@ -806,6 +930,9 @@ function renderRutina(){
   const pesoKg = pesoDesdeDieta();
 
   const hechos = lista.filter(it=>it.hecho);
+  const porHacer = lista.length - hechos.length;
+  const tabH = document.getElementById('tab-hechos');
+  if(tabH) tabH.textContent = '✅ Hechos' + (porHacer ? ' · ' + porHacer + ' por hacer' : '');
   if(!pesoKg){
     balanceDiv.innerHTML = '<span style="color:var(--gris2)">Falta tu peso: ponlo en ⚙️ Ajustes → Perfil para ver la estimación acá.</span>';
   } else {
@@ -861,7 +988,7 @@ function renderHistorial(){
   if(!grid) return;
   const hist = hcLeer();
   const porDia = {};
-  hist.forEach(e=>{ if(e && e.fecha){ (porDia[e.fecha] = porDia[e.fecha] || []).push(e); } });
+  hist.forEach(e=>{ if(e && e.fecha && !esPasosH(e)){ (porDia[e.fecha] = porDia[e.fecha] || []).push(e); } }); // los pasos sueltos no hacen "día con ejercicio"
   const fechas = Object.keys(porDia).sort();
   const primera = fechas.length ? fechas[0] : null;
   const hoy = hoyISO();
@@ -895,9 +1022,12 @@ function renderHistorial(){
   const det = document.getElementById('hc-detalle');
   if(hcDiaSel){
     const idx = []; hist.forEach((x,i)=>{ if(x && x.fecha===hcDiaSel) idx.push(i); });
+    const filaDet = i => esPasosH(hist[i])
+      ? '<li style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:4px 0"><span>'+hcEsc(hist[i].nombre||'Pasos')+' — '+hcEsc(hist[i].kcal||0)+' kcal</span><span style="font-size:0.75rem;color:var(--gris)">automático</span></li>'
+      : '<li style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:4px 0"><span>'+hcEsc(hist[i].nombre||'Ejercicio')+(hist[i].minutos?' — '+hcEsc(hist[i].minutos)+' min':'')+'</span><button type="button" class="secundario" data-del="'+i+'">Quitar</button></li>';
     const opts = Object.keys(NOMBRE_ACTIVIDAD).map(k=>'<option value="'+k+'">'+NOMBRE_ACTIVIDAD[k]+'</option>').join('');
     det.innerHTML = '<b>' + hcEsc(hcDiaSel) + '</b>' + (idx.length
-      ? '<ul style="list-style:none;padding:0;margin:6px 0">' + idx.map(i=>'<li style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:4px 0"><span>'+hcEsc(hist[i].nombre||'Ejercicio')+(hist[i].minutos?' — '+hcEsc(hist[i].minutos)+' min':'')+'</span><button type="button" class="secundario" data-del="'+i+'">Quitar</button></li>').join('') + '</ul>'
+      ? '<ul style="list-style:none;padding:0;margin:6px 0">' + idx.map(filaDet).join('') + '</ul>'
       : '<div>Sin ejercicios registrados ese día.</div>')
       + (hcDiaSel > hoy ? '' : '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center"><select id="hc-add-tipo" style="width:auto">'+opts+'</select><input id="hc-add-otra" placeholder="Nombre" style="display:none;width:130px"><input id="hc-add-min" type="number" min="1" placeholder="Min" style="width:80px"><button type="button" class="secundario" id="hc-add-btn">+ Añadir a este día</button></div>');
     det.querySelectorAll('[data-del]').forEach(bt=> bt.onclick = ()=>{
@@ -933,7 +1063,7 @@ async function sugerirIA(){
   const txt = id => { const s = document.getElementById(id); return s && s.value ? s.options[s.selectedIndex].text : ''; };
   const zonas = zonasElegidas.size ? [...zonasElegidas].map(z=>{ const f = ZONAS.find(x=>x[0]===z); return f ? f[1] : z; }).join(', ') : '';
   const filtros = [zonas && 'Zona del cuerpo: '+zonas, txt('intensidad') && 'Intensidad: '+txt('intensidad'), txt('duracion') && 'Duración: '+txt('duracion'), txt('equipo') && 'Equipamiento: '+txt('equipo'), txt('tipo') && 'Tipo: '+txt('tipo')].filter(Boolean).join('\n') || 'Sin filtros: cualquier zona, intensidad y tipo.';
-  const prompt = 'Eres un asistente de ejercicio suave para una persona adulta con artritis. Sugiere exactamente 3 ejercicios distintos, de bajo impacto (sin saltos ni movimientos bruscos), que se detengan si hay dolor. No des diagnósticos ni consejos médicos.\nFiltros elegidos:\n' + filtros + '\nResponde SOLO con un JSON válido, sin texto antes ni después ni marcas de código, con esta forma: [{"nombre":"","para_que":"","pasos":["","",""],"dosis":"series y repeticiones o minutos","cuidado":"aviso para las articulaciones","tipo":"fuerza|cardio|movilidad|yoga|otro","minutos":10}]. Todo en español sencillo.';
+  const prompt = textoPerfilIA() + '\nFiltros elegidos:\n' + filtros + '\nResponde SOLO con un JSON válido, sin texto antes ni después ni marcas de código, con esta forma: [{"nombre":"","para_que":"","pasos":["","",""],"dosis":"series y repeticiones o minutos","cuidado":"aviso para las articulaciones","tipo":"fuerza|cardio|movilidad|yoga|otro","minutos":10}]. Todo en español sencillo.';
   cont.innerHTML = '<p>Pidiendo ideas a la IA…</p>';
   try{
     const data = await IAClaves.gemini({ contents:[{parts:[{text:prompt}]}] });
@@ -982,11 +1112,11 @@ function renderListaHc(){
   const box = document.getElementById('hc-lista'); if(!box || !hcMes) return;
   const peso = pesoDesdeDieta(), hist = hcLeer(), porDia = {};
   hist.forEach(x=>{ if(x && x.fecha && x.fecha.slice(0,7) === hcMes.y+'-'+String(hcMes.m+1).padStart(2,'0')) (porDia[x.fecha] = porDia[x.fecha] || []).push(x); });
-  const dias = Object.keys(porDia).sort();
+  const dias = Object.keys(porDia).filter(f => porDia[f].some(x => !esPasosH(x))).sort(); // un día solo con pasos no es un día de ejercicio
   box.innerHTML = dias.length ? dias.map(f=>{
     const p = f.split('-'), nom = new Date(+p[0], +p[1]-1, +p[2]).toLocaleDateString('es-ES',{weekday:'long', day:'numeric', month:'long'});
     let k = 0; porDia[f].forEach(x=>{ if(typeof x.kcal==='number') k += x.kcal; else { const v = kcalQuemadasDe({tipoEjercicio:x.tipo, minutos:parseFloat(x.minutos)}, peso); if(v!=null) k += v; } });
-    return '<button type="button" class="hc-fila" data-f="'+f+'" style="display:block;width:100%;text-align:left;padding:10px;margin:6px 0;border-radius:10px"><b style="text-transform:capitalize">'+hcEsc(nom)+'</b> · '+Math.round(k)+' kcal extra'+porDia[f].map(x=>'<div style="font-size:0.9rem;opacity:.85">'+hcEsc(x.nombre||'Ejercicio')+(x.minutos?' — '+hcEsc(x.minutos)+' min':'')+'</div>').join('')+'</button>';
+    return '<button type="button" class="hc-fila" data-f="'+f+'" style="display:block;width:100%;text-align:left;padding:10px;margin:6px 0;border-radius:10px"><b style="text-transform:capitalize">'+hcEsc(nom)+'</b> · '+Math.round(k)+' kcal extra'+porDia[f].map(x=>'<div style="font-size:0.9rem;opacity:.85">'+hcEsc(x.nombre||'Ejercicio')+(x.minutos && !esPasosH(x)?' — '+hcEsc(x.minutos)+' min':'')+'</div>').join('')+'</button>';
   }).join('') : '<p class="empty">No hay ejercicios registrados este mes.</p>';
   box.querySelectorAll('.hc-fila').forEach(b=> b.onclick = ()=>{ hcDiaSel = b.dataset.f; renderHistorial(); });
 }
@@ -1001,6 +1131,162 @@ function aplicarModoHc(){
 document.getElementById('hc-modo-grid').onclick = ()=>{ modoHc = 'grid'; localStorage.setItem('fitCalModoV1','grid'); aplicarModoHc(); };
 document.getElementById('hc-modo-lista').onclick = ()=>{ modoHc = 'lista'; localStorage.setItem('fitCalModoV1','lista'); aplicarModoHc(); };
 const _rh1 = renderHistorial; renderHistorial = function(){ _rh1.apply(this, arguments); aplicarModoHc(); };
+
+// ---------- Perfil de búsqueda: sexo, edad y objetivo ----------
+// Sexo y edad viven en el mismo sitio que Nutrición → Perfil (dietaPerfilDatosV1_), para no tener el dato duplicado.
+// Si ahí está vacío se usan estos valores de partida; solo se guardan cuando los cambias tú.
+const PERFIL_DEFECTO = { Mamy:{genero:'Mujer', edad:56}, Filha:{genero:'Mujer', edad:23} };
+function leerJSONfit(k, d){ try{ const v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; }catch(e){ return d; } }
+function datosPerfil(){
+  const pd = leerJSONfit('dietaPerfilDatosV1_' + perfil, {}) || {}, def = PERFIL_DEFECTO[perfil] || {};
+  return { genero: pd.genero || def.genero || '', edad: parseInt(pd.edad, 10) || def.edad || null };
+}
+function prefsBusq(){
+  const p = leerJSONfit('fam_ex_perfilbusq_' + perfil, null) || {};
+  return {
+    objetivo: OBJ_TXT[p.objetivo] ? p.objetivo : 'ambos',
+    bajoImpacto: p.bajoImpacto == null ? perfil === 'Mamy' : !!p.bajoImpacto,
+    sinMusculo: p.sinMusculo == null ? true : !!p.sinMusculo
+  };
+}
+function perfilTxt(){
+  const d = datosPerfil(), e = d.edad;
+  let s = d.genero === 'Mujer' ? 'para mujeres' : d.genero === 'Hombre' ? 'para hombres' : '';
+  if(s && e){ if(e >= 60) s += ' mayores de 60'; else if(e >= 50) s += ' mayores de 50'; else if(e >= 40) s += ' de 40'; }
+  return s;
+}
+function textoPerfilIA(){
+  const d = datosPerfil(), pr = prefsBusq();
+  const quien = (d.genero === 'Mujer' ? 'una mujer' : d.genero === 'Hombre' ? 'un hombre' : 'una persona') + (d.edad ? ' de ' + d.edad + ' años' : '') + (perfil === 'Mamy' ? ' con artritis' : '');
+  const obj = {ambos:'bajar de peso y tonificar el cuerpo', bajar:'bajar de peso', tonificar:'tonificar el cuerpo', mantener:'mantenerse en movimiento con suavidad'}[pr.objetivo];
+  return 'Eres un asistente de ejercicio para ' + quien + '. Su objetivo es ' + obj + (pr.sinMusculo ? ', sin ganar volumen muscular (nada de rutinas de gimnasio ni de hipertrofia)' : '') +
+    '. Sugiere exactamente 3 ejercicios distintos' + ((pr.bajoImpacto || perfil === 'Mamy') ? ', de bajo impacto (sin saltos ni movimientos bruscos)' : '') + ', que se detengan si hay dolor. No des diagnósticos ni consejos médicos.';
+}
+function resumenPerfilBusqueda(){
+  const d = datosPerfil(), pr = prefsBusq();
+  const obj = {ambos:'bajar peso y tonificar', bajar:'bajar peso', tonificar:'tonificar', mantener:'mantenerse en movimiento'}[pr.objetivo];
+  const el = document.getElementById('pb-resumen');
+  el.innerHTML = 'Buscando para: <b>' + (d.genero ? d.genero.toLowerCase() : 'sin sexo indicado') + (d.edad ? ' de ' + d.edad + ' años' : '') + '</b> · objetivo: <b>' + obj + '</b>' +
+    (pr.bajoImpacto ? ' · bajo impacto' : '') + (pr.sinMusculo ? ' · sin rutinas de ganar músculo' : '');
+}
+function cargarPerfilBusqueda(){
+  const d = datosPerfil(), pr = prefsBusq();
+  document.getElementById('pb-nombre').textContent = perfil;
+  document.getElementById('pb-genero').value = d.genero || 'Mujer';
+  document.getElementById('pb-edad').value = d.edad || '';
+  document.getElementById('pb-objetivo').value = pr.objetivo;
+  document.getElementById('pb-impacto').checked = pr.bajoImpacto;
+  document.getElementById('pb-musculo').checked = pr.sinMusculo;
+  resumenPerfilBusqueda();
+}
+function guardarPerfilBusqueda(){
+  // sexo y edad -> mismo sitio que Nutrición (se mezcla con lo que ya hubiera: nombre, altura…)
+  const pd = leerJSONfit('dietaPerfilDatosV1_' + perfil, {}) || {};
+  pd.genero = document.getElementById('pb-genero').value;
+  pd.edad = parseInt(document.getElementById('pb-edad').value, 10) || null;
+  localStorage.setItem('dietaPerfilDatosV1_' + perfil, JSON.stringify(pd));
+  localStorage.setItem('fam_ex_perfilbusq_' + perfil, JSON.stringify({
+    objetivo: document.getElementById('pb-objetivo').value,
+    bajoImpacto: document.getElementById('pb-impacto').checked,
+    sinMusculo: document.getElementById('pb-musculo').checked
+  }));
+  resumenPerfilBusqueda(); renderAtajos();
+}
+['pb-genero','pb-edad','pb-objetivo','pb-impacto','pb-musculo'].forEach(id => document.getElementById(id).addEventListener('change', guardarPerfilBusqueda));
+
+// ---------- Búsquedas precisas (un toque = una búsqueda concreta en YouTube) ----------
+// tipo/min: cómo se anota en el historial si la agregas a tu rutina (mismas claves que usa Nutrición para estimar kcal)
+const ATAJOS = [
+  {id:'caminar', ico:'🚶', t:'Caminar en casa', q:'caminata en casa para adelgazar', tipo:'caminata', min:20},
+  {id:'cardio', ico:'🔥', t:'Cardio sin saltos', q:'cardio sin saltos quemar grasa en casa', tipo:'cardio', min:15},
+  {id:'hiit', ico:'⚡', t:'HIIT para empezar', q:'HIIT principiantes quemar grasa en casa', tipo:'cardio', min:15, maxEdad:45, soloActivo:true},
+  {id:'baile', ico:'💃', t:'Baile fitness', q:'baile fitness quemar calorías en casa', tipo:'baile', min:20},
+  {id:'piernas', ico:'🍑', t:'Piernas y glúteos', q:'tonificar piernas y glúteos sin pesas', tipo:'fuerza', min:15},
+  {id:'brazos', ico:'💪', t:'Brazos sin volumen', q:'tonificar brazos flacidez sin pesas', tipo:'fuerza', min:10},
+  {id:'barriga', ico:'🎯', t:'Barriga de pie', q:'reducir barriga ejercicios de pie sin abdominales en el suelo', tipo:'fuerza', min:10},
+  {id:'pilates', ico:'🧘', t:'Pilates en casa', q:'pilates en casa tonificar principiantes', tipo:'yoga', min:20},
+  {id:'equilibrio', ico:'⚖️', t:'Equilibrio y fuerza', q:'equilibrio y fuerza para tonificar', tipo:'fuerza', min:15, minEdad:50},
+  {id:'huesos', ico:'🦴', t:'Huesos y articulaciones', q:'ejercicios suaves para huesos y articulaciones fuertes', tipo:'fuerza', min:15, minEdad:50},
+  {id:'estirar', ico:'🌿', t:'Estirar al terminar', q:'estiramientos después de ejercicio', tipo:'movilidad', min:10}
+];
+function atajosDelPerfil(){
+  const e = datosPerfil().edad, pr = prefsBusq();
+  return ATAJOS.filter(a => (!a.minEdad || (e || 0) >= a.minEdad) && (!a.maxEdad || (e || 99) <= a.maxEdad) && (!a.soloActivo || !pr.bajoImpacto));
+}
+function renderAtajos(){
+  const cont = document.getElementById('atajos'); if(!cont) return;
+  cont.innerHTML = '';
+  atajosDelPerfil().forEach(a => {
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = a.ico + ' ' + a.t;
+    b.onclick = () => buscarAtajo(a.id); cont.appendChild(b);
+  });
+}
+async function buscarAtajo(id){
+  const a = ATAJOS.find(x => x.id === id); if(!a) return;
+  const pr = prefsBusq(), cid = 'at-' + id, tit = a.ico + ' ' + a.t;
+  document.getElementById('resultados').innerHTML = '';
+  renderCategoria(cid, tit); irAResultados();
+  const animo = document.getElementById('animo').value, suave = perfil === 'Mamy' && animo !== 'bien';
+  const q = [a.q, perfilTxt(), (pr.bajoImpacto || suave) ? 'bajo impacto' : ''].filter(Boolean).join(' ') + ' en español' + (pr.sinMusculo ? EXCLUIR_MUSCULO : '');
+  try{
+    const r = await buscarYouTube(q, 4);
+    r.forEach(x => { x.tipoEjercicio = a.tipo; x.minutos = a.min; });
+    renderResultado(cid, tit, r);
+  }catch(e){ renderError(cid, tit, e.message); }
+}
+function irAResultados(){ setTimeout(() => { const r = document.getElementById('resultados'); if(r && r.scrollIntoView) r.scrollIntoView({behavior:'smooth', block:'start'}); }, 60); }
+
+// ---------- Pasos (vienen de ⌚ Huawei; aquí solo se leen) ----------
+function isoDeFecha(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+function nf(v){ return Number(v).toLocaleString('es'); }
+function renderPasos(){
+  const box = document.getElementById('pasos-box'); if(!box) return;
+  document.getElementById('pasos-nombre').textContent = perfil;
+  const d = leerJSONfit('huaweiDiaV1_' + perfil, {}) || {}, hoy = hoyISO();
+  const conPasos = Object.keys(d).filter(f => d[f] && d[f].pasos != null).sort();
+  if(!conPasos.length){
+    box.innerHTML = '<p class="empty">Todavía no hay pasos de ' + perfil + '. Se cargan al pulsar «Sincronizar Huawei» en <a href="huawei.html" style="color:var(--acc)">⌚ Huawei</a>.</p>';
+    return;
+  }
+  const f = (d[hoy] && d[hoy].pasos != null) ? hoy : conPasos[conPasos.length - 1], x = d[f];
+  const act = x.actPasos || 0, sueltos = Math.max(0, x.pasos - act);
+  const peso = pesoDesdeDieta(), on = localStorage.getItem('huaweiPasosKcalV1_' + perfil) === '1';
+  const kPot = peso ? Math.round(sueltos * peso * 0.0003) : null; // misma fórmula que huawei.html: pasos × peso × 0,0003
+  const reg = hcLeer().find(e => e && e.hid === 'hwp:' + f);
+  const cuando = f === hoy ? 'Hoy' : 'Último día con datos: ' + f.slice(8) + '/' + f.slice(5, 7);
+  let kTxt;
+  if(on) kTxt = reg ? '✅ Cuentan en Nutrición: <b>' + reg.kcal + ' kcal</b> por los pasos sueltos.' : '✅ Contar pasos sueltos está activado' + (peso ? '.' : ', pero falta tu peso para calcular.');
+  else kTxt = 'Los pasos sueltos <b>no suman</b> a Nutrición' + (kPot != null ? ' (sumarían ≈ ' + kPot + ' kcal)' : '') + '.';
+  const dias7 = []; for(let i = 6; i >= 0; i--){ const dd = new Date(); dd.setDate(dd.getDate() - i); dias7.push(isoDeFecha(dd)); }
+  const vals = dias7.map(g => (d[g] && d[g].pasos != null) ? d[g].pasos : null), con = vals.filter(v => v != null);
+  const max = Math.max(1, ...con), media = con.length ? Math.round(con.reduce((a, b) => a + b, 0) / con.length) : null;
+  const barras = dias7.map((g, i) => '<div class="pasos-barra"><span style="width:42px">' + g.slice(8) + '/' + g.slice(5, 7) + '</span><div class="pista"><i style="width:' + (vals[i] != null ? Math.round(vals[i] / max * 100) : 0) + '%"></i></div><span style="width:58px;text-align:right">' + (vals[i] != null ? nf(vals[i]) : '–') + '</span></div>').join('');
+  box.innerHTML =
+    '<div class="pasos-grande">👣 ' + nf(x.pasos) + ' <span style="font-size:0.9rem;font-weight:500;color:var(--gris2)">pasos · ' + cuando + '</span></div>' +
+    '<div style="font-size:0.88rem;margin-top:4px">🏃 ' + nf(act) + ' dentro de actividades · 🚶 ' + nf(sueltos) + ' sueltos</div>' +
+    '<div style="font-size:0.85rem;margin-top:4px;color:var(--gris2)">' + kTxt + '</div>' +
+    '<div style="margin-top:10px;font-size:0.8rem;color:var(--gris2)">Últimos 7 días' + (media != null ? ' · media ' + nf(media) + ' pasos/día' : '') + '</div>' + barras +
+    '<p class="pendiente" style="text-align:left;margin-top:10px">Se actualizan al sincronizar en <a href="huawei.html" style="color:var(--acc)">⌚ Huawei</a>, donde también se activa «Contar también los pasos que no son de una actividad». Los pasos de una caminata o carrera ya van dentro de esa actividad y no se cuentan dos veces; si la actividad aún no llegó a Drive, sus pasos cuentan como sueltos hasta el siguiente sync. Los pasos son una estimación (pasos × peso × 0,0003), no una medición. Un día solo con pasos no se marca como «día con ejercicio».</p>';
+}
+window.addEventListener('focus', renderPasos);
+window.addEventListener('storage', e => { if(e.key && e.key.indexOf('huawei') === 0) renderPasos(); });
+
+// ---------- Pestañas Buscar / Hechos ----------
+function mostrarPestana(p){
+  if(p !== 'hechos') p = 'buscar';
+  ['buscar','hechos'].forEach(x => {
+    document.getElementById('panel-' + x).hidden = (x !== p);
+    const t = document.getElementById('tab-' + x); t.classList.toggle('on', x === p); t.setAttribute('aria-selected', x === p ? 'true' : 'false');
+  });
+  try{ localStorage.setItem('fitPestanaV1', p); }catch(e){}
+  if(p === 'hechos'){ renderPasos(); renderRutina(); renderHistorial(); }
+}
+
+cargarPerfilBusqueda();
+renderAtajos();
+renderPasos();
+(function(){ let p = 'buscar'; try{ p = localStorage.getItem('fitPestanaV1') || 'buscar'; }catch(e){} if(location.hash === '#hechos') p = 'hechos'; else if(location.hash === '#buscar') p = 'buscar'; mostrarPestana(p); })();
+
 
 </script>
 <script type="module" src="nube.js" onerror="var d=document.createElement('div');d.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99998;background:#7a1f1f;color:#fff;padding:10px 14px;font:14px system-ui,sans-serif;text-align:center';d.textContent='⚠️ El archivo nube.js no se pudo descargar (revisa que esté subido a GitHub con ese nombre exacto).';document.body.appendChild(d)"></script>

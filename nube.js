@@ -19,7 +19,7 @@ const auth = getAuth(app), db = getFirestore(app);
 window.__nubeToken = async () => { try{ await auth.authStateReady(); return auth.currentUser ? await auth.currentUser.getIdToken() : null; }catch(e){ return null; } };
 
 // Solo se sincronizan estos datos, y solo los de tu perfil (terminan en _Mamy o _Filha).
-const PREF = ["dietaDiarioV3_","dietaRecetasV1_","dietaComidasGuardadasV1_","dietaRepartoV1_","dietaFrecuentesV1_","dietaFiltrosV1_","dietaMedidasV1_","dietaPerfilDatosV1_","ejercicioHistorial_","huaweiDiaV1_","huaweiPasosKcalV1_","fam_ex_rutina_","fam_ex_favoritos_","fam_ex_videos_","saludCondicionesV1_","saludCirugiasV1_","saludMedicacionV1_","saludMedTomasV1_","saludBancoMedV1_","saludPruebasV1_","saludArticV1_","saludSintomasV1_","perfilMetasV1_"];
+const PREF = ["dietaDiarioV3_","dietaRecetasV1_","dietaComidasGuardadasV1_","dietaRepartoV1_","dietaFrecuentesV1_","dietaFiltrosV1_","dietaMedidasV1_","dietaPerfilDatosV1_","ejercicioHistorial_","huaweiDiaV1_","huaweiPasosKcalV1_","fam_ex_rutina_","fam_ex_favoritos_","fam_ex_videos_","fam_ex_perfilbusq_","saludCondicionesV1_","saludCirugiasV1_","saludMedicacionV1_","saludMedTomasV1_","saludBancoMedV1_","saludPruebasV1_","saludArticV1_","saludSintomasV1_","perfilMetasV1_"];
 const IMG_GATO = {
   Mamy: "gato-mamy.png",
   Filha: "gato-filha.png"

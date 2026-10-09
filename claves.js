@@ -40,6 +40,27 @@
     proxyActivo: function(){ return proxyOn(); },
     tieneGemini: function(){ return proxyOn() || lista(K.gem).length > 0; },
     tieneSpoonacular: function(){ return proxyOn() || !!leer("dietaSpoonacularKey"); },
+    // Bases de alimentos privadas (BEDCA y AESAN): se piden al Worker (solo responde a tus cuentas con sesión) y se guardan en el aparato
+    // 30 días para no descargarlas cada vez ni gastar datos. Si no hay conexión se usa la copia guardada aunque sea antigua.
+    datos: async function(nombre){
+      var DIAS30 = 30*864e5, ruta = "/datos/" + encodeURIComponent(nombre), clave = new Request(base() + ruta), cache = null, guardada = null;
+      try{ cache = await caches.open("datos-privados-v1"); guardada = await cache.match(clave); }catch(e){}
+      if(guardada){
+        var t = parseInt(guardada.headers.get("x-guardado"), 10) || 0;
+        if(Date.now() - t < DIAS30){ try{ return await guardada.clone().json(); }catch(e){} }
+      }
+      try{
+        if(!proxyOn()) throw new Error("No está configurada la dirección del Worker (PROXY) en claves.js.");
+        var r = await viaProxy(ruta);
+        if(!r.ok){ var d = {}; try{ d = await r.json(); }catch(e){} throw new Error((d.error && d.error.message) || ("Error " + r.status)); }
+        var texto = await r.text(), json = JSON.parse(texto);
+        if(cache){ try{ await cache.put(clave, new Response(texto, {headers:{"Content-Type":"application/json", "x-guardado": String(Date.now())}})); }catch(e){} }
+        return json;
+      }catch(e){
+        if(guardada){ try{ return await guardada.clone().json(); }catch(e2){} }
+        throw e;
+      }
+    },
     usoHoy: function(){ return {usadas: conteo().n, tope: tope()}; },
     gemini: async function(body){
       var usaProxy = proxyOn(), claves = usaProxy ? [null] : lista(K.gem), modelo = leer(K.modelo) || "gemini-3.1-flash-lite";
