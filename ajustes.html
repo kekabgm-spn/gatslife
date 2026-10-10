@@ -35,6 +35,12 @@ button{margin-top:10px;padding:11px 16px;border-radius:10px;border:1px solid var
 <label for="rTxt">Escribe REINICIAR para confirmar</label><input id="rTxt" type="text" autocomplete="off" autocapitalize="characters">
 <button id="rGo" type="button" onclick="rEjecutar()" disabled style="border-color:#e5484d;color:#e5484d">Borrar mis datos</button><button type="button" onclick="rCerrar()" style="margin-left:8px">Cancelar</button>
 <p class="n" id="rMsg"></p></div></div>
+<h2 style="font-size:1.05rem;margin:22px 0 0">Datos compartidos (Casa, Calendario, Invitaciones)</h2>
+<div class="c"><p class="n" style="margin-top:0">Casa, Calendario e Invitaciones son de las dos. Aquí se descarga una copia de ellos y se pasan al formato nuevo, en el que cada tarea y cada evento se guarda por separado y dos cambios a la vez no se pisan. Solo hace falta migrar una vez, desde un solo aparato.</p>
+<p class="n" id="sh_estado">Comprobando…</p>
+<button id="sh_copia" type="button" onclick="shCopia()" disabled>⬇️ 1. Descargar copia de lo compartido</button>
+<button id="sh_migrar" type="button" onclick="shMigrar()" disabled style="margin-left:8px">🔄 2. Migrar al formato nuevo</button>
+<p class="n" id="sh_msg"></p></div>
 <h2 style="font-size:1.05rem;margin:22px 0 0">Claves<button type="button" class="ayu" data-t="Las claves se guardan solo en este aparato. Tendrás que ponerlas una vez en cada móvil u ordenador. Nunca las compartas ni las pegues en el código." title="Las claves se guardan solo en este aparato. Tendrás que ponerlas una vez en cada móvil u ordenador. Nunca las compartas ni las pegues en el código." aria-label="Más información" aria-expanded="false">i</button></h2><p class="n" id="notaClaves"></p>
 <div id="lista"></div>
 <script src="claves.js"></script>
@@ -133,6 +139,51 @@ async function rEjecutar(){
     msg.textContent="✓ Datos reiniciados. Recargando…";setTimeout(function(){location.reload()},1200);
   }catch(e){msg.textContent="⚠️ No se borró nada: "+(e&&e.message?e.message:e);go.disabled=false;}
 }
+
+// ---------- Datos compartidos: copia y migración (Fase 3) ----------
+let shCopiaHecha=false, shModo=null;
+const shN=o=>"Casa "+o.casa+" · Calendario "+o.calendario+" · Invitaciones "+o.invitaciones;
+function shListo(){return !!(window.Familia&&window.Familia.listo&&window.Familia.migracion);}
+async function shRefrescar(){
+  const el=document.getElementById("sh_estado"),bc=document.getElementById("sh_copia"),bm=document.getElementById("sh_migrar");
+  if(!shListo()){el.textContent="Sin conexión, o la sincronización todavía no está activa. Espera unos segundos o recarga la página.";bc.disabled=true;bm.disabled=true;return;}
+  try{
+    const e=await window.Familia.migracion.estado();shModo=e.modo;
+    bc.disabled=false;
+    if(e.modo==="nuevo"){el.textContent="✔ Formato nuevo activo ("+shN(e.nuevo)+"). Cada tarea y cada evento se guarda por separado.";bm.style.display="none";}
+    else{el.textContent="Formato anterior ("+shN(e.anterior)+"). Pendiente de migrar.";bm.style.display="";bm.disabled=!shCopiaHecha;}
+  }catch(err){el.textContent="⚠️ No se pudo leer el estado: "+(err&&err.message?err.message:err);}
+}
+async function shCopia(){
+  const msg=document.getElementById("sh_msg"),bc=document.getElementById("sh_copia");
+  bc.disabled=true;msg.textContent="Descargando copia…";
+  try{
+    const c=await window.Familia.migracion.copia();
+    const blob=new Blob([JSON.stringify(c,null,1)],{type:"application/json"});
+    const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="nuestra-app-compartidos-"+new Date().toISOString().slice(0,10)+".json";
+    document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+    shCopiaHecha=true;
+    const n=c.modo==="nuevo"?c.nuevo:c.anterior;
+    msg.textContent="✓ Copia descargada ("+n.casa.length+" tareas de Casa, "+n.calendario.length+" eventos, "+n.invitaciones.length+" invitaciones). Guarda ese archivo.";
+  }catch(e){msg.textContent="⚠️ No se pudo descargar la copia: "+(e&&e.message?e.message:e);}
+  bc.disabled=false;shRefrescar();
+}
+async function shMigrar(){
+  const msg=document.getElementById("sh_msg"),bm=document.getElementById("sh_migrar");
+  if(!shCopiaHecha){msg.textContent="Primero descarga la copia (botón 1).";return;}
+  if(!navigator.onLine){msg.textContent="⚠️ Hace falta conexión a internet. No se cambió nada.";return;}
+  if(!confirm("Se van a pasar Casa, Calendario e Invitaciones al formato nuevo.\n\nAntes de seguir:\n• Ya descargaste la copia.\n• Cierra la app en los demás aparatos (el móvil de la otra persona, el PC…) hasta que termine.\n\nLo anterior no se borra. ¿Migrar ahora?"))return;
+  bm.disabled=true;msg.textContent="Migrando… no cierres esta pantalla.";
+  try{
+    const r=await window.Familia.migracion.migrar();
+    const dup=Object.keys(r).reduce((t,k)=>t+r[k].duplicados,0);
+    msg.textContent="✓ Migrado: "+r.casa.despues+" tareas de Casa, "+r.calendario.despues+" eventos, "+r.invitaciones.despues+" invitaciones."+(dup?" Se quitaron "+dup+" duplicados.":"")+" Recargando…";
+    setTimeout(function(){location.reload()},2500);
+  }catch(e){msg.textContent="⚠️ No se cambió nada de lo que usas: "+(e&&e.message?e.message:e);bm.disabled=false;}
+}
+(function esperar(n){if(shListo())shRefrescar();else if(n>0)setTimeout(function(){esperar(n-1)},500);else shRefrescar();})(60);
+window.addEventListener("online",shRefrescar);
 </script>
 <script type="module" src="nube.js" onerror="var d=document.createElement('div');d.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99998;background:#7a1f1f;color:#fff;padding:10px 14px;font:14px system-ui,sans-serif;text-align:center';d.textContent='⚠️ El archivo nube.js no se pudo descargar (revisa que esté subido a GitHub con ese nombre exacto).';document.body.appendChild(d)"></script>
+<script src="familia.js" onerror="var d=document.createElement('div');d.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99997;background:#7a1f1f;color:#fff;padding:10px 14px;font:14px system-ui,sans-serif;text-align:center';d.textContent='⚠️ El archivo familia.js no se pudo descargar (revisa que esté subido a GitHub con ese nombre exacto).';document.body.appendChild(d)"></script>
 </body></html>

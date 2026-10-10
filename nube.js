@@ -219,7 +219,7 @@ async function iniciar(user){
     quitar(); window.__nubeOn = true; ui(); escuchar();
     // ---------- Fase 2: expone lo necesario para que familia.js (tareas/calendario compartidos) use la misma conexión ----------
     window.__familia = {
-      db, doc, getDoc, setDoc, onSnapshot, updateDoc, collection, getDocs,
+      db, doc, getDoc, setDoc, onSnapshot, updateDoc, deleteDoc, collection, getDocs,
       uid, perfil, email: user.email.toLowerCase()
     };
     window.dispatchEvent(new Event("familia-lista"));

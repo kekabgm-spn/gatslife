@@ -284,7 +284,7 @@ function conectarCasaCompartida(){
       });
       if(casaLocal.length){ window.Familia.guardarCasa(casaLocal); }
     } else {
-      estado.tareas = estado.tareas.filter(t=>t.lista!=="casa").concat(tareasCasaNube);
+      estado.tareas = estado.tareas.filter(t=>t.lista!=="casa" && t.lista!=="invitadas").concat(tareasCasaNube); // la nube manda en Casa e Invitadas (antes las invitadas se duplicaban)
       if(estado.tareas.some(esSemillaVieja)){
         reducirTareasCasa(true); // la nube todavía tenía las 287 antiguas: se reemplazan por las 50 y se suben a la nube
       } else {
