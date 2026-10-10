@@ -1,0 +1,2814 @@
+const COMIDAS = [
+  {id:"desayuno", nombre:"Desayuno", icono:"☀️"},
+  {id:"almuerzo", nombre:"Almuerzo", icono:"🌤️"},
+  {id:"cena", nombre:"Cena", icono:"🌙"},
+  {id:"snacks", nombre:"Snacks", icono:"🍎"}
+];
+const MEALS = COMIDAS.filter(c => c.id !== "snacks"); // tarjetas visuales; los snacks se agrupan dentro de estas
+const LETRAS_SEMANA = ["L","M","X","J","V","S","D"];
+const PERFILES = ["Mamy","Filha"];
+const CLAVE_PERFIL_ACTIVO = "dietaPerfilActivo";
+
+const METRICAS = [
+  {id:"kcal",  nombre:"Calorías",      unidad:"kcal"},
+  {id:"carbh", nombre:"Carbohidratos", unidad:"g"},
+  {id:"prot",  nombre:"Proteínas",     unidad:"g"},
+  {id:"grasa", nombre:"Grasas",        unidad:"g"}
+];
+const CAMPOS_MEDIDA = [
+  {id:"peso",           etiqueta:"Peso (kg)"},
+  {id:"bmi",            etiqueta:"BMI"},
+  {id:"grasaPct",       etiqueta:"Grasa (%)"},
+  {id:"grasaKg",        etiqueta:"Peso de grasa corporal (kg)"},
+  {id:"musculoEsqPct",  etiqueta:"Masa muscular esquelética (%)"},
+  {id:"musculoEsqKg",   etiqueta:"Masa muscular esquelética (kg)"},
+  {id:"musculosPct",    etiqueta:"Músculos (%)"},
+  {id:"musculosKg",     etiqueta:"Peso muscular (kg)"},
+  {id:"aguaPct",        etiqueta:"Agua (%)"},
+  {id:"aguaKg",         etiqueta:"Peso del agua (kg)"},
+  {id:"grasaVisceral",  etiqueta:"Grasa visceral"},
+  {id:"huesosKg",       etiqueta:"Huesos (kg)"},
+  {id:"metabolismo",    etiqueta:"Metabolismo (kcal)"},
+  {id:"proteinaPct",    etiqueta:"Proteína (%)"},
+  {id:"obesidadPct",    etiqueta:"Grado de obesidad (%)"},
+  {id:"edadMetabolica", etiqueta:"Edad metabólica"},
+  {id:"pesoSinGrasa",   etiqueta:"Peso sin grasa (kg)"},
+  {id:"pecho",          etiqueta:"Pecho / busto (cm, cinta)"},
+  {id:"antebrazo",      etiqueta:"Antebrazo (cm, cinta)"},
+  {id:"cintura",        etiqueta:"Cintura (cm, cinta)"},
+  {id:"abdomenBajo",    etiqueta:"Abdomen bajo (cm, cinta)"},
+  {id:"caderas",        etiqueta:"Caderas (cm, cinta)"},
+  {id:"biceps",         etiqueta:"Brazo (cm, cinta)"},
+  {id:"muslo",          etiqueta:"Muslo (cm, cinta)"},
+  {id:"pantorrilla",    etiqueta:"Pantorrilla (cm, cinta)"}
+];
+const PAISES = [
+  ["","Cualquier país"],["spain","España"],["argentina","Argentina"],["mexico","México"],["chile","Chile"],
+  ["colombia","Colombia"],["peru","Perú"],["uruguay","Uruguay"],["venezuela","Venezuela"],["ecuador","Ecuador"],
+  ["bolivia","Bolivia"],["paraguay","Paraguay"],["portugal","Portugal"],["france","Francia"],["italy","Italia"],
+  ["united-kingdom","Reino Unido"],["united-states","Estados Unidos"]
+];
+const NOVA_FILTROS = [["todos","Todos"],["fresco","🥬 Frescos"],["procesado","🥫 Procesados"],["ultra","🍟 Ultraprocesados"]];
+// Supermercados: el id es la etiqueta "stores" de OpenFoodFacts. SUPER_MARCAS = marcas blancas que se buscan además (p. ej. Mercadona vende como Hacendado).
+const SUPERS = [["","Cualquier supermercado"],["mercadona","Mercadona"],["carrefour","Carrefour"],["lidl","Lidl"],["dia","Dia"],["alcampo","Alcampo"],["eroski","Eroski"],["aldi","Aldi"],["consum","Consum"],["el-corte-ingles","El Corte Inglés"]];
+const SUPER_MARCAS = {mercadona:["hacendado"], carrefour:["carrefour"], dia:["dia"], alcampo:["auchan"], eroski:["eroski"], lidl:["milbona"], consum:["consum"]};
+function nombreSuper(id){ const x = SUPERS.find(t=>t[0]===id); return x ? x[1] : id; }
+// Medidas para la ficha de raciones. Las equivalencias en gramos son estimadas y se pueden corregir (se recuerdan por alimento).
+const UNIDADES = [["g","gramos (g)"],["100g","100 g"],["mg","miligramos (mg)"],["kg","kilogramos (kg)"],["ml","mililitros (ml)"],["l","litros (l)"],["racion","ración del envase"],["unidad","unidad"],["pequena","unidad pequeña"],["mediana","unidad mediana"],["grande","unidad grande"],["loncha","loncha"],["rebanada","rebanada"],["vaso","vaso (200 ml)"],["taza","taza"],["cucharada","cucharada"],["cucharadita","cucharadita"],["punado","puñado"]];
+const REGLAS_MEDIDA = [
+  [/\b(huevo|huevos)\b/, {unidad:55}],
+  [/\b(pan|baguette|chapata|tostada|tostadas|molde)\b/, {rebanada:30}],
+  [/\b(jamon|queso|fiambre|pavo|lomo|chorizo|salchichon|mortadela|bacon|beicon|york)\b/, {loncha:20}],
+  [/\b(leche|agua|zumo|bebida|caldo|horchata|refresco|cola|cerveza|vino)\b/, {taza:240}],
+  [/\bleche\b/, {ml:1.03, l:1030, vaso:206}],
+  [/\baceite\b/, {cucharada:14, cucharadita:5, ml:0.92, l:920, vaso:184}],
+  [/\b(azucar|sal)\b/, {cucharada:12, cucharadita:5}],
+  [/\b(miel|mermelada|crema|mantequilla|margarina|tomate|salsa|mayonesa|ketchup|nutella)\b/, {cucharada:15, cucharadita:5}],
+  [/\barroz\b/, {taza:185}],
+  [/\bharina\b/, {taza:125}],
+  [/\b(avena|copos)\b/, {taza:90}]
+];
+function medidasDefecto(p){
+  const d = {unidad: p.cantidadG || p.porcionG || 100, racion: p.porcionG || 100, loncha:20, rebanada:30, taza:240, cucharada:15, cucharadita:5,
+    mg:0.001, kg:1000, ml:1, l:1000, vaso:200, punado:30};
+  const n = " " + slug(p.nombre).replace(/-/g," ") + " ";
+  REGLAS_MEDIDA.forEach(r=>{ if(r[0].test(n)) Object.assign(d, r[1]); });
+  d.mediana = d.unidad; d.pequena = Math.round(d.unidad*0.75*10)/10; d.grande = Math.round(d.unidad*1.3*10)/10; // tamaños: estimación, corregible en la ficha
+  return d;
+}
+const CLAVE_EQUIV = "dietaEquivMedidasV1";
+function leerEquiv(){ const e = leerJSON(CLAVE_EQUIV, {}); return (e && typeof e==="object" && !Array.isArray(e)) ? e : {}; }
+function guardarEquiv(clave, unidad, g){ const e = leerEquiv(); (e[clave] = e[clave] || {})[unidad] = g; escribirJSON(CLAVE_EQUIV, e); }
+function claveAlim(p){ return p.code || slug((p.nombre||"") + "-" + (p.marca||"")); }
+// MET aproximados (equivalente metabólico) para estimar kcal cuando Fitness guarda minutos pero no calorías.
+const MET = {caminata:3.5, corrida:9, natacion:6, fuerza:4, cardio:6, movilidad:2.3, yoga:2.5, otro:4};
+
+function cargarPerfilActivo(){
+  const p = localStorage.getItem(CLAVE_PERFIL_ACTIVO);
+  return PERFILES.includes(p) ? p : PERFILES[0];
+}
+function guardarPerfilActivo(p){ localStorage.setItem(CLAVE_PERFIL_ACTIVO, p); }
+let perfilActivo = cargarPerfilActivo();
+
+// Cada perfil (Mamy / Filha) tiene su propio diario, recetas, reparto de macros, frecuentes, filtros, perfil y medidas.
+function CLAVE(){ return "dietaDiarioV3_"+perfilActivo; }
+function CLAVE_RECETAS(){ return "dietaRecetasV1_"+perfilActivo; }
+function CLAVE_REPARTO(){ return "dietaRepartoV1_"+perfilActivo; }
+function CLAVE_FRECUENTES(){ return "dietaFrecuentesV1_"+perfilActivo; }
+function CLAVE_FILTROS(){ return "dietaFiltrosV1_"+perfilActivo; }
+function CLAVE_PERFIL_DATOS(){ return "dietaPerfilDatosV1_"+perfilActivo; }
+function CLAVE_MEDIDAS(){ return "dietaMedidasV1_"+perfilActivo; }
+function CLAVE_COMIDAS_GUARDADAS(){ return "dietaComidasGuardadasV1_"+perfilActivo; }
+// Contrato con el módulo Ejercicio: array de {fecha:"AAAA-MM-DD", tipo, nombre, minutos, kcal?}
+function CLAVE_EJERCICIO(){ return "ejercicioHistorial_"+perfilActivo; }
+
+function leerJSON(clave, defecto){
+  try{
+    const v = JSON.parse(localStorage.getItem(clave));
+    return (v === null || v === undefined) ? defecto : v;
+  }catch(e){ return defecto; }
+}
+function escribirJSON(clave, valor){
+  try{ localStorage.setItem(clave, JSON.stringify(valor)); }
+  catch(e){ console.warn("No se pudo guardar", clave, e); }
+}
+function esc(s){
+  return String(s==null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+function fmt(n){ return String(Math.round(n*10)/10); }
+
+// Fechas en hora local (antes usaban UTC y el "hoy" cambiaba a una hora que no era medianoche).
+function fechaISO(d){
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,"0");
+  const dd = String(d.getDate()).padStart(2,"0");
+  return y+"-"+m+"-"+dd;
+}
+function hoyISO(){ return fechaISO(new Date()); }
+function sumarDias(f,n){ const d=new Date(f+"T00:00:00"); d.setDate(d.getDate()+n); return fechaISO(d); }
+function inicioSemana(f){
+  const d = new Date(f+"T00:00:00");
+  const diaSemana = (d.getDay()+6)%7; // 0=lunes
+  d.setDate(d.getDate()-diaSemana);
+  return fechaISO(d);
+}
+
+function nombreDe(id){
+  const datos = leerJSON("dietaPerfilDatosV1_"+id, {});
+  return (datos && typeof datos.nombre === "string" && datos.nombre.trim()) ? datos.nombre.trim() : id;
+}
+
+function cargarEstado(){
+  let e = leerJSON(CLAVE(), null);
+  if(!e || typeof e !== "object") e = {meta:null, dias:{}};
+  if(!e.dias) e.dias = {};
+  if(e.meta === undefined) e.meta = null;
+  if(e.metaAgua === undefined) e.metaAgua = 2000;
+  return e;
+}
+function guardarEstado(){ escribirJSON(CLAVE(), estado); }
+
+function diaDe(f){
+  if(!estado.dias[f]) estado.dias[f] = {comidas:{}, quemadas:0, agua:[]};
+  const d = estado.dias[f];
+  if(!d.comidas) d.comidas = {};
+  COMIDAS.forEach(c => { if(!d.comidas[c.id]) d.comidas[c.id] = []; });
+  if(d.quemadas === undefined) d.quemadas = 0;
+  if(!Array.isArray(d.agua)) d.agua = [];
+  return d;
+}
+
+let estado = cargarEstado();
+let fechaActual = hoyISO();
+let buscadorAbiertoEn = null;
+let buscadorSnackAbiertoEn = null; // id de la comida a la que se le está pegando un snack
+let tabBuscadorPorComida = {}; // comidaId -> 'alimento' | 'receta'
+let metricaHeat = "kcal";
+
+function cargarRecetas(){ const r = leerJSON(CLAVE_RECETAS(), []); return Array.isArray(r) ? r : []; }
+function guardarRecetas(){ escribirJSON(CLAVE_RECETAS(), recetas); }
+let recetas = cargarRecetas();
+
+// ---------- Comidas guardadas: combos ya armados (distinto de Recetas: no llevan porciones ni cocción, son un grupo de alimentos que se agrega tal cual al diario) ----------
+function cargarComidasGuardadas(){ const r = leerJSON(CLAVE_COMIDAS_GUARDADAS(), []); return Array.isArray(r) ? r : []; }
+function guardarComidasGuardadasStorage(){ escribirJSON(CLAVE_COMIDAS_GUARDADAS(), comidasGuardadas); }
+let comidasGuardadas = cargarComidasGuardadas();
+let comidaGuardadaEnEdicion = null; // {nombre, tipoComida, items:[...]}
+
+function cargarReparto(){ return leerJSON(CLAVE_REPARTO(), null); }
+function guardarReparto(r){ escribirJSON(CLAVE_REPARTO(), r); }
+let reparto = cargarReparto(); // {carb, prot, grasa} en % o null si no está definido
+
+function cargarFrecuentes(){ const f = leerJSON(CLAVE_FRECUENTES(), {}); return (f && typeof f === "object" && !Array.isArray(f)) ? f : {}; }
+let frecuentes = cargarFrecuentes();
+
+function cargarFiltros(){
+  const f = leerJSON(CLAVE_FILTROS(), {});
+  return {
+    marca: (f && typeof f.marca === "string") ? f.marca : "",
+    pais: (f && typeof f.pais === "string") ? f.pais : "",
+    nova: (f && NOVA_FILTROS.some(n => n[0] === f.nova)) ? f.nova : "todos",
+    sinClasificar: !!(f && f.sinClasificar),
+    tienda: (f && SUPERS.some(t => t[0] === f.tienda)) ? f.tienda : ""
+  };
+}
+function guardarFiltros(){ escribirJSON(CLAVE_FILTROS(), filtros); }
+let filtros = cargarFiltros();
+
+let perfilDatos = leerJSON(CLAVE_PERFIL_DATOS(), {});
+if(!perfilDatos || typeof perfilDatos !== "object") perfilDatos = {};
+let medidas = leerJSON(CLAVE_MEDIDAS(), []);
+if(!Array.isArray(medidas)) medidas = [];
+
+function cambiarPerfil(p){
+  if(p === perfilActivo) return;
+  perfilActivo = p;
+  guardarPerfilActivo(p);
+  estado = cargarEstado();
+  recetas = cargarRecetas();
+  reparto = cargarReparto();
+  frecuentes = cargarFrecuentes();
+  filtros = cargarFiltros();
+  perfilDatos = leerJSON(CLAVE_PERFIL_DATOS(), {});
+  if(!perfilDatos || typeof perfilDatos !== "object") perfilDatos = {};
+  medidas = leerJSON(CLAVE_MEDIDAS(), []);
+  if(!Array.isArray(medidas)) medidas = [];
+  fechaActual = hoyISO();
+  buscadorAbiertoEn = null;
+  buscadorSnackAbiertoEn = null;
+  cancelarReceta(); // una receta a medias no debe pasar al otro perfil
+  pintarTabsPerfil();
+  render();
+  renderRecetas();
+  renderReparto();
+  pintarPerfil();
+  renderGraficoProgreso();
+}
+function pintarTabsPerfil(){
+  document.querySelectorAll("#tabsPerfil button").forEach(b=>{
+    b.classList.toggle("on", b.dataset.perfil === perfilActivo);
+    b.textContent = nombreDe(b.dataset.perfil);
+  });
+}
+document.querySelectorAll("#tabsPerfil button").forEach(b=>{
+  b.onclick = ()=>cambiarPerfil(b.dataset.perfil);
+});
+
+// ---------- Reparto de macros ----------
+function leerRepartoInputs(){
+  return {
+    carb: parseFloat(document.getElementById("repCarb").value) || 0,
+    prot: parseFloat(document.getElementById("repProt").value) || 0,
+    grasa: parseFloat(document.getElementById("repGrasa").value) || 0
+  };
+}
+
+function renderReparto(){
+  // Siempre se pisan los campos: si este perfil no tiene reparto, quedan vacíos (antes heredaban los del otro perfil).
+  document.getElementById("repCarb").value = reparto ? reparto.carb : "";
+  document.getElementById("repProt").value = reparto ? reparto.prot : "";
+  document.getElementById("repGrasa").value = reparto ? reparto.grasa : "";
+  actualizarReparto(false);
+}
+
+function actualizarReparto(guardar){
+  const r = leerRepartoInputs();
+  const suma = r.carb + r.prot + r.grasa;
+  const sumaEl = document.getElementById("repSuma");
+  const limitesEl = document.getElementById("repLimites");
+  const notaEl = document.getElementById("repNota");
+
+  if(suma === 0){
+    sumaEl.textContent = "";
+    limitesEl.style.display = "none";
+    notaEl.textContent = "";
+    return;
+  }
+
+  sumaEl.textContent = "Suma: " + suma + "%";
+  sumaEl.className = "rep-suma " + (suma===100 ? "ok" : "mal");
+
+  if(suma !== 100){
+    limitesEl.style.display = "none";
+    notaEl.textContent = "Los tres porcentajes tienen que sumar 100 para poder calcular los gramos.";
+    return;
+  }
+
+  if(guardar){ guardarReparto(r); reparto = r; }
+
+  if(!estado.meta){
+    limitesEl.style.display = "none";
+    notaEl.textContent = "Falta poner tu meta diaria de calorías (arriba, en Meta diaria) para calcular los gramos.";
+    return;
+  }
+
+  const gCarb = Math.round(estado.meta * r.carb/100 / 4);
+  const gProt = Math.round(estado.meta * r.prot/100 / 4);
+  const gGrasa = Math.round(estado.meta * r.grasa/100 / 9);
+
+  document.getElementById("rlCarb").textContent = gCarb + "g";
+  document.getElementById("rlProt").textContent = gProt + "g";
+  document.getElementById("rlGrasa").textContent = gGrasa + "g";
+  limitesEl.style.display = "flex";
+  notaEl.textContent = "";
+}
+
+// Objetivos diarios: calorías = meta; gramos por macro = meta × % del reparto (4 kcal/g carbos y proteína, 9 kcal/g grasa)
+function objetivosDia(){
+  const o = {kcal: estado.meta || null, carbh:null, prot:null, grasa:null};
+  if(estado.meta && reparto && (reparto.carb + reparto.prot + reparto.grasa) === 100){
+    o.carbh = Math.round(estado.meta * reparto.carb/100 / 4);
+    o.prot  = Math.round(estado.meta * reparto.prot/100 / 4);
+    o.grasa = Math.round(estado.meta * reparto.grasa/100 / 9);
+  }
+  return o;
+}
+
+// ---------- Buscador de alimentos (OpenFoodFacts) ----------
+function slug(s){
+  return String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");
+}
+function normalizarProducto(p){
+  const n = p.nutriments || {};
+  const kcal = parseFloat(n["energy-kcal_100g"]);
+  if(isNaN(kcal)) return null;
+  const nova = parseInt(p.nova_group, 10);
+  return {
+    code: p.code || "",
+    nombre: p.product_name || "Sin nombre",
+    marca: p.brands || "",
+    kcal100: kcal,
+    grasa100: parseFloat(n["fat_100g"]) || 0,
+    carbh100: parseFloat(n["carbohydrates_100g"]) || 0,
+    prot100: parseFloat(n["proteins_100g"]) || 0,
+    nova: (nova>=1 && nova<=4) ? nova : null,
+    porcionG: (parseFloat(p.serving_quantity) > 0 && parseFloat(p.serving_quantity) < 5000) ? parseFloat(p.serving_quantity) : null,
+    cantidadG: (parseFloat(p.product_quantity) > 0 && parseFloat(p.product_quantity) < 5000) ? parseFloat(p.product_quantity) : null,
+    scans: parseInt(p.unique_scans_n, 10) || 0
+  };
+}
+// ---------- Escáner de código de barras (cámara nativa, con respaldo ZXing) ----------
+let escanerStream = null;
+let escanerZXingReader = null;
+let zxingCargado = false;
+
+function cargarZXing(){
+  if(zxingCargado) return Promise.resolve();
+  return new Promise((resolve, reject)=>{
+    const s = document.createElement("script");
+    s.src = "https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js";
+    s.onload = ()=>{ zxingCargado = true; resolve(); };
+    s.onerror = ()=> reject(new Error("No se pudo cargar la librería de escaneo."));
+    document.head.appendChild(s);
+  });
+}
+
+async function abrirEscaner(onCodigo){
+  const modal = document.getElementById("modalEscaner");
+  const video = document.getElementById("escVideo");
+  const estado = document.getElementById("escEstado");
+  modal.hidden = false;
+  estado.textContent = "Apuntá al código de barras del producto.";
+
+  try{
+    escanerStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+  }catch(e){
+    estado.textContent = "No se pudo acceder a la cámara: " + e.message;
+    return;
+  }
+  video.srcObject = escanerStream;
+
+  function terminar(codigo){
+    cerrarEscaner();
+    if(codigo) onCodigo(codigo);
+  }
+
+  if("BarcodeDetector" in window){
+    // Cámara nativa del navegador, sin cargar nada externo
+    const detector = new BarcodeDetector({ formats: ["ean_13","ean_8","upc_a","upc_e","code_128"] });
+    const intervalo = setInterval(async ()=>{
+      if(!escanerStream) { clearInterval(intervalo); return; }
+      try{
+        const codigos = await detector.detect(video);
+        if(codigos.length > 0){ clearInterval(intervalo); terminar(codigos[0].rawValue); }
+      }catch(e){ /* un frame fallido no es grave, sigue intentando */ }
+    }, 400);
+    escanerZXingReader = { stop: ()=> clearInterval(intervalo) };
+  } else {
+    // Respaldo: librería ZXing (para navegadores sin BarcodeDetector, ej. Safari/iPhone)
+    estado.textContent = "Preparando el lector (primera vez puede tardar un segundo)...";
+    try{
+      await cargarZXing();
+    }catch(e){
+      estado.textContent = e.message;
+      return;
+    }
+    estado.textContent = "Apuntá al código de barras del producto.";
+    const { BrowserMultiFormatReader } = window.ZXingBrowser || window.ZXing;
+    escanerZXingReader = new BrowserMultiFormatReader();
+    escanerZXingReader.decodeFromStream(escanerStream, video, (resultado, error)=>{
+      if(resultado) terminar(resultado.getText());
+    });
+  }
+}
+
+function cerrarEscaner(){
+  const modal = document.getElementById("modalEscaner");
+  modal.hidden = true;
+  if(escanerZXingReader && escanerZXingReader.stop) escanerZXingReader.stop();
+  if(escanerZXingReader && escanerZXingReader.reset) escanerZXingReader.reset();
+  escanerZXingReader = null;
+  if(escanerStream){ escanerStream.getTracks().forEach(t=>t.stop()); escanerStream = null; }
+}
+document.getElementById("escCerrar").onclick = cerrarEscaner;
+document.getElementById("modalEscaner").addEventListener("click", e=>{ if(e.target.id === "modalEscaner") cerrarEscaner(); });
+
+async function buscarPorCodigoBarras(codigo){
+  const url = "https://world.openfoodfacts.org/api/v2/product/" + encodeURIComponent(codigo)
+    + ".json?fields=code,product_name,brands,nutriments,nova_group,serving_quantity,product_quantity,unique_scans_n";
+  const ctrl = new AbortController();
+  const timer = setTimeout(()=>ctrl.abort(), 15000);
+  let data;
+  try{
+    const resp = await fetch(url, {signal: ctrl.signal});
+    data = await resp.json();
+  } finally { clearTimeout(timer); }
+  if(!data || data.status !== 1 || !data.product) return null;
+  return normalizarProducto(data.product);
+}
+
+function pasaNova(p, f){
+  if(f.nova === "todos") return true;
+  if(!p.nova) return !!f.sinClasificar;
+  if(f.nova === "fresco") return p.nova === 1;
+  if(f.nova === "procesado") return p.nova === 2 || p.nova === 3;
+  if(f.nova === "ultra") return p.nova === 4;
+  return true;
+}
+function fuentesOFF(f){
+  const base = [];
+  if(f.pais) base.push(["countries", f.pais]);
+  const hayMarca = !!(f.marca && f.marca.trim());
+  if(hayMarca) base.push(["brands", slug(f.marca)]);
+  if(!f.tienda) return [base];
+  const fs = [base.concat([["stores", f.tienda]])];
+  if(!hayMarca) (SUPER_MARCAS[f.tienda] || []).slice(0,2).forEach(b => fs.push(base.concat([["brands", b]])));
+  return fs;
+}
+function extraerSuper(texto){
+  const pal = texto.split(/\s+/).filter(Boolean), norm = pal.map(w => slug(w));
+  const seq = ["corte","ingles"];
+  for(let i=0;i+1<norm.length;i++){
+    if(norm[i]===seq[0] && norm[i+1]===seq[1]){
+      const ini = (i>0 && norm[i-1]==="el") ? i-1 : i;
+      return {tienda:"el-corte-ingles", termino: pal.filter((_,k)=> k<ini || k>i+1).join(" ")};
+    }
+  }
+  const simples = {mercadona:"mercadona", carrefour:"carrefour", lidl:"lidl", alcampo:"alcampo", eroski:"eroski", aldi:"aldi", consum:"consum", dia:"dia", hipercor:"el-corte-ingles"};
+  for(let i=0;i<norm.length;i++){
+    const id = simples[norm[i]];
+    if(!id) continue;
+    if(norm[i]==="dia" && (norm.length===1 || i===0)) continue; // "dia" solo cuenta como tienda al final ("leche dia")
+    return {tienda:id, termino: pal.filter((_,k)=> k!==i).join(" ")};
+  }
+  return {tienda:"", termino:texto};
+}
+// OpenFoodFacts a veces responde con error o se pasa del límite de búsquedas (el navegador lo muestra como "Failed to fetch"):
+// se reintenta una vez y se recuerdan 5 minutos las búsquedas ya hechas.
+const _offCache = new Map();
+async function fetchOFFConReintento(url){
+  const c = _offCache.get(url);
+  if(c && Date.now() - c.t < 300000) return c.productos;
+  let ultimo = null;
+  for(let intento=0; intento<2; intento++){
+    const ctrl = new AbortController();
+    const timer = setTimeout(()=>ctrl.abort(), 20000);
+    try{
+      const resp = await fetch(url, {signal: ctrl.signal});
+      if(!resp.ok) throw new Error("HTTP " + resp.status);
+      const data = await resp.json();
+      const productos = data.products || [];
+      _offCache.set(url, {t: Date.now(), productos});
+      return productos;
+    }catch(e){ ultimo = e; if(intento === 0) await new Promise(r => setTimeout(r, 1500)); }
+    finally{ clearTimeout(timer); }
+  }
+  throw ultimo;
+}
+// Respaldo cuando la base de datos no responde o no tiene el alimento: valores por 100 g estimados por la IA.
+async function estimarAlimentoIA(termino){
+  const prompt = 'Estima los valores nutricionales por 100 g del alimento "' + termino + '" (alimento genérico, tal como se come normalmente; ' +
+    'si es arroz, pasta o legumbres sin más datos, considera cocido). Devuelve SOLO un objeto JSON, sin texto extra ni ```, con estas claves: ' +
+    'nombre (nombre corto en español), kcal100, grasa100, carbh100, prot100 (números; gramos por 100 g). Son aproximaciones.';
+  const limpio = await IAClaves.geminiTexto(prompt);
+  const m = limpio.match(/\{[\s\S]*\}/);
+  const o = JSON.parse(m ? m[0] : limpio);
+  const kcal = parseFloat(o.kcal100);
+  if(!(kcal >= 0 && kcal <= 950)) throw new Error("La IA no devolvió un valor válido.");
+  const nombre = String(o.nombre || termino).trim();
+  return {
+    code: "ia-" + slug(nombre), nombre: nombre + " (aprox.)", marca: "estimado por IA",
+    kcal100: kcal, grasa100: parseFloat(o.grasa100) || 0, carbh100: parseFloat(o.carbh100) || 0, prot100: parseFloat(o.prot100) || 0,
+    nova: null, porcionG: null, cantidadG: null, scans: 0
+  };
+}
+// Una página de resultados (las fuentes una a una, sin repetidos, los más escaneados primero).
+async function buscarOFFPag(termino, f, pagina, vistos){
+  const conNova = f.nova !== "todos", size = conNova ? 40 : 24;
+  const res = [];
+  const fuentes = fuentesOFF(f);
+  for(let k=0; k<fuentes.length; k++){ // una detrás de otra: así no se pasa del límite de búsquedas por minuto
+    const tags = fuentes[k];
+    let url = "https://world.openfoodfacts.org/cgi/search.pl?search_terms=" + encodeURIComponent(termino)
+      + "&search_simple=1&action=process&json=1&sort_by=unique_scans_n&page=" + pagina + "&page_size=" + size
+      + "&fields=code,product_name,brands,nutriments,nova_group,serving_quantity,product_quantity,unique_scans_n";
+    tags.forEach((t,i)=>{ url += "&tagtype_"+i+"=" + t[0] + "&tag_contains_"+i+"=contains&tag_"+i+"=" + encodeURIComponent(t[1]); });
+    try{ res.push({status:"fulfilled", value: await fetchOFFConReintento(url)}); }
+    catch(e){ res.push({status:"rejected", reason:e}); }
+  }
+  if(res.every(x => x.status === "rejected")) throw res[0].reason;
+  let crudos = [], hayMas = false;
+  res.forEach(x=>{ if(x.status==="fulfilled"){ if(x.value.length >= size) hayMas = true; crudos = crudos.concat(x.value); } });
+  const nuevos = [];
+  crudos.forEach(raw=>{
+    const p = normalizarProducto(raw);
+    if(!p) return;
+    const k = p.code || (p.nombre + "|" + p.marca);
+    if(vistos.has(k)) return;
+    vistos.add(k); nuevos.push(p);
+  });
+  nuevos.sort((a,b)=> b.scans - a.scans);
+  const visibles = nuevos.filter(p => pasaNova(p, f));
+  return {productos: visibles, ocultos: nuevos.length - visibles.length, hayMas};
+}
+
+function registrarFrecuente(p, gramos){
+  const k = (p.code || (p.nombre + "|" + (p.marca||""))).toLowerCase();
+  const prev = frecuentes[k] || {veces:0};
+  frecuentes[k] = {
+    clave:k, code:p.code||"", nombre:p.nombre, marca:p.marca||"",
+    kcal100:p.kcal100, grasa100:p.grasa100, carbh100:p.carbh100, prot100:p.prot100, nova:p.nova||null,
+    porcionG:p.porcionG||null, cantidadG:p.cantidadG||null,
+    veces: prev.veces+1, ultimoGramos:gramos, ultimaVez:Date.now()
+  };
+  escribirJSON(CLAVE_FRECUENTES(), frecuentes);
+}
+function quitarFrecuente(k){
+  delete frecuentes[k];
+  escribirJSON(CLAVE_FRECUENTES(), frecuentes);
+}
+function topFrecuentes(n){
+  return Object.values(frecuentes).sort((a,b)=> (b.veces-a.veces) || (b.ultimaVez-a.ultimaVez)).slice(0,n);
+}
+
+function comidaPorHora(){ const h = new Date().getHours(); return h < 11 ? "desayuno" : h < 16 ? "almuerzo" : h < 19 ? "snacks" : "cena"; }
+function tarjetaProducto(p, gramosIni, onAgregar, onQuitar, conComida){
+  const r1 = x => Math.round(x*10)/10;
+  const div = document.createElement("div");
+  div.className = "resultado";
+  const nova = p.nova ? `<span class="nova nova${p.nova}" title="Clasificación NOVA: 1 fresco/mínimamente procesado, 4 ultraprocesado">NOVA ${p.nova}</span>` : "";
+  const detalle = [p.marca, Math.round(p.kcal100) + " kcal/100 g"].filter(Boolean).join(" · ");
+  const racionTxt = p.porcionG ? "ración " + r1(p.porcionG) + " g = " + Math.round(p.kcal100*p.porcionG/100) + " kcal" : "";
+  div.innerHTML = `
+    <div class="res-cab" role="button" tabindex="0" aria-expanded="false">
+      <div class="res-info">
+        <div class="resultado-nombre">${esc(p.nombre)}${nova}</div>
+        <div class="resultado-detalle">${esc(detalle)}${racionTxt ? "<br>" + esc(racionTxt) : ""}</div>
+      </div>
+      <div class="res-acc">${onQuitar ? '<button class="btn-quitar" type="button" title="Quitar de frecuentes">✕</button>' : ""}<span class="res-flecha" aria-hidden="true">›</span></div>
+    </div>
+    <div class="ficha" hidden></div>`;
+  const cab = div.querySelector(".res-cab"), ficha = div.querySelector(".ficha");
+  let armada = false;
+  function armar(){
+    armada = true;
+    const clave = claveAlim(p), def = medidasDefecto(p);
+    let uni = gramosIni ? "g" : (p.porcionG ? "racion" : "100g"), n = gramosIni ? Number(gramosIni) : 1;
+    const gUni = u => u==="g" ? 1 : u==="100g" ? 100 : ((leerEquiv()[clave]||{})[u] > 0 ? leerEquiv()[clave][u] : def[u]);
+    const nomUni = u => (UNIDADES.find(x=>x[0]===u)||[u,u])[1];
+    const esPeq = u => u==="g" || u==="ml" || u==="mg";
+    ficha.innerHTML = `
+      ${conComida ? '<div class="fi-fila"><label>Añadir a<select class="fi-comida">' + COMIDAS.map(c=>`<option value="${c.id}">${c.icono} ${c.nombre}</option>`).join("") + '</select></label></div>' : ""}
+      <div class="fi-fila">
+        <label>Medida<select class="fi-uni">${UNIDADES.filter(u=>u[0]!=="racion" || p.porcionG).map(u=>`<option value="${u[0]}">${u[1]}</option>`).join("")}</select></label>
+        <label>Número de raciones<div class="fi-cant"><button type="button" class="fi-menos" aria-label="Menos">−</button><input type="number" class="fi-n" inputmode="decimal" min="0" step="any"><button type="button" class="fi-mas" aria-label="Más">+</button></div></label>
+      </div>
+      <div class="fi-equiv"><span class="fi-eq-txt"></span><input type="number" class="fi-eq-g" min="0" step="any" inputmode="decimal"> g <small>(estimado: corrígelo si lo pesas)</small></div>
+      <div class="fi-total"></div>
+      <div class="fi-macros">
+        <div><span>Grasa</span><b class="fm-grasa">–</b></div><div><span>Carbh</span><b class="fm-carbh">–</b></div>
+        <div><span>Prot</span><b class="fm-prot">–</b></div><div><span>Cals</span><b class="fm-kcal">–</b></div>
+      </div>
+      <button type="button" class="btn-agregar">Agregar</button>`;
+    const sel = ficha.querySelector(".fi-uni"), inN = ficha.querySelector(".fi-n"), eqBox = ficha.querySelector(".fi-equiv"), eqIn = ficha.querySelector(".fi-eq-g");
+    function pintar(){
+      const g = n * gUni(uni);
+      ficha.querySelector(".fi-total").innerHTML = `= <b>${r1(g)} g</b>`;
+      ficha.querySelector(".fm-kcal").textContent = Math.round(p.kcal100*g/100);
+      ficha.querySelector(".fm-grasa").textContent = r1(p.grasa100*g/100) + " g";
+      ficha.querySelector(".fm-carbh").textContent = r1(p.carbh100*g/100) + " g";
+      ficha.querySelector(".fm-prot").textContent = r1(p.prot100*g/100) + " g";
+      const conEq = !["g","100g","mg","kg"].includes(uni);
+      eqBox.style.display = conEq ? "" : "none";
+      if(conEq){
+        ficha.querySelector(".fi-eq-txt").textContent = "1 " + nomUni(uni).replace(/ \(.*\)/, "") + " = ";
+        if(document.activeElement !== eqIn) eqIn.value = r1(gUni(uni));
+      }
+    }
+    const selCom = ficha.querySelector(".fi-comida");
+    if(selCom){ selCom.value = window.__comidaBuscar || comidaPorHora(); selCom.onchange = ()=>{ window.__comidaBuscar = selCom.value; }; }
+    sel.value = uni; inN.value = r1(n);
+    sel.onchange = ()=>{ uni = sel.value; n = esPeq(uni) ? 100 : 1; inN.value = n; pintar(); };
+    inN.oninput = ()=>{ n = parseFloat(inN.value) || 0; pintar(); };
+    ficha.querySelector(".fi-menos").onclick = ()=>{ n = Math.max(0, r1(n - (esPeq(uni) ? 10 : 0.5))); inN.value = n; pintar(); };
+    ficha.querySelector(".fi-mas").onclick = ()=>{ n = r1(n + (esPeq(uni) ? 10 : 0.5)); inN.value = n; pintar(); };
+    eqIn.oninput = ()=>{ const v = parseFloat(eqIn.value); if(v > 0){ guardarEquiv(clave, uni, v); pintar(); } };
+    ficha.querySelector(".btn-agregar").onclick = ()=>{
+      const g = n * gUni(uni);
+      if(!(g > 0)){ avisar("Pon primero una cantidad."); return; }
+      onAgregar(p, r1(g), {n, uni, comida: selCom ? selCom.value : undefined});
+    };
+    pintar();
+  }
+  function cerrar(){ ficha.hidden = true; div.classList.remove("abierto"); cab.setAttribute("aria-expanded","false"); }
+  div._cerrar = cerrar;
+  function alternar(){
+    const abrir = ficha.hidden;
+    if(abrir && div.parentElement) div.parentElement.querySelectorAll(".resultado.abierto").forEach(o=>{ if(o !== div && o._cerrar) o._cerrar(); });
+    if(abrir && !armada) armar();
+    ficha.hidden = !abrir; div.classList.toggle("abierto", abrir); cab.setAttribute("aria-expanded", abrir ? "true" : "false");
+  }
+  cab.onclick = e=>{ if(e.target.closest(".btn-quitar")) return; alternar(); };
+  cab.onkeydown = e=>{ if(e.key==="Enter" || e.key===" "){ e.preventDefault(); alternar(); } };
+  if(onQuitar) div.querySelector(".btn-quitar").onclick = e=>{ e.stopPropagation(); onQuitar(); };
+  return div;
+}
+
+// Panel de búsqueda reutilizado en las comidas y en el constructor de recetas.
+// opts: { onElegir(producto, gramos), conFrecuentes }
+async function traducirEsEn(texto){
+  try{
+    const res = await fetch("https://api.mymemory.translated.net/get?q=" + encodeURIComponent(texto) + "&langpair=es|en");
+    const data = await res.json();
+    return (data.responseData && data.responseData.translatedText) || texto;
+  }catch(e){ return texto; } // si falla la traducción, busca tal cual el término en español (puede no encontrar nada en wger)
+}
+async function buscarWgerAlimentos(terminoEs){
+  const termino = await traducirEsEn(terminoEs);
+  const res = await fetch("https://wger.de/api/v2/ingredient/search/?term=" + encodeURIComponent(termino) + "&language=english&format=json");
+  const data = await res.json();
+  const sugerencias = (data.suggestions || []).slice(0, 8);
+  const detalles = await Promise.all(sugerencias.map(async s=>{
+    try{
+      const id = s.data && s.data.id;
+      if(!id) return null;
+      const r2 = await fetch("https://wger.de/api/v2/ingredient/" + id + "/?format=json");
+      const d = await r2.json();
+      const kcal = parseFloat(d.energy);
+      if(isNaN(kcal)) return null;
+      return {
+        code: "wger" + id, nombre: d.name || s.value || terminoEs, marca: "wger",
+        kcal100: kcal, grasa100: parseFloat(d.fat) || 0,
+        carbh100: parseFloat(d.carbohydrates) || 0, prot100: parseFloat(d.protein) || 0, nova: null
+      };
+    }catch(e){ return null; }
+  }));
+  return detalles.filter(Boolean);
+}
+function crearPanelBusqueda(opts){
+  const box = document.createElement("div");
+  box.className = "panel-busq";
+  box.innerHTML = `
+    <div class="frec-cont"></div>
+    <input type="text" class="buscar-input" placeholder="Buscar alimento">
+    <div class="f-tienda-fila"><select class="f-tienda" aria-label="Supermercado">${SUPERS.map(t=>`<option value="${t[0]}">${t[1]}</option>`).join("")}</select></div>
+    <div class="filtros">
+      <input type="text" class="f-marca" placeholder="Marca (opcional)">
+      <select class="f-pais">${PAISES.map(p=>`<option value="${p[0]}">${p[1]}</option>`).join("")}</select>
+    </div>
+    <div class="chips f-nova">${NOVA_FILTROS.map(n=>`<button type="button" data-nova="${n[0]}">${n[1]}</button>`).join("")}</div>
+    <div class="f-extra" style="display:none">
+      <label class="f-sin"><input type="checkbox" class="f-sin-chk"> Incluir también los que no tienen clasificación${ayu("Fresco/procesado usa la clasificación NOVA de OpenFoodFacts. Es orientativa y muchos productos no la tienen.")}</label>
+    </div>
+    <button class="buscar" type="button">Buscar</button>${ayu("Busca en los alimentos genéricos en español y en los productos de supermercado. Open Food Facts es opcional (botón al final). Marca, país y fresco/procesado solo afectan a Open Food Facts.")}
+    <button class="escanear" type="button">📷 Escanear código de barras</button>
+    <div class="rep-nota nota-busq"></div>
+    <div class="resultados"></div>
+    <div class="mas-cont"></div>
+    <details class="personalizado-det" style="margin-top:10px">
+      <summary style="cursor:pointer;font-size:0.82rem;color:var(--muted)">➕ Agregar alimento personalizado (sin buscar)</summary>
+      <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+        <input type="text" class="pz-nombre" placeholder="Nombre" style="flex:2;min-width:120px">
+        <input type="number" class="pz-kcal" placeholder="Kcal totales" style="flex:1;min-width:90px" min="0">
+        <button class="pz-agregar" type="button">Agregar</button>
+      </div>
+    </details>`;
+
+  const input = box.querySelector(".buscar-input");
+  const marca = box.querySelector(".f-marca");
+  const pais = box.querySelector(".f-pais");
+  const chips = box.querySelectorAll(".f-nova button");
+  const extra = box.querySelector(".f-extra");
+  const sinChk = box.querySelector(".f-sin-chk");
+  const filtrosDiv = box.querySelector(".filtros");
+  const tienda = box.querySelector(".f-tienda"), tiendaDiv = box.querySelector(".f-tienda-fila");
+  const notaBusq = box.querySelector(".nota-busq"), mas = box.querySelector(".mas-cont");
+  let pag = 1, vistos = new Set(), ocultosTot = 0, ultimaB = null;
+  const chipsNovaDiv = box.querySelector(".f-nova");
+  let fuente = "off";
+  box.querySelectorAll(".fuente-btn").forEach(btn=>{
+    btn.onclick = ()=>{
+      fuente = btn.dataset.fuente;
+      box.querySelectorAll(".fuente-btn").forEach(b=>b.classList.toggle("on", b===btn));
+      const esOff = fuente === "off";
+      filtrosDiv.style.display = esOff ? "" : "none";
+      tiendaDiv.style.display = esOff ? "" : "none";
+      chipsNovaDiv.style.display = esOff ? "" : "none";
+      extra.style.display = "none";
+    };
+  });
+  const resDiv = box.querySelector(".resultados");
+
+  function elegir(p, g, med){
+    if(opts.conFrecuentes) registrarFrecuente(p, g);
+    opts.onElegir(p, g, med);
+  }
+  box.querySelector(".pz-agregar").onclick = ()=>{
+    const nombre = box.querySelector(".pz-nombre").value.trim();
+    const kcal = parseFloat(box.querySelector(".pz-kcal").value);
+    if(!nombre){ avisar("Ponele un nombre al alimento."); return; }
+    if(!(kcal>=0)){ avisar("Escribí las calorías."); return; }
+    // Se guarda como "100g = las kcal escritas" para que encaje con el mismo cálculo que usa el resto del buscador,
+    // agregándolo directo con 100 (o sea: la cantidad completa que pusiste).
+    opts.onElegir({ nombre, kcal100: kcal, grasa100: 0, carbh100: 0, prot100: 0 }, 100);
+    box.querySelector(".pz-nombre").value = "";
+    box.querySelector(".pz-kcal").value = "";
+  };
+  function pintarFrec(){
+    const cont = box.querySelector(".frec-cont");
+    cont.innerHTML = "";
+    if(!opts.conFrecuentes) return;
+    const lista = topFrecuentes(8);
+    if(lista.length === 0) return;
+    const tit = document.createElement("div");
+    tit.className = "frec-tit";
+    tit.textContent = "⭐ Frecuentes";
+    cont.appendChild(tit);
+    lista.forEach(f=>{
+      cont.appendChild(tarjetaProducto(f, f.ultimoGramos, elegir, ()=>{ quitarFrecuente(f.clave); pintarFrec(); }));
+    });
+  }
+  function pintarFiltros(){
+    marca.value = filtros.marca;
+    pais.value = filtros.pais;
+    tienda.value = filtros.tienda;
+    sinChk.checked = filtros.sinClasificar;
+    chips.forEach(b => b.classList.toggle("on", b.dataset.nova === filtros.nova));
+    extra.style.display = filtros.nova === "todos" ? "none" : "block";
+  }
+  marca.addEventListener("input", ()=>{ filtros.marca = marca.value; guardarFiltros(); });
+  pais.addEventListener("change", ()=>{ filtros.pais = pais.value; guardarFiltros(); });
+  tienda.addEventListener("change", ()=>{ filtros.tienda = tienda.value; guardarFiltros(); });
+  sinChk.addEventListener("change", ()=>{ filtros.sinClasificar = sinChk.checked; guardarFiltros(); });
+  chips.forEach(b => b.onclick = ()=>{ filtros.nova = b.dataset.nova; guardarFiltros(); pintarFiltros(); });
+
+  function ofrecerEstimarIA(termino){
+    if(!termino) return;
+    const d = document.createElement("div");
+    d.className = "estado";
+    d.innerHTML = '<button type="button">✨ Estimar «' + esc(termino) + '» con IA</button><div class="rep-nota" style="margin:4px 0 0">Valores aproximados por 100 g, calculados por la IA. Úsalo cuando no encuentras el alimento.</div>';
+    const btn = d.querySelector("button");
+    btn.onclick = async ()=>{
+      btn.disabled = true; btn.textContent = "Calculando...";
+      try{
+        const p = await estimarAlimentoIA(termino);
+        d.remove();
+        resDiv.insertBefore(tarjetaProducto(p, "", elegir), resDiv.firstChild);
+      }catch(e){
+        btn.disabled = false; btn.textContent = "✨ Estimar «" + termino + "» con IA";
+        const n = d.querySelector(".rep-nota"); n.textContent = "No se pudo estimar: " + e.message;
+      }
+    };
+    resDiv.appendChild(d);
+  }
+  let destOff = null, ultLoc = {gen:[], sup:[]}, limLoc = {gen:30, sup:30}, locDiv = null, offDiv = null;
+  function secLoc(t){ const d = document.createElement("div"); d.className = "frec-tit"; d.textContent = t; locDiv.appendChild(d); }
+  function estLoc(t){ const d = document.createElement("div"); d.className = "estado"; d.textContent = t; locDiv.appendChild(d); }
+  function masLoc(txt, fn){ const d = document.createElement("div"); d.className = "mas-cont"; const bt = document.createElement("button"); bt.type = "button"; bt.textContent = txt; bt.onclick = fn; d.appendChild(bt); locDiv.appendChild(d); }
+  async function pintarLocal(){
+    const B = window.BuscadorBase, tiendaSel = ultimaB.f.tienda;
+    let errores = [];
+    ultLoc = {gen:[], sup:[]};
+    if(B){ try{ const c = await B.cargar(); errores = c.errores || []; ultLoc = B.buscar(ultimaB.termino, tiendaSel); }catch(e){ errores = [(e && e.message) || "error"]; } }
+    else errores = ["buscar.js no está cargado"];
+    locDiv.innerHTML = "";
+    if(errores.length) estLoc("No se pudo cargar " + errores.join(" · ") + ". Comprueba que tengas la sesión de Google iniciada y que el Worker esté configurado con los datos.");
+    if(!tiendaSel){
+      secLoc("🥚 Alimentos genéricos (" + ultLoc.gen.length + ")");
+      if(!ultLoc.gen.length) estLoc("Sin coincidencias entre los alimentos genéricos.");
+      ultLoc.gen.slice(0, limLoc.gen).forEach(p => locDiv.appendChild(tarjetaProducto(p, "", elegir)));
+      if(ultLoc.gen.length > limLoc.gen) masLoc("Ver más genéricos", ()=>{ limLoc.gen += 30; pintarLocal(); });
+    }
+    secLoc("🛒 Productos de supermercado" + (tiendaSel ? " · " + nombreSuper(tiendaSel) : "") + " (" + ultLoc.sup.length + ")");
+    if(!ultLoc.sup.length) estLoc("Sin coincidencias en la base de productos de supermercado.");
+    ultLoc.sup.slice(0, limLoc.sup).forEach(p => locDiv.appendChild(tarjetaProducto(p, "", elegir)));
+    if(ultLoc.sup.length > limLoc.sup) masLoc("Ver más productos", ()=>{ limLoc.sup += 30; pintarLocal(); });
+  }
+  async function cargarOFF(btn){
+    btn.disabled = true; btn.textContent = "Buscando en Open Food Facts…";
+    pag = 1; ocultosTot = 0; destOff = offDiv; offDiv.innerHTML = "";
+    vistos = new Set(ultLoc.gen.concat(ultLoc.sup).map(p => p.code));
+    try{
+      const r = await buscarOFFPag(ultimaB.termino, ultimaB.f, 1, vistos);
+      btn.parentNode.style.display = "none";
+      if(r.productos.length === 0 && !r.hayMas){
+        offDiv.innerHTML = '<div class="estado">Open Food Facts no aporta nada nuevo para esta búsqueda.</div>';
+        if(!ultLoc.gen.length && !ultLoc.sup.length) ofrecerEstimarIA(ultimaB.termino);
+        return;
+      }
+      pintarLote(r);
+    }catch(err){
+      btn.disabled = false; btn.textContent = "🌐 Reintentar Open Food Facts";
+      offDiv.innerHTML = '<div class="estado">No se pudo conectar con Open Food Facts (' + esc(err.message || "error") + '). Suele ser temporal: espera un minuto.</div>';
+    }
+  }
+  async function buscar(){
+    let termino = input.value.trim();
+    const x = extraerSuper(termino);
+    if(x.tienda){ filtros.tienda = x.tienda; guardarFiltros(); pintarFiltros(); termino = x.termino; }
+    if(!termino && !filtros.tienda) return;
+    mas.innerHTML = ""; notaBusq.textContent = "";
+    pag = 1; vistos = new Set(); ocultosTot = 0; limLoc = {gen:30, sup:30};
+    ultimaB = {termino, f:{...filtros}};
+    resDiv.innerHTML = "";
+    locDiv = document.createElement("div"); locDiv.innerHTML = '<div class="estado">Buscando...</div>';
+    const offFila = document.createElement("div"); offFila.className = "mas-cont";
+    const offBtn = document.createElement("button"); offBtn.type = "button"; offBtn.textContent = "🌐 Buscar también en Open Food Facts";
+    offBtn.onclick = ()=> cargarOFF(offBtn);
+    offFila.appendChild(offBtn);
+    offDiv = document.createElement("div"); destOff = offDiv;
+    resDiv.appendChild(locDiv); resDiv.appendChild(offFila); resDiv.appendChild(offDiv);
+    await pintarLocal();
+    if(!ultLoc.gen.length && !ultLoc.sup.length) ofrecerEstimarIA(termino);
+  }
+  function pintarLote(r){
+    ocultosTot += r.ocultos;
+    const dest = destOff || resDiv;
+    const viejo = dest.querySelector(".nota-ocultos"); if(viejo) viejo.remove();
+    r.productos.forEach(p => dest.appendChild(tarjetaProducto(p, "", elegir)));
+    if(ocultosTot > 0 && ultimaB && ultimaB.f.nova !== "todos"){
+      const n = document.createElement("div");
+      n.className = "estado nota-ocultos";
+      n.textContent = "Se ocultaron " + ocultosTot + " resultado" + (ocultosTot===1?"":"s") + " que no coinciden con el filtro fresco/procesado.";
+      dest.appendChild(n);
+    }
+    mas.innerHTML = "";
+    if(r.hayMas){
+      const b = document.createElement("button");
+      b.type = "button"; b.textContent = "Ver más resultados";
+      b.onclick = verMas;
+      mas.appendChild(b);
+    }
+  }
+  async function verMas(){
+    if(!ultimaB) return;
+    const b = mas.querySelector("button"); if(b){ b.disabled = true; b.textContent = "Buscando..."; }
+    try{
+      pag++;
+      pintarLote(await buscarOFFPag(ultimaB.termino, ultimaB.f, pag, vistos));
+    }catch(err){
+      pag--;
+      mas.innerHTML = `<div class="estado">No se pudo cargar más (${esc(err.message || "error")}).</div>`;
+      const b2 = document.createElement("button"); b2.type = "button"; b2.textContent = "Reintentar"; b2.onclick = verMas; mas.appendChild(b2);
+    }
+  }
+  box.querySelector(".buscar").onclick = buscar;
+  box.querySelector(".escanear").onclick = ()=>{
+    abrirEscaner(async (codigo)=>{
+      resDiv.innerHTML = `<div class="estado">Buscando código ${esc(codigo)}...</div>`;
+      try{
+        let p = null;
+        try{ if(window.BuscadorBase){ await BuscadorBase.cargar(); p = BuscadorBase.porCodigo(codigo); } }catch(e){}
+        if(!p) p = await buscarPorCodigoBarras(codigo);
+        if(!p){ resDiv.innerHTML = `<div class="estado">No se encontró ningún producto con ese código ni en AESAN ni en OpenFoodFacts.</div>`; return; }
+        resDiv.innerHTML = "";
+        resDiv.appendChild(tarjetaProducto(p, "", elegir));
+      }catch(e){
+        resDiv.innerHTML = `<div class="estado">No se pudo buscar el código: ${esc(e.message)}</div>`;
+      }
+    });
+  };
+  input.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); buscar(); } });
+
+  pintarFiltros();
+  pintarFrec();
+  if(opts.sinPersonalizado){ const pz = box.querySelector(".personalizado-det"); if(pz) pz.remove(); }
+  return box;
+}
+
+// ---------- Constructor de recetas ----------
+let recetaEnEdicion = null; // {nombre, porciones, ingredientes:[{nombre,gramos,kcal,grasa,carbh,prot}]}
+
+function iniciarNuevaReceta(){
+  document.getElementById("iaRecetaContainer").innerHTML = ""; // no dejar el panel de IA a medias
+  document.getElementById("realRecetaContainer").innerHTML = "";
+  recetaEnEdicion = { nombre:"", porciones:1, tiempoPrep:0, tiempoCoccion:0, tipoComida:"", ingredientes:[], pasosTxt:"" };
+  renderBuilder();
+}
+function cancelarReceta(){
+  recetaEnEdicion = null;
+  document.getElementById("builderContainer").innerHTML = "";
+}
+function totalesReceta(){
+  let kcal=0,grasa=0,carbh=0,prot=0,sinCal=0;
+  recetaEnEdicion.ingredientes.forEach(i=>{ kcal+=i.kcal||0; grasa+=i.grasa||0; carbh+=i.carbh||0; prot+=i.prot||0; if(i.sinCal) sinCal++; });
+  return {kcal,grasa,carbh,prot,sinCal};
+}
+// "1. Picar\n2) Mezclar\n- Servir" -> ["Picar","Mezclar","Servir"]
+function pasosDeTexto(t){
+  return String(t||"").split(/\r?\n/).map(l=>l.replace(/^\s*(?:\d+\s*[.)\-:]|[-•*])\s*/,"").trim()).filter(Boolean);
+}
+// Lee los campos del formulario "Mi receta" (se llama antes de guardar)
+function syncDatosReceta(){
+  const e = recetaEnEdicion; if(!e) return;
+  const v = id => { const el = document.getElementById(id); return el ? el.value : null; };
+  if(v("recNombre") !== null) e.nombre = v("recNombre");
+  if(v("recPorciones") !== null) e.porciones = parseFloat(v("recPorciones")) || 1;
+  if(v("recTiempoPrep") !== null) e.tiempoPrep = parseFloat(v("recTiempoPrep")) || 0;
+  if(v("recTiempoCoccion") !== null) e.tiempoCoccion = parseFloat(v("recTiempoCoccion")) || 0;
+  if(v("recTipoComida") !== null) e.tipoComida = v("recTipoComida") || "";
+  if(v("recPasos") !== null) e.pasosTxt = v("recPasos");
+}
+function guardarRecetaActual(){
+  const e = recetaEnEdicion; if(!e) return;
+  syncDatosReceta();
+  const nombre = (e.nombre||"").trim(), porciones = e.porciones || 1;
+  if(!nombre){ avisar("Ponle un nombre a la receta."); return; }
+  if(e.ingredientes.length===0){ avisar("Añade al menos un ingrediente."); return; }
+  const t = totalesReceta();
+  const datos = {
+    nombre, porciones, tiempoPrep:e.tiempoPrep||0, tiempoCoccion:e.tiempoCoccion||0, tipoComida:e.tipoComida||"",
+    ingredientes: e.ingredientes, pasos: pasosDeTexto(e.pasosTxt),
+    kcalTotal: t.kcal, grasaTotal: t.grasa, carbhTotal: t.carbh, protTotal: t.prot,
+    kcalPorc: t.kcal/porciones, grasaPorc: t.grasa/porciones, carbhPorc: t.carbh/porciones, protPorc: t.prot/porciones
+  };
+  if(e.id){
+    // edición in-place: mantiene id y autor original
+    const idx = recetas.findIndex(r=>r.id===e.id);
+    if(idx>-1) recetas[idx] = Object.assign({}, recetas[idx], datos);
+  } else {
+    recetas.push(Object.assign({ id: "r" + Date.now(), autor: perfilActivo }, datos));
+  }
+  guardarRecetas();
+  cancelarReceta();
+  renderRecetas();
+}
+function esRecetaDeTexto(r){ return !!(r.origenIA || r.origenExterno || !Array.isArray(r.ingredientes)); }
+function editarReceta(id){
+  const r = recetas.find(x=>x.id===id);
+  if(!r) return;
+  if(esRecetaDeTexto(r)) return editarRecetaTexto(r);
+  document.getElementById("iaRecetaContainer").innerHTML = "";
+  document.getElementById("realRecetaContainer").innerHTML = "";
+  recetaEnEdicion = {
+    id: r.id, nombre: r.nombre, porciones: r.porciones,
+    tiempoPrep: r.tiempoPrep||0, tiempoCoccion: r.tiempoCoccion||0, tipoComida: r.tipoComida||"",
+    ingredientes: r.ingredientes.map(i=>Object.assign({}, i)), pasosTxt: (r.pasos||[]).join("\n")
+  };
+  renderBuilder();
+  document.getElementById("builderContainer").scrollIntoView({behavior:"smooth", block:"start"});
+}
+// Recetas creadas con IA o guardadas de internet: no tienen ingredientes con calorías, se editan como texto
+function editarRecetaTexto(r){
+  recetaEnEdicion = null;
+  document.getElementById("iaRecetaContainer").innerHTML = "";
+  document.getElementById("realRecetaContainer").innerHTML = "";
+  const cont = document.getElementById("builderContainer");
+  const num = x => (x > 0 ? Math.round(x*10)/10 : "");
+  cont.innerHTML = `
+    <div class="receta-builder">
+      <h3 class="rb-tit">✎ Editar receta</h3>
+      <label for="rtNombre">Nombre de la receta</label>
+      <input type="text" id="rtNombre" value="${esc(r.nombre)}">
+      <div class="fila" style="display:flex;gap:8px;flex-wrap:wrap">
+        <div style="flex:1;min-width:110px"><label for="rtPorciones">Porciones</label><input type="number" id="rtPorciones" min="1" step="any" value="${num(r.porciones)||1}"></div>
+        <div style="flex:1;min-width:110px"><label for="rtTiempo">Tiempo total (min)</label><input type="number" id="rtTiempo" min="0" value="${(r.tiempoPrep||0)+(r.tiempoCoccion||r.tiempoMin||0)}"></div>
+        <div style="flex:1;min-width:140px"><label for="rtTipo">Tipo de comida</label>
+          <select id="rtTipo"><option value="">Cualquiera</option>${COMIDAS.map(c=>`<option value="${c.id}" ${r.tipoComida===c.id?"selected":""}>${c.icono} ${c.nombre}</option>`).join("")}</select></div>
+      </div>
+      <div class="rb-bloque">Calorías y macros por porción</div>
+      <div class="fila" style="display:flex;gap:8px;flex-wrap:wrap">
+        <div style="flex:1;min-width:80px"><label for="rtKcal">Kcal</label><input type="number" id="rtKcal" min="0" step="any" value="${num(r.kcalPorc)}"></div>
+        <div style="flex:1;min-width:80px"><label for="rtGrasa">Grasa (g)</label><input type="number" id="rtGrasa" min="0" step="any" value="${num(r.grasaPorc)}"></div>
+        <div style="flex:1;min-width:80px"><label for="rtCarbh">Carbh (g)</label><input type="number" id="rtCarbh" min="0" step="any" value="${num(r.carbhPorc)}"></div>
+        <div style="flex:1;min-width:80px"><label for="rtProt">Prot (g)</label><input type="number" id="rtProt" min="0" step="any" value="${num(r.protPorc)}"></div>
+      </div>
+      <div class="rb-bloque">Ingredientes (uno por línea)</div>
+      <textarea id="rtIng" rows="6">${esc((r.ingredientesTexto||[]).join("\n"))}</textarea>
+      <div class="rb-bloque">Pasos (uno por línea)</div>
+      <textarea id="rtPasos" rows="6" placeholder="Escribe cada paso en una línea nueva">${esc((r.pasos||[]).join("\n"))}</textarea>
+      <div class="receta-acciones">
+        <button class="cancelar" id="rtCancelar" type="button">Cancelar</button>
+        <button class="guardar" id="rtGuardar" type="button">Guardar cambios</button>
+      </div>
+    </div>`;
+  document.getElementById("rtCancelar").onclick = ()=>{ cont.innerHTML = ""; };
+  document.getElementById("rtGuardar").onclick = ()=>{
+    const nombre = document.getElementById("rtNombre").value.trim();
+    if(!nombre){ avisar("Ponle un nombre a la receta."); return; }
+    const f = id => parseFloat(String(document.getElementById(id).value).replace(",",".")) || 0;
+    const porciones = f("rtPorciones") || 1;
+    const idx = recetas.findIndex(x=>x.id===r.id); if(idx<0) return;
+    recetas[idx] = Object.assign({}, recetas[idx], {
+      nombre, porciones, tipoComida: document.getElementById("rtTipo").value || "",
+      tiempoPrep: 0, tiempoCoccion: f("rtTiempo"),
+      kcalPorc: f("rtKcal"), grasaPorc: f("rtGrasa"), carbhPorc: f("rtCarbh"), protPorc: f("rtProt"),
+      kcalTotal: f("rtKcal")*porciones, grasaTotal: f("rtGrasa")*porciones, carbhTotal: f("rtCarbh")*porciones, protTotal: f("rtProt")*porciones,
+      ingredientesTexto: document.getElementById("rtIng").value.split(/\r?\n/).map(l=>l.trim()).filter(Boolean),
+      pasos: pasosDeTexto(document.getElementById("rtPasos").value)
+    });
+    guardarRecetas(); cont.innerHTML = ""; renderRecetas();
+  };
+  cont.scrollIntoView({behavior:"smooth", block:"start"});
+}
+function duplicarReceta(id){
+  const r = recetas.find(x=>x.id===id);
+  if(!r) return;
+  const copia = JSON.parse(JSON.stringify(r));
+  copia.id = "r" + Date.now();
+  copia.nombre = r.nombre + " (copia)";
+  copia.autor = perfilActivo;
+  recetas.push(copia);
+  guardarRecetas();
+  renderRecetas();
+}
+// ---------- Recetas con IA (Gemini, texto) ----------
+async function llamarGeminiTexto(prompt){ return IAClaves.geminiTexto(prompt); }
+
+// ---------- Buscar recetas: un solo panel (recetas reales, web con Gemini o inventadas con IA) ----------
+let bqFuente = "real";
+const BQ_INFO = {
+  real: "Recetas que ya existen (Spoonacular y TheMealDB), con calorías y macros cuando la fuente los trae. Si escribes varios ingredientes separados por coma, busca recetas que los usen. Llegan en inglés: cada una tiene un botón para traducirla (1 llamada IA). Aplica tiempo, calorías y tipo de comida.",
+  web:  "Busca recetas en páginas web reales (con Tavily si está configurado; si no, con la búsqueda de Google de Gemini) y Gemini las pone en español, con la fuente. Aplica todos los filtros. Las calorías y macros son estimados. Gasta 1 llamada de IA.",
+  ia:   "La IA inventa recetas a tu medida (no existen en ninguna web). Aplica todos los filtros. Las calorías y macros son estimados. Gasta 1 llamada de IA."
+};
+function iniciarBuscarRecetas(){
+  cancelarReceta(); // no dejar "Mi receta" a medias
+  document.getElementById("realRecetaContainer").innerHTML = "";
+  const cont = document.getElementById("iaRecetaContainer");
+  cont.innerHTML = `
+    <div class="receta-builder">
+      <h3 class="rb-tit">🔎 Buscar recetas</h3>
+      <label for="bqPedido">¿Qué te apetece cocinar, o qué ingredientes tienes?</label>
+      <input type="text" id="bqPedido" placeholder="ej: algo con pollo, o tengo tomate y huevo">
+      <label style="margin-top:8px">¿Dónde buscar?</label>
+      <div class="rf-fuentes">
+        <button type="button" class="rf-btn" data-f="real">🍲 Recetas reales</button>
+        <button type="button" class="rf-btn" data-f="web">🌐 Web con Gemini</button>
+        <button type="button" class="rf-btn" data-f="ia">🤖 Inventar con IA</button>
+      </div>
+      <div class="rep-nota" id="bqFuenteInfo" style="margin-top:0"></div>
+      <div class="fila" style="display:flex;gap:8px;flex-wrap:wrap">
+        <div style="flex:1;min-width:120px"><label for="bqTiempo">Tiempo máximo</label>
+          <select id="bqTiempo"><option value="">Sin límite</option><option value="15">15 min</option><option value="30">30 min</option><option value="45">45 min</option><option value="60">60 min</option></select></div>
+        <div style="flex:1;min-width:120px"><label for="bqDificultad">Dificultad</label>
+          <select id="bqDificultad"><option value="">Cualquiera</option><option value="fácil">Fácil</option><option value="media">Media</option><option value="difícil">Difícil</option></select></div>
+        <div style="flex:1;min-width:120px"><label for="bqTemp">Fría o caliente</label>
+          <select id="bqTemp"><option value="">Cualquiera</option><option value="fría">Fría</option><option value="caliente">Caliente</option></select></div>
+        <div style="flex:1;min-width:120px"><label for="bqKcal">Kcal por porción (aprox.)</label>
+          <input type="number" id="bqKcal" min="0" placeholder="ej: 400"></div>
+        <div style="flex:1;min-width:140px"><label for="bqTipo">Tipo de comida</label>
+          <select id="bqTipo"><option value="">Cualquiera</option>${COMIDAS.map(c=>`<option value="${c.id}">${c.icono} ${c.nombre}</option>`).join("")}</select></div>
+      </div>
+      <button type="button" class="btn-primario" id="bqBuscar">Buscar</button>
+      <div id="bqEstado" class="rep-nota" style="margin-top:8px"></div>
+      <div id="bqResultados"></div>
+      <div id="bqFuentesWeb" class="rep-nota"></div>
+      <button type="button" class="cerrar-buscador" id="bqCerrar" style="margin-top:8px">Cerrar</button>
+    </div>`;
+  const marcar = ()=>{
+    cont.querySelectorAll(".rf-btn").forEach(b => b.classList.toggle("on", b.dataset.f === bqFuente));
+    let info = BQ_INFO[bqFuente];
+    if(bqFuente === "real" && !IAClaves.tieneSpoonacular()) info = "Spoonacular no tiene clave guardada, así que por ahora solo busca en TheMealDB (menos variedad, sin calorías ni filtros). Las recetas llegan en inglés.";
+    document.getElementById("bqFuenteInfo").textContent = info;
+    ["bqDificultad","bqTemp"].forEach(id => { const el = document.getElementById(id); el.disabled = bqFuente === "real"; if(bqFuente === "real") el.value = ""; });
+  };
+  cont.querySelectorAll(".rf-btn").forEach(b => b.onclick = ()=>{ bqFuente = b.dataset.f; marcar(); });
+  marcar();
+  document.getElementById("bqBuscar").onclick = buscarRecetas;
+  document.getElementById("bqPedido").addEventListener("keydown", ev=>{ if(ev.key === "Enter"){ ev.preventDefault(); buscarRecetas(); } });
+  document.getElementById("bqCerrar").onclick = ()=>{ cont.innerHTML = ""; };
+}
+function bqAviso(txt){ const el = document.getElementById("bqEstado"); if(el) el.textContent = txt; }
+function tipoComidaValido(t){ const x = String(t||"").toLowerCase().trim(); return COMIDAS.some(c => c.id === x) ? x : ""; }
+function promptRecetas(f, conWeb){
+  const cond = [];
+  if(f.tiempo) cond.push("que se preparen en " + f.tiempo + " minutos o menos");
+  if(f.dificultad) cond.push("dificultad " + f.dificultad);
+  if(f.temp) cond.push("de comida " + f.temp);
+  if(f.kcal) cond.push("aproximadamente " + f.kcal + " kcal por porción");
+  const tipo = COMIDAS.find(c => c.id === f.tipo);
+  if(tipo) cond.push("adecuadas para " + tipo.nombre.toLowerCase());
+  return (conWeb
+      ? 'Busca en internet recetas reales para este pedido y escríbelas en español: "' + f.pedido + '".'
+      : 'Actúa como un recetario. El pedido es: "' + f.pedido + '".') +
+    (cond.length ? " Condiciones: " + cond.join(", ") + "." : "") +
+    " Propón entre 5 y 8 recetas distintas que encajen. " +
+    (conWeb ? "Usa solo recetas que hayas encontrado en la búsqueda y di de qué sitio web sale cada una. " : "") +
+    "Devuelve SOLO un array JSON (sin texto extra, sin ```), donde cada elemento tenga exactamente estas claves: " +
+    'nombre (texto), tiempoMin (número, minutos), dificultad ("fácil", "media" o "difícil"), tipoTemp ("fría" o "caliente"), ' +
+    'tipoComida ("desayuno", "almuerzo", "cena" o "snacks"), porciones (número), ' +
+    "kcalPorc (número, estimado), grasaPorc (número, gramos, estimado), carbhPorc (número, gramos, estimado), protPorc (número, gramos, estimado), " +
+    'ingredientes (array de strings, cada uno "cantidad + nombre"), pasos (array de strings, pasos en orden)' +
+    (conWeb ? ", fuente (nombre del sitio web de donde sale la receta)" : "") + ". " +
+    "Los valores nutricionales son una estimación tuya, hazla realista según los ingredientes.";
+}
+function jsonArrayDeTexto(t){
+  const m = String(t||"").match(/\[[\s\S]*\]/);
+  if(!m) throw new Error("Gemini no devolvió recetas en el formato esperado. Prueba de nuevo.");
+  return JSON.parse(m[0]);
+}
+async function buscarRecetas(){
+  const v = id => document.getElementById(id).value;
+  const f = {pedido: v("bqPedido").trim(), tiempo: v("bqTiempo"), dificultad: v("bqDificultad"), temp: v("bqTemp"), kcal: v("bqKcal"), tipo: v("bqTipo")};
+  const resultados = document.getElementById("bqResultados"), fuentesEl = document.getElementById("bqFuentesWeb");
+  if(!f.pedido){ bqAviso("Escribe qué te apetece cocinar o qué ingredientes tienes."); return; }
+  const btn = document.getElementById("bqBuscar"); btn.disabled = true;
+  resultados.innerHTML = ""; fuentesEl.innerHTML = "";
+  try{
+    if(bqFuente === "real"){
+      bqAviso("Buscando recetas reales...");
+      const r = await buscarRecetasRealesFiltro(f);
+      if(r.lista.length === 0){ bqAviso("No se encontraron recetas para eso" + (r.q !== f.pedido ? " (busqué «" + r.q + "»)" : "") + ". Prueba con otra palabra o quita algún filtro."); return; }
+      bqAviso("Encontradas " + r.lista.length + (r.q !== f.pedido ? " (busqué «" + r.q + "»)" : "") + ".");
+      r.lista.forEach(x => resultados.appendChild(tarjetaRecetaReal(x)));
+    } else {
+      const conWeb = bqFuente === "web";
+      bqAviso(conWeb ? "Gemini está buscando en Google..." : "Pensando recetas...");
+      // Modo Web: 1) Tavily busca en internet; 2) Gemini (sin herramienta de búsqueda, gratis en cualquier modelo) ordena los resultados en recetas.
+      // Si Tavily no está configurado o falla, se usa la búsqueda de Google de Gemini como antes.
+      let tav = null;
+      if(conWeb){ try{ tav = await IAClaves.tavily("receta " + f.pedido + (f.tipo ? " " + f.tipo : ""), 8); }catch(e){ tav = null; } }
+      const hayTav = !!(tav && tav.length);
+      let prompt = promptRecetas(f, conWeb);
+      if(hayTav) prompt += "\n\nResultados de la búsqueda web (usa SOLO estas páginas; en fuente pon el nombre del sitio de la página de donde sale cada receta):\n" +
+        tav.map((x,i) => "[" + (i+1) + "] " + x.title + " — " + x.url + "\n" + x.content).join("\n\n");
+      const body = {contents:[{parts:[{text: prompt}]}]};
+      if(conWeb && !hayTav) body.tools = [{google_search:{}}];
+      let data;
+      try{ data = await IAClaves.gemini(body); }
+      catch(e){
+        throw new Error(conWeb ? e.message + " (Si habla de herramientas o tools, hay que permitir la búsqueda de Google en tu Worker de Cloudflare.)" : e.message);
+      }
+      const cand = (data.candidates || [])[0] || {};
+      const texto = ((cand.content || {}).parts || []).map(p => p.text || "").join("");
+      const lista = jsonArrayDeTexto(texto);
+      if(!Array.isArray(lista) || lista.length === 0){ bqAviso("No se generaron recetas. Prueba a reformular el pedido."); return; }
+      const chunks = (hayTav ? tav.map(x => ({uri:x.url, title:x.title})) : (((cand.groundingMetadata || {}).groundingChunks) || []).map(c => c.web)).filter(w => w && /^https:\/\//i.test(w.uri || ""));
+      lista.forEach(r=>{
+        r.tipoComida = f.tipo || tipoComidaValido(r.tipoComida);
+        if(conWeb){
+          const comp = x => slug(x || "").replace(/-/g, "");
+          const k = comp(r.fuente);
+          const ch = k.length >= 4 ? chunks.find(c => { const t = comp(c.title); return t.length >= 4 && (k.includes(t) || t.includes(k)); }) : null;
+          if(ch) r.enlace = ch.uri;
+        }
+        resultados.appendChild(tarjetaRecetaIA(r, 0));
+      });
+      bqAviso("Encontradas " + lista.length + ". Revisa los datos antes de guardar: las calorías son estimadas.");
+      if(conWeb && chunks.length){
+        fuentesEl.innerHTML = "<b>Fuentes consultadas" + (hayTav ? " (Tavily)" : " por Gemini") + ":</b><br>" + chunks.slice(0,6).map(c => '<a href="' + esc(c.uri) + '" target="_blank" rel="noopener" style="color:var(--accent)">' + esc(c.title || c.uri) + "</a>").join(" · ");
+      }
+    }
+  }catch(e){
+    bqAviso("No se pudo buscar: " + e.message);
+  }finally{ btn.disabled = false; }
+}
+
+// Calorías y macros por porción, solo los que existen.
+function macrosTxt(r){
+  const p = [], n = x => parseFloat(x) > 0;
+  if(n(r.kcalPorc)) p.push("Cal " + Math.round(r.kcalPorc));
+  if(n(r.grasaPorc)) p.push("Grasa " + Math.round(r.grasaPorc) + " g");
+  if(n(r.carbhPorc)) p.push("Carbh " + Math.round(r.carbhPorc) + " g");
+  if(n(r.protPorc)) p.push("Prot " + Math.round(r.protPorc) + " g");
+  return p.join(" · ");
+}
+// De dónde salió la receta: 🍲 Recetas reales / 🌐 Web con Gemini / 🤖 Inventar con IA / ✍️ Mi receta.
+function origenEtiqueta(r){
+  if(r.origenIA) return r.fuenteWeb ? "🌐 Web con Gemini · " + r.fuenteWeb : "🤖 Inventar con IA";
+  if(r.origenExterno) return "🍲 Recetas reales · " + String(r.origenExterno).replace(/^[^\p{L}\p{N}]+/u, "");
+  return "✍️ Mi receta";
+}
+function tarjetaRecetaIA(r, idx){
+  const div = document.createElement("div");
+  div.className = "receta-usar";
+  const detalles = [
+    r.tiempoMin ? "⏱️ " + r.tiempoMin + " min" : null,
+    r.dificultad || null,
+    r.tipoTemp || null
+  ].filter(Boolean).join(" · ");
+  const macros = macrosTxt(r);
+  const origen = r.fuente ? "🌐 Web con Gemini · " + r.fuente : "🤖 Inventar con IA";
+  const ingredientesHtml = (r.ingredientes||[]).map(i=>"<li>"+esc(i)+"</li>").join("");
+  const pasosHtml = (r.pasos||[]).map(p=>"<li>"+esc(p)+"</li>").join("");
+  div.innerHTML = `
+    <div class="ru-fila" style="align-items:flex-start">
+      <div style="flex:1">
+        <b>${esc(r.nombre||"Receta")}</b>
+        <div class="item-detalle" style="color:var(--accent)">${esc(origen)}${/^https:\/\//i.test(r.enlace||"") ? ' · <a href="' + esc(r.enlace) + '" target="_blank" rel="noopener" style="color:var(--accent)">🔗 ver fuente</a>' : ""}</div>
+        <div class="item-detalle">${esc(detalles)}</div>
+        <div class="item-detalle">${macros ? "Por porción (estimado): " + esc(macros) : "Sin datos nutricionales"}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0"><button type="button" class="btn-agregar">Usar esta receta</button><button type="button" class="btn-descartar" style="background:transparent;border:1px solid var(--muted);color:var(--muted);border-radius:8px;padding:0.3rem 0.6rem;font-size:0.8rem;cursor:pointer">✕ Descartar</button></div>
+    </div>
+    <details style="margin-top:6px">
+      <summary style="cursor:pointer;font-size:0.82rem;color:var(--muted)">Ver ingredientes y pasos</summary>
+      <div class="rep-nota" style="margin-top:6px"><b>Ingredientes</b><ul style="margin:4px 0 8px 18px">${ingredientesHtml}</ul>
+      <b>Pasos</b><ol style="margin:4px 0 0 18px">${pasosHtml}</ol></div>
+    </details>`;
+  div.querySelector(".btn-agregar").onclick = ()=>{ guardarRecetaIA(r); div.remove(); bqAviso("«" + (r.nombre || "Receta") + "» guardada en Mis recetas."); };
+  div.querySelector(".btn-descartar").onclick = ()=> div.remove();
+  return div;
+}
+
+function guardarRecetaIA(r){
+  const porciones = parseFloat(r.porciones) || 1;
+  recetas.push({
+    id: "r" + Date.now(),
+    nombre: r.nombre || "Receta con IA",
+    porciones, autor: perfilActivo,
+    ingredientesTexto: r.ingredientes || [],
+    pasos: r.pasos || [],
+    origenIA: true,
+    fuenteWeb: r.fuente || null,
+    enlace: /^https:\/\//i.test(r.enlace||"") ? r.enlace : null,
+    tipoComida: tipoComidaValido(r.tipoComida),
+    tiempoMin: r.tiempoMin || null,
+    dificultad: r.dificultad || null,
+    tipoTemp: r.tipoTemp || null,
+    kcalTotal: (r.kcalPorc||0) * porciones,
+    grasaTotal: (r.grasaPorc||0) * porciones,
+    carbhTotal: (r.carbhPorc||0) * porciones,
+    protTotal: (r.protPorc||0) * porciones,
+    kcalPorc: r.kcalPorc || 0,
+    grasaPorc: r.grasaPorc || 0,
+    carbhPorc: r.carbhPorc || 0,
+    protPorc: r.protPorc || 0
+  });
+  guardarRecetas();
+  renderRecetas();
+}
+
+function borrarReceta(id){
+  recetas = recetas.filter(r=>r.id!==id);
+  guardarRecetas();
+  renderRecetas();
+}
+
+// ---------- Recetas reales (Spoonacular + TheMealDB) ----------
+// ---------- Recetas reales (Spoonacular + TheMealDB), usadas desde "Buscar recetas" ----------
+const SPOON_TIPO = {desayuno:"breakfast", almuerzo:"main course", cena:"main course", snacks:"snack"};
+function tipoDeDishTypes(arr){
+  const t = (arr || []).join(" ").toLowerCase();
+  if(/breakfast|brunch|morning/.test(t)) return "desayuno";
+  if(/lunch|main (course|dish)/.test(t)) return "almuerzo";
+  if(/dinner|supper/.test(t)) return "cena";
+  if(/snack|dessert|fingerfood|appetizer|antipasti|starter|side dish/.test(t)) return "snacks";
+  return "";
+}
+// Si el pedido es una lista de ingredientes ("tomatoes, eggs") devuelve ["tomatoes","eggs"]; si no, null.
+function listaIngredientes(q){
+  const t = String(q||"").toLowerCase().replace(/^\s*(i have|i've got|something with|recipes? with|with)\s+/, "");
+  const partes = t.split(/\s*(?:,|;|\band\b|&)\s*/).map(x=>x.trim()).filter(Boolean);
+  return (partes.length >= 2 && partes.every(x => x.split(/\s+/).length <= 3)) ? partes : null;
+}
+async function buscarEnSpoonacular(query, f){
+  f = f || {};
+  const ing = listaIngredientes(query);
+  let url = "https://api.spoonacular.com/recipes/complexSearch?" +
+    (ing ? "includeIngredients=" + encodeURIComponent(ing.join(",")) + "&sort=max-used-ingredients&fillIngredients=true"
+         : "query=" + encodeURIComponent(query)) +
+    "&number=6&addRecipeInformation=true&addRecipeNutrition=true";
+  if(f.tiempo) url += "&maxReadyTime=" + encodeURIComponent(f.tiempo);
+  if(f.tipo && SPOON_TIPO[f.tipo]) url += "&type=" + encodeURIComponent(SPOON_TIPO[f.tipo]);
+  const k = parseFloat(f.kcal);
+  if(k > 0) url += "&minCalories=" + Math.round(k*0.75) + "&maxCalories=" + Math.round(k*1.25);
+  const data = await IAClaves.spoonacular(url);
+  if(data.status === "failure") throw new Error(data.message || "Error de Spoonacular.");
+  return (data.results || []).map(r=>{
+    const nut = (r.nutrition && r.nutrition.nutrients) || [];
+    const buscar = n => { const x = nut.find(v=>v.name===n); return x ? x.amount : 0; };
+    return {
+      fuente: "🍲 Spoonacular",
+      nombre: r.title,
+      porciones: r.servings || 1,
+      tiempoCoccion: r.readyInMinutes || 0,
+      tipoComida: f.tipo || tipoDeDishTypes(r.dishTypes),
+      ingredientesTexto: (r.extendedIngredients||[]).map(i=>i.original),
+      pasos: (r.analyzedInstructions && r.analyzedInstructions[0] && r.analyzedInstructions[0].steps || []).map(s=>s.step),
+      kcalPorc: buscar("Calories"), grasaPorc: buscar("Fat"), carbhPorc: buscar("Carbohydrates"), protPorc: buscar("Protein")
+    };
+  });
+}
+async function buscarEnMealDB(query, f){
+  f = f || {};
+  const res = await fetch("https://www.themealdb.com/api/json/v1/1/search.php?s=" + encodeURIComponent(query));
+  const data = await res.json();
+  if(!data.meals) return [];
+  return data.meals.slice(0,6).map(m=>{
+    const ingredientes = [];
+    for(let i=1;i<=20;i++){
+      const nombre = m["strIngredient"+i], medida = m["strMeasure"+i];
+      if(nombre && nombre.trim()) ingredientes.push((medida&&medida.trim() ? medida.trim()+" " : "") + nombre.trim());
+    }
+    const pasos = (m.strInstructions||"").split(/\r?\n/).map(p=>p.trim()).filter(Boolean);
+    const cat = String(m.strCategory || "").toLowerCase();
+    return {
+      fuente: "🥘 TheMealDB",
+      nombre: m.strMeal, porciones: 1, tiempoCoccion: 0,
+      tipoComida: f.tipo || (cat === "breakfast" ? "desayuno" : (cat === "dessert" || cat === "starter" || cat === "side") ? "snacks" : ""),
+      ingredientesTexto: ingredientes, pasos: pasos.length ? pasos : [m.strInstructions||""],
+      kcalPorc: 0, grasaPorc: 0, carbhPorc: 0, protPorc: 0
+    };
+  });
+}
+// Las dos fuentes están en inglés: se traduce la búsqueda (si falla la traducción, se busca tal cual).
+async function buscarRecetasRealesFiltro(f){
+  const q = ((await traducirEsEn(f.pedido)) || f.pedido).trim() || f.pedido;
+  const avisos = [];
+  // TheMealDB solo busca por nombre de plato: con una lista de ingredientes no devuelve nada útil, así que se omite.
+  const tareas = [ listaIngredientes(q) ? Promise.resolve([]) : buscarEnMealDB(q, f).catch(e=>{ console.warn("TheMealDB:", e); return []; }) ];
+  if(IAClaves.tieneSpoonacular()) tareas.push(buscarEnSpoonacular(q, f).catch(e=>{ bqAviso("Spoonacular: " + e.message); return []; }));
+  const [mealdb, spoon] = await Promise.all([tareas[0], tareas[1] || Promise.resolve([])]);
+  return {q, lista: [...spoon, ...mealdb]}; // Spoonacular primero: trae datos nutricionales completos
+}
+function tarjetaRecetaReal(r){
+  const div = document.createElement("div");
+  div.className = "receta-usar";
+  const detalles = [ r.tiempoCoccion ? "⏱️ " + r.tiempoCoccion + " min" : null, r.porciones ? r.porciones + " porciones" : null ].filter(Boolean).join(" · ");
+  const macros = macrosTxt(r);
+  const origen = "🍲 Recetas reales · " + String(r.fuente || "").replace(/^[^\p{L}\p{N}]+/u, "");
+  const ingredientesHtml = r.ingredientesTexto.map(i=>"<li>"+esc(i)+"</li>").join("");
+  const pasosHtml = r.pasos.map(p=>"<li>"+esc(p)+"</li>").join("");
+  div.innerHTML = `
+    <div class="ru-fila" style="align-items:flex-start">
+      <div style="flex:1">
+        <b class="rr-nombre">${esc(r.nombre)}</b>
+        <div class="item-detalle" style="color:var(--accent)">${esc(origen)}</div>
+        <div class="item-detalle">${esc(detalles)}</div>
+        <div class="item-detalle">${macros ? "Por porción: " + esc(macros) : "Sin datos nutricionales (esta fuente no los trae)"}</div>
+        <button type="button" class="btn-trad" style="margin-top:6px;background:transparent;border:1px solid var(--accent);color:var(--accent);border-radius:8px;padding:0.25rem 0.6rem;font-size:0.78rem;cursor:pointer">🌐 Traducir al español (1 llamada IA)</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0"><button type="button" class="btn-agregar">Guardar</button><button type="button" class="btn-descartar" style="background:transparent;border:1px solid var(--muted);color:var(--muted);border-radius:8px;padding:0.3rem 0.6rem;font-size:0.8rem;cursor:pointer">✕ Descartar</button></div>
+    </div>
+    <details style="margin-top:6px">
+      <summary style="cursor:pointer;font-size:0.82rem;color:var(--muted)">Ver ingredientes y pasos</summary>
+      <div class="rep-nota" style="margin-top:6px"><b>Ingredientes</b><ul class="rr-ing" style="margin:4px 0 8px 18px">${ingredientesHtml}</ul>
+      <b>Pasos</b><ol class="rr-pasos" style="margin:4px 0 0 18px">${pasosHtml}</ol></div>
+    </details>`;
+  div.querySelector(".btn-agregar").onclick = ()=>{ guardarRecetaReal(r); div.remove(); bqAviso("«" + r.nombre + "» guardada en Mis recetas."); };
+  div.querySelector(".btn-descartar").onclick = ()=> div.remove();
+  const bt = div.querySelector(".btn-trad");
+  bt.onclick = async ()=>{
+    bt.disabled = true; bt.textContent = "Traduciendo...";
+    try{
+      const t = await IAClaves.geminiTexto('Traduce al español esta receta. Devuelve SOLO un objeto JSON (sin texto extra, sin ```) con las claves nombre (texto), ingredientes (array de textos) y pasos (array de textos). Mantén el mismo orden y el mismo número de elementos en ingredientes y pasos, y no cambies cantidades ni unidades. Receta: ' + JSON.stringify({nombre:r.nombre, ingredientes:r.ingredientesTexto, pasos:r.pasos}));
+      const m = t.match(/\{[\s\S]*\}/), o = JSON.parse(m ? m[0] : t);
+      if(!o || !o.nombre || !Array.isArray(o.ingredientes) || !Array.isArray(o.pasos)) throw new Error("La IA no devolvió la traducción en el formato esperado.");
+      r.nombre = String(o.nombre); r.ingredientesTexto = o.ingredientes.map(String); r.pasos = o.pasos.map(String);
+      div.querySelector(".rr-nombre").textContent = r.nombre;
+      div.querySelector(".rr-ing").innerHTML = r.ingredientesTexto.map(i=>"<li>"+esc(i)+"</li>").join("");
+      div.querySelector(".rr-pasos").innerHTML = r.pasos.map(p=>"<li>"+esc(p)+"</li>").join("");
+      bt.remove();
+    }catch(e){ bt.disabled = false; bt.textContent = "🌐 Traducir al español (1 llamada IA)"; bqAviso("No se pudo traducir: " + e.message); }
+  };
+  return div;
+}
+function guardarRecetaReal(r){
+  recetas.push({
+    id: "r" + Date.now(), nombre: r.nombre, porciones: r.porciones || 1, autor: perfilActivo,
+    ingredientesTexto: r.ingredientesTexto, pasos: r.pasos,
+    origenExterno: r.fuente, tipoComida: tipoComidaValido(r.tipoComida), tiempoPrep: 0, tiempoCoccion: r.tiempoCoccion || 0,
+    kcalTotal: (r.kcalPorc||0)*(r.porciones||1), grasaTotal: (r.grasaPorc||0)*(r.porciones||1),
+    carbhTotal: (r.carbhPorc||0)*(r.porciones||1), protTotal: (r.protPorc||0)*(r.porciones||1),
+    kcalPorc: r.kcalPorc||0, grasaPorc: r.grasaPorc||0, carbhPorc: r.carbhPorc||0, protPorc: r.protPorc||0
+  });
+  guardarRecetas();
+  renderRecetas();
+}
+
+// ---------- Comidas guardadas ----------
+function iniciarNuevaComidaGuardada(){
+  comidaGuardadaEnEdicion = { nombre:"", tipoComida:"", items:[] };
+  renderBuilderComidaGuardada();
+}
+function cancelarComidaGuardada(){
+  comidaGuardadaEnEdicion = null;
+  document.getElementById("builderComidaGuardadaContainer").innerHTML = "";
+}
+function guardarComidaGuardadaActual(){
+  const nombre = document.getElementById("cgNombre").value.trim();
+  const tipoComida = document.getElementById("cgTipoComida").value || "";
+  if(!nombre){ avisar("Ponele un nombre a la comida."); return; }
+  if(comidaGuardadaEnEdicion.items.length===0){ avisar("Agregá al menos un alimento."); return; }
+  comidasGuardadas.push({
+    id: "cg" + Date.now(), nombre, tipoComida, autor: perfilActivo,
+    items: comidaGuardadaEnEdicion.items
+  });
+  guardarComidasGuardadasStorage();
+  cancelarComidaGuardada();
+  renderComidasGuardadas();
+}
+function borrarComidaGuardada(id){
+  comidasGuardadas = comidasGuardadas.filter(c=>c.id!==id);
+  guardarComidasGuardadasStorage();
+  renderComidasGuardadas();
+}
+function renderBuilderComidaGuardada(){
+  const cont = document.getElementById("builderComidaGuardadaContainer");
+  if(!comidaGuardadaEnEdicion){ cont.innerHTML=""; return; }
+  const totalKcal = comidaGuardadaEnEdicion.items.reduce((s,i)=>s+i.kcal,0);
+  cont.innerHTML = `
+    <div class="receta-builder">
+      <label>Nombre de la comida guardada</label>
+      <input type="text" id="cgNombre" value="${esc(comidaGuardadaEnEdicion.nombre)}" placeholder="ej: Desayuno de siempre">
+      <label for="cgTipoComida">Tipo de comida</label>
+      <select id="cgTipoComida">
+        <option value="">Cualquiera</option>
+        ${COMIDAS.map(c=>`<option value="${c.id}">${c.icono} ${c.nombre}</option>`).join("")}
+      </select>
+      <label>Agregar alimentos</label>
+      <div id="cgPanelBusqueda"></div>
+      <div id="cgItems" style="margin-top:10px"></div>
+      <div class="receta-totales">
+        <div class="rt-col"><div class="rt-label">Total kcal</div><div class="rt-val">${Math.round(totalKcal)}</div></div>
+      </div>
+      <div class="receta-acciones">
+        <button class="cancelar" id="btnCancelarComidaGuardada" type="button">Cancelar</button>
+        <button class="guardar" id="btnGuardarComidaGuardada" type="button">Guardar comida</button>
+      </div>
+    </div>`;
+  document.getElementById("btnCancelarComidaGuardada").onclick = cancelarComidaGuardada;
+  document.getElementById("btnGuardarComidaGuardada").onclick = guardarComidaGuardadaActual;
+  document.getElementById("cgPanelBusqueda").appendChild(crearPanelBusqueda({
+    conFrecuentes: false,
+    onElegir: (p, gramos)=>{
+      comidaGuardadaEnEdicion.items.push({
+        nombre: p.nombre, gramos,
+        kcal:(p.kcal100*gramos)/100, grasa:(p.grasa100*gramos)/100,
+        carbh:(p.carbh100*gramos)/100, prot:(p.prot100*gramos)/100
+      });
+      renderBuilderComidaGuardada();
+    }
+  }));
+  const itemsCont = document.getElementById("cgItems");
+  comidaGuardadaEnEdicion.items.forEach((i,idx)=>{
+    const row = document.createElement("div");
+    row.className = "ing-agregado";
+    row.innerHTML = `<span>${esc(i.nombre)} — ${i.gramos} g (${Math.round(i.kcal)} kcal)</span><button data-idx="${idx}">✕</button>`;
+    row.querySelector("button").onclick = ()=>{
+      comidaGuardadaEnEdicion.items.splice(idx,1);
+      renderBuilderComidaGuardada();
+    };
+    itemsCont.appendChild(row);
+  });
+}
+function renderComidasGuardadas(){
+  const cont = document.getElementById("listaComidasGuardadas");
+  if(comidasGuardadas.length===0){ cont.innerHTML = `<div class="empty-recetas">Todavía no guardaste ninguna comida.</div>`; return; }
+  cont.innerHTML = "";
+  comidasGuardadas.forEach(c=>{
+    const totalKcal = c.items.reduce((s,i)=>s+i.kcal,0);
+    const comidaInfo = COMIDAS.find(x=>x.id===c.tipoComida);
+    const tipoTxt = comidaInfo ? comidaInfo.icono+" "+comidaInfo.nombre : "";
+    const div = document.createElement("div");
+    div.className = "receta-card";
+    div.style.flexDirection = "column";
+    div.style.alignItems = "stretch";
+    div.innerHTML = `
+      <div class="ru-fila">
+        <div><div class="rc-nombre">${esc(c.nombre)}${badgeAutor(c.autor)}</div>
+        <div class="rc-detalle">${Math.round(totalKcal)} kcal · ${c.items.length} alimento(s)${tipoTxt ? " · "+esc(tipoTxt) : ""}</div></div>
+        <button class="rc-borrar" data-id="${esc(c.id)}" style="background:transparent;border:1px solid var(--muted);color:var(--muted);border-radius:8px;padding:0.3rem 0.5rem;font-size:0.85rem;cursor:pointer">✕</button>
+      </div>
+      <details style="margin-top:6px">
+        <summary style="cursor:pointer;font-size:0.8rem;color:var(--muted)">Ver alimentos</summary>
+        <div class="rep-nota" style="margin-top:6px"><ul style="margin:4px 0 0 18px">${c.items.map(i=>"<li>"+esc(i.nombre)+" — "+fmt(i.gramos)+" g</li>").join("")}</ul></div>
+      </details>`;
+    div.querySelector(".rc-borrar").onclick = ()=>borrarComidaGuardada(c.id);
+    cont.appendChild(div);
+  });
+}
+
+const UNIDADES_ING = ["g","kg","ml","l","unidad","loncha","rebanada","taza","cucharada","cucharadita","puñado","diente","rodaja","hoja","lata","pizca"];
+function pluralUnidad(u, n){
+  const x = String(u||"").trim();
+  if(n === 1 || /^(g|kg|mg|ml|l|cl|dl|oz|lb)$/i.test(x) || /\s/.test(x)) return x;
+  if(/ón$/i.test(x)) return x.slice(0,-2) + "ones";
+  if(/[aeiouáéíóú]$/i.test(x)) return x + "s";
+  if(/z$/i.test(x)) return x.slice(0,-1) + "ces";
+  return x + "es";
+}
+function gramosDe(cant, uni){
+  const u = String(uni||"").trim().toLowerCase();
+  if(u === "g") return cant;
+  if(u === "kg") return cant*1000;
+  return 0; // no se sabe: las calorías se piden aparte
+}
+// "200 g de arroz", "1 manzana", "2 × huevo", "3 lonchas de jamón"
+function textoIngrediente(i){
+  if(i.cantidad > 0){
+    const num = fmt(i.cantidad).replace(".", ",");
+    const u = String(i.unidad||"").trim();
+    if(!u || u.toLowerCase() === "unidad") return (i.cantidad === 1 ? "1 " : num + " × ") + i.nombre;
+    return num + " " + pluralUnidad(u, i.cantidad) + " de " + i.nombre;
+  }
+  return i.nombre + " — " + fmt(i.gramos||0) + " g"; // recetas antiguas (solo gramos)
+}
+function renderBuilder(){
+  const cont = document.getElementById("builderContainer");
+  const e = recetaEnEdicion;
+  if(!e){ cont.innerHTML=""; return; }
+  cont.innerHTML = `
+    <div class="receta-builder">
+      <h3 class="rb-tit">${e.id ? "✎ Editar mi receta" : "✍️ Mi receta"}</h3>
+      <div class="rb-bloque">1 · Datos</div>
+      <label for="recNombre">Nombre de la receta</label>
+      <input type="text" id="recNombre" value="${esc(e.nombre)}" placeholder="ej: Tarta de verduras">
+      <div class="fila" style="display:flex;gap:8px;flex-wrap:wrap">
+        <div style="flex:1;min-width:110px"><label for="recPorciones">Porciones que rinde</label><input type="number" id="recPorciones" value="${e.porciones||1}" min="1" step="any"></div>
+        <div style="flex:1;min-width:110px"><label for="recTiempoPrep">Prep. (min)</label><input type="number" id="recTiempoPrep" value="${e.tiempoPrep||0}" min="0"></div>
+        <div style="flex:1;min-width:110px"><label for="recTiempoCoccion">Cocción (min)</label><input type="number" id="recTiempoCoccion" value="${e.tiempoCoccion||0}" min="0"></div>
+        <div style="flex:1;min-width:140px"><label for="recTipoComida">Tipo de comida</label>
+          <select id="recTipoComida"><option value="">Cualquiera</option>${COMIDAS.map(c=>`<option value="${c.id}" ${e.tipoComida===c.id?"selected":""}>${c.icono} ${c.nombre}</option>`).join("")}</select></div>
+      </div>
+
+      <div class="rb-bloque">2 · Ingredientes</div>
+      <div id="recIngredientes"></div>
+      <div class="rb-add">
+        <div class="fila" style="display:flex;gap:8px;flex-wrap:wrap">
+          <div style="flex:0 0 84px"><label for="ingCant">Cantidad</label><input type="number" id="ingCant" min="0" step="any" inputmode="decimal" placeholder="1"></div>
+          <div style="flex:1;min-width:120px"><label for="ingUni">Unidad (elige o escribe)</label><input type="text" id="ingUni" list="listaUnidadesIng" placeholder="unidad, g, kg, loncha..." autocomplete="off"></div>
+          <div style="flex:2;min-width:150px"><label for="ingNom">Alimento</label><input type="text" id="ingNom" placeholder="ej: manzana, arroz" autocomplete="off"></div>
+        </div>
+        <datalist id="listaUnidadesIng">${UNIDADES_ING.map(u=>`<option value="${u}">`).join("")}</datalist>
+        <details class="ia-foto" style="margin:4px 0 8px">
+          <summary>Calorías de este ingrediente (opcional)</summary>
+          <div class="rep-nota" style="margin:6px 0">Pon los valores de la cantidad completa de arriba, no por 100 g. Si lo dejas vacío, se guarda sin calorías y la receta avisa.</div>
+          <div class="fila" style="display:flex;gap:8px;flex-wrap:wrap">
+            <div style="flex:1;min-width:70px"><label for="ingKcal">Kcal</label><input type="number" id="ingKcal" min="0" step="any" inputmode="decimal"></div>
+            <div style="flex:1;min-width:70px"><label for="ingGrasa">Grasa (g)</label><input type="number" id="ingGrasa" min="0" step="any" inputmode="decimal"></div>
+            <div style="flex:1;min-width:70px"><label for="ingCarbh">Carbh (g)</label><input type="number" id="ingCarbh" min="0" step="any" inputmode="decimal"></div>
+            <div style="flex:1;min-width:70px"><label for="ingProt">Prot (g)</label><input type="number" id="ingProt" min="0" step="any" inputmode="decimal"></div>
+          </div>
+        </details>
+        <button type="button" class="btn-primario" id="ingAnadir" style="margin-top:0">+ Añadir ingrediente</button>
+      </div>
+      <details class="ia-foto" id="recBuscarDet">
+        <summary>🔍 Buscar en la base de datos (calcula las calorías solo)</summary>
+        <div id="recPanelBusqueda" style="margin-top:8px"></div>
+      </details>
+
+      <div class="rb-bloque">3 · Pasos</div>
+      <textarea id="recPasos" rows="5" placeholder="Escribe un paso por línea (opcional)">${esc(e.pasosTxt||"")}</textarea>
+
+      <div class="rb-bloque">4 · Totales</div>
+      <div class="receta-totales" id="recTotales"></div>
+      <div class="rep-nota" id="recAvisoCal" style="margin-top:0"></div>
+      <div class="receta-acciones">
+        <button class="cancelar" id="btnCancelarReceta" type="button">Cancelar</button>
+        <button class="guardar" id="btnGuardarReceta" type="button">${e.id ? "Guardar cambios" : "Guardar receta"}</button>
+      </div>
+    </div>`;
+
+  document.getElementById("recPorciones").addEventListener("input", pintarTotalesReceta);
+  document.getElementById("btnCancelarReceta").onclick = cancelarReceta;
+  document.getElementById("btnGuardarReceta").onclick = guardarRecetaActual;
+  document.getElementById("ingAnadir").onclick = anadirIngredienteManual;
+  document.getElementById("ingNom").addEventListener("keydown", ev=>{ if(ev.key==="Enter"){ ev.preventDefault(); anadirIngredienteManual(); } });
+
+  document.getElementById("recPanelBusqueda").appendChild(crearPanelBusqueda({
+    conFrecuentes: false, sinPersonalizado: true,
+    onElegir: (p, gramos, med)=>{
+      let cantidad = gramos, unidad = "g";
+      if(med && med.n > 0){
+        if(med.uni === "g"){ cantidad = med.n; }
+        else if(med.uni === "100g"){ cantidad = med.n*100; }
+        else if(med.uni === "racion"){ cantidad = med.n; unidad = "ración"; }
+        else { cantidad = med.n; unidad = med.uni; }
+      }
+      recetaEnEdicion.ingredientes.push({
+        nombre: p.nombre, cantidad: Math.round(cantidad*100)/100, unidad, gramos,
+        kcal:(p.kcal100*gramos)/100, grasa:(p.grasa100*gramos)/100,
+        carbh:(p.carbh100*gramos)/100, prot:(p.prot100*gramos)/100
+      });
+      pintarIngredientesReceta();
+    }
+  }));
+  pintarIngredientesReceta();
+}
+function anadirIngredienteManual(){
+  const e = recetaEnEdicion; if(!e) return;
+  const val = id => document.getElementById(id).value;
+  const num = id => { const t = String(val(id)).replace(",",".").trim(); if(t==="") return null; const v = parseFloat(t); return v >= 0 ? v : null; };
+  const nombre = val("ingNom").trim();
+  const cantidad = num("ingCant");
+  const unidad = val("ingUni").trim() || "unidad";
+  if(!nombre){ avisar("Escribe el nombre del alimento."); return; }
+  if(!(cantidad > 0)){ avisar("Escribe la cantidad (por ejemplo 1, 200 o 0,5)."); return; }
+  const kcal = num("ingKcal");
+  e.ingredientes.push({
+    nombre, cantidad, unidad, gramos: gramosDe(cantidad, unidad),
+    kcal: kcal || 0, grasa: num("ingGrasa") || 0, carbh: num("ingCarbh") || 0, prot: num("ingProt") || 0,
+    sinCal: kcal === null
+  });
+  ["ingCant","ingUni","ingNom","ingKcal","ingGrasa","ingCarbh","ingProt"].forEach(id => document.getElementById(id).value = "");
+  document.getElementById("ingCant").focus();
+  pintarIngredientesReceta();
+}
+function pintarIngredientesReceta(){
+  const e = recetaEnEdicion; if(!e) return;
+  const ingCont = document.getElementById("recIngredientes");
+  ingCont.innerHTML = "";
+  if(e.ingredientes.length === 0){
+    ingCont.innerHTML = `<div class="rep-nota" style="margin:0 0 6px">Todavía no hay ingredientes.</div>`;
+  }
+  e.ingredientes.forEach((i,idx)=>{
+    const row = document.createElement("div");
+    row.className = "ing-agregado";
+    const cal = i.sinCal ? `<small class="aviso">⚠ sin calorías</small>` : `<small>${i.estimado ? "≈ " : ""}${Math.round(i.kcal||0)} kcal${i.estimado ? " (IA)" : ""}</small>`;
+    row.innerHTML = `<span>${esc(textoIngrediente(i))}${cal}</span><button type="button" title="Quitar" data-idx="${idx}">✕</button>`;
+    row.querySelector("button").onclick = ()=>{ e.ingredientes.splice(idx,1); pintarIngredientesReceta(); };
+    ingCont.appendChild(row);
+  });
+  pintarTotalesReceta();
+}
+async function calcularCaloriasIAFaltantes(){
+  const e = recetaEnEdicion; if(!e) return;
+  const faltan = e.ingredientes.filter(i => i.sinCal);
+  if(!faltan.length) return;
+  const aviso = document.getElementById("recAvisoCal");
+  const btn = document.getElementById("btnCalcIA"); if(btn){ btn.disabled = true; btn.textContent = "Calculando..."; }
+  const lista = faltan.map((i,n) => n + ". " + textoIngrediente(i)).join("\n");
+  const prompt = "Estima las calorías y los macros de estas cantidades de ingredientes (si no se dice otra cosa, el alimento se considera tal como se usa en una receta; " +
+    "arroz, pasta y legumbres se consideran cocidos). Devuelve SOLO un array JSON, sin texto extra ni ```, con un elemento por línea y en el mismo orden, " +
+    "con las claves: n (número de la línea), kcal, grasa, carbh, prot (números; macros en gramos, de la cantidad indicada completa, no por 100 g).\n" + lista;
+  try{
+    const limpio = await IAClaves.geminiTexto(prompt);
+    const m = limpio.match(/\[[\s\S]*\]/);
+    const arr = JSON.parse(m ? m[0] : limpio);
+    let n = 0;
+    arr.forEach(o=>{
+      const i = faltan[o.n]; const k = parseFloat(o.kcal);
+      if(!i || !(k >= 0)) return;
+      Object.assign(i, {kcal:k, grasa:parseFloat(o.grasa)||0, carbh:parseFloat(o.carbh)||0, prot:parseFloat(o.prot)||0, sinCal:false, estimado:true});
+      n++;
+    });
+    if(n === 0) throw new Error("La IA no devolvió valores válidos.");
+    pintarIngredientesReceta();
+  }catch(err){
+    aviso.textContent = "No se pudo calcular con IA: " + err.message;
+  }
+}
+function pintarTotalesReceta(){
+  const e = recetaEnEdicion, box = document.getElementById("recTotales"); if(!e || !box) return;
+  const t = totalesReceta();
+  const porciones = parseFloat(document.getElementById("recPorciones").value) || 1;
+  box.innerHTML = `
+    <div class="rt-col"><div class="rt-label">Total kcal</div><div class="rt-val">${Math.round(t.kcal)}</div></div>
+    <div class="rt-col"><div class="rt-label">Por porción</div><div class="rt-val">${Math.round(t.kcal/porciones)}</div></div>
+    <div class="rt-col"><div class="rt-label">Prot/porc</div><div class="rt-val">${Math.round(t.prot/porciones)}g</div></div>`;
+  const aviso = document.getElementById("recAvisoCal");
+  const nEst = e.ingredientes.filter(i => i.estimado).length;
+  aviso.innerHTML = "";
+  if(t.sinCal){
+    aviso.appendChild(document.createTextNode("⚠ " + t.sinCal + (t.sinCal===1 ? " ingrediente no tiene" : " ingredientes no tienen") + " calorías: el total es parcial. "));
+    const btn = document.createElement("button");
+    btn.type = "button"; btn.id = "btnCalcIA"; btn.textContent = "✨ Calcular con IA las que faltan";
+    btn.onclick = calcularCaloriasIAFaltantes;
+    aviso.appendChild(btn);
+  } else if(nEst){
+    aviso.textContent = "≈ Incluye calorías estimadas por IA en " + nEst + (nEst===1 ? " ingrediente." : " ingredientes.") + " Revísalas si necesitas precisión.";
+  }
+}
+
+function detalleIngredientesHtml(r){
+  const pas = r.pasos || [];
+  const pasosHtml = pas.length
+    ? `<b>Pasos</b><ol style="margin:4px 0 0 18px">${pas.map(p=>"<li>"+esc(p)+"</li>").join("")}</ol>`
+    : `<div style="margin-top:8px">Sin pasos todavía: toca ✎ Editar para añadirlos.</div>`;
+  const items = esRecetaDeTexto(r)
+    ? (r.ingredientesTexto||[]).map(i=>"<li>"+esc(i)+"</li>").join("")
+    : (r.ingredientes||[]).map(i=>"<li>"+esc(textoIngrediente(i))+"</li>").join("");
+  const enlaceHtml = /^https:\/\//i.test(r.enlace || "") ? `<div style="margin-top:8px"><a href="${esc(r.enlace)}" target="_blank" rel="noopener" style="color:var(--accent)">🔗 Ver receta original</a></div>` : "";
+  return `<b>Ingredientes</b><ul style="margin:4px 0 8px 18px">${items}</ul>${pasosHtml}${enlaceHtml}`;
+}
+
+const LETRA_AUTOR = { Mamy:"M", Filha:"F" };
+function badgeAutor(autor){
+  if(!autor || !LETRA_AUTOR[autor]) return "";
+  const letra = LETRA_AUTOR[autor];
+  const color = autor==="Mamy" ? "#c98e2c" : "#7d37a3";
+  return `<span title="Creada por ${esc(autor)}" style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:${color};color:#fff;font-size:0.65rem;font-weight:800;margin-left:5px">${letra}</span>`;
+}
+function llenarFiltroTipoComida(){
+  const sel = document.getElementById("filtroTipoRecetas");
+  if(!sel || sel.options.length) return; // ya está armado
+  sel.innerHTML = `<option value="">Todas</option>` + COMIDAS.map(c=>`<option value="${c.id}">${c.icono} ${c.nombre}</option>`).join("");
+  sel.addEventListener("change", renderRecetas);
+}
+function renderRecetas(){
+  llenarFiltroTipoComida();
+  const filtro = document.getElementById("filtroTipoRecetas") ? document.getElementById("filtroTipoRecetas").value : "";
+  const cont = document.getElementById("listaRecetas");
+  const lista = filtro ? recetas.filter(r=>r.tipoComida===filtro) : recetas;
+  if(lista.length===0){ cont.innerHTML = `<div class="empty-recetas">${recetas.length===0 ? "Todavía no creaste ninguna receta." : "No hay recetas de ese tipo todavía."}</div>`; return; }
+  cont.innerHTML = "";
+  lista.forEach(r=>{
+    const div = document.createElement("div");
+    div.className = "receta-card";
+    div.style.flexDirection = "column";
+    div.style.alignItems = "stretch";
+    const enlaceHtml = /^https:\/\//i.test(r.enlace||"") ? ' · <a href="' + esc(r.enlace) + '" target="_blank" rel="noopener" style="color:var(--accent)">🔗 ver fuente</a>' : "";
+    const origenTag = ' <span style="color:var(--accent);font-size:0.72rem">' + esc(origenEtiqueta(r)) + enlaceHtml + '</span>';
+    const comidaInfo = COMIDAS.find(c=>c.id===r.tipoComida);
+    const tipoTxt = comidaInfo ? comidaInfo.icono + " " + comidaInfo.nombre : "";
+    const tiempoTxt = (r.tiempoPrep || r.tiempoCoccion) ? `⏱️ ${(r.tiempoPrep||0)+(r.tiempoCoccion||0)} min` : "";
+    const detalleExtra = [tiempoTxt, tipoTxt].filter(Boolean).join(" · ");
+    const btn = "border-radius:8px;padding:0.35rem 0.7rem;font-size:0.82rem;cursor:pointer;background:transparent;";
+    div.innerHTML = `
+      <div class="ru-fila">
+        <div><div class="rc-nombre">${esc(r.nombre)}${origenTag}${badgeAutor(r.autor)}</div>
+        <div class="rc-detalle">${macrosTxt(r) ? "Por porción: " + esc(macrosTxt(r)) : Math.round(r.kcalPorc||0) + " kcal/porción"} · ${r.porciones} porciones${detalleExtra ? " · "+esc(detalleExtra) : ""}</div></div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+        <button type="button" class="rc-editar" style="${btn}border:1px solid var(--accent);color:var(--accent)">✎ Editar</button>
+        <button type="button" class="rc-duplicar" style="${btn}border:1px solid var(--muted);color:var(--muted)">⧉ Duplicar</button>
+        <button type="button" class="rc-borrar" style="${btn}border:1px solid var(--warn);color:var(--warn)">🗑 Borrar</button>
+      </div>
+      <details style="margin-top:6px">
+        <summary style="cursor:pointer;font-size:0.8rem;color:var(--muted)">Ver ingredientes y pasos</summary>
+        <div class="rep-nota" style="margin-top:6px">${detalleIngredientesHtml(r)}</div>
+      </details>`;
+    div.querySelector(".rc-editar").onclick = ()=>editarReceta(r.id);
+    div.querySelector(".rc-duplicar").onclick = ()=>duplicarReceta(r.id);
+    div.querySelector(".rc-borrar").onclick = async ()=>{ if(await confirmar('¿Borrar la receta "' + r.nombre + '"? No se puede deshacer.', {si:"Borrar", peligro:true})) borrarReceta(r.id); };
+    cont.appendChild(div);
+  });
+}
+
+// ---------- Totales ----------
+// No crea días vacíos en el estado (el mapa de 4 semanas consulta muchos días).
+function totalesDelDia(f){
+  const d = estado.dias[f];
+  let kcal=0, grasa=0, carbh=0, prot=0;
+  if(d && d.comidas){
+    COMIDAS.forEach(c => (d.comidas[c.id]||[]).forEach(it=>{
+      kcal += it.kcal; grasa += it.grasa||0; carbh += it.carbh||0; prot += it.prot||0;
+    }));
+  }
+  return {kcal:Math.round(kcal), grasa:Math.round(grasa), carbh:Math.round(carbh), prot:Math.round(prot)};
+}
+function totalDeComida(f,id){
+  return Math.round(diaDe(f).comidas[id].reduce((s,i)=>s+i.kcal,0));
+}
+function snacksPegadosA(f, mealId){
+  return diaDe(f).comidas.snacks
+    .map((item, idx) => ({item, idx}))
+    .filter(x => x.item.pegadaA === mealId);
+}
+function totalDeComidaConSnacks(f, mealId){
+  const propio = totalDeComida(f, mealId);
+  const snacks = snacksPegadosA(f, mealId).reduce((s,x)=>s+x.item.kcal,0);
+  return Math.round(propio + snacks);
+}
+function tieneDatos(f){
+  const d = estado.dias[f];
+  if(!d || !d.comidas) return false;
+  return COMIDAS.some(c => (d.comidas[c.id]||[]).length>0);
+}
+
+// ---------- Calorías quemadas: manual + Ejercicio ----------
+function pesoActual(){
+  const conPeso = medidas.filter(m => m.peso > 0).sort((a,b)=> a.fecha < b.fecha ? 1 : (a.fecha > b.fecha ? -1 : 0));
+  if(conPeso.length) return conPeso[0].peso;
+  const pm = leerJSON("perfilMetasV1_"+perfilActivo, null);
+  return (pm && pm.pesoInicial > 0) ? pm.pesoInicial : null;
+}
+function quemadasEjercicio(f){
+  const hist = leerJSON(CLAVE_EJERCICIO(), null);
+  if(!Array.isArray(hist)) return {kcal:0, n:0, hayHistorial:false, estimadas:0, sinPeso:0};
+  const peso = pesoActual();
+  let kcal=0, n=0, estimadas=0, sinPeso=0;
+  hist.filter(h => h && h.fecha === f).forEach(h=>{
+    n++;
+    if(typeof h.kcal === "number" && h.kcal >= 0){ kcal += h.kcal; return; }
+    const min = parseFloat(h.minutos);
+    if(!(min > 0)) return;
+    if(!peso){ sinPeso++; return; }
+    const tipo = String(h.tipo||"").toLowerCase();
+    kcal += Math.max(0, (MET[tipo] || MET.otro) - 1) * peso * (min/60);
+    estimadas++;
+  });
+  return {kcal:Math.round(kcal), n, hayHistorial:true, estimadas, sinPeso};
+}
+function quemadasTotales(f){
+  const d = estado.dias[f];
+  const manual = (d && d.quemadas) || 0;
+  const ej = quemadasEjercicio(f);
+  return {manual, ejercicio:ej.kcal, total:manual + ej.kcal, ej};
+}
+
+// ---------- Render ----------
+function dibujarSemana(){
+  const inicio = inicioSemana(fechaActual);
+  const cont = document.getElementById("semana");
+  cont.innerHTML = "";
+  for(let i=0;i<7;i++){
+    const f = sumarDias(inicio,i);
+    const esHoy = f === hoyISO();
+    const col = document.createElement("div");
+    col.className = "semana-col";
+    const circ = document.createElement("div");
+    circ.className = "circulo" + (esHoy ? " hoy" : (tieneDatos(f) ? " con-datos" : ""));
+    col.appendChild(circ);
+    const letra = document.createElement("div");
+    letra.className = "letra-dia";
+    letra.textContent = LETRAS_SEMANA[i];
+    col.appendChild(letra);
+    col.onclick = () => { fechaActual = f; buscadorAbiertoEn=null; buscadorSnackAbiertoEn=null; render(); };
+    cont.appendChild(col);
+  }
+}
+
+function cuadritos(pct, extraClase, etiqueta){
+  const llenos = (pct != null && pct > 0) ? Math.max(1, Math.min(10, Math.round(pct/10))) : 0;
+  const sobre = pct != null && pct > 110;
+  let h = `<div class="cuadritos${sobre ? " sobre" : ""}${extraClase ? " "+extraClase : ""}" role="img" aria-label="${esc(etiqueta||"")}">`;
+  for(let i=0;i<10;i++) h += `<span class="${i<llenos ? "lleno" : ""}"></span>`;
+  return h + "</div>";
+}
+
+function renderProgreso(){
+  const t = totalesDelDia(fechaActual);
+  const o = objetivosDia();
+  let html = "";
+  METRICAS.forEach(m=>{
+    const val = t[m.id], obj = o[m.id];
+    const pct = obj ? val/obj*100 : null;
+    const txt = obj ? `${val} / ${obj} ${m.unidad} · ${Math.round(pct)}%` : `${val} ${m.unidad}`;
+    html += `<div class="prog-fila"><div class="prog-cab"><span>${m.nombre}</span><span class="p-num">${txt}</span></div>${cuadritos(pct, "", m.nombre + ": " + txt)}</div>`;
+  });
+  if(!o.kcal) html += `<div class="rep-nota">Poné tu meta diaria (en Resumen) para ver el objetivo de calorías.</div>`;
+  else if(!o.carbh) html += `<div class="rep-nota">Definí el reparto de macros (que sume 100%) para ver el objetivo de cada macro.</div>`;
+  document.getElementById("progreso").innerHTML = html;
+}
+
+function claseHeat(pct){
+  if(pct < 50) return "h1";
+  if(pct < 90) return "h2";
+  if(pct <= 110) return "h3";
+  return "h4";
+}
+function renderHeat(){
+  if(typeof renderCalMes==="function") renderCalMes();
+  const met = METRICAS.find(m => m.id === metricaHeat);
+  const obj = objetivosDia()[metricaHeat];
+  document.querySelectorAll("#heatChips button").forEach(b => b.classList.toggle("on", b.dataset.m === metricaHeat));
+  const inicio = sumarDias(inicioSemana(hoyISO()), -21);
+  const hoy = hoyISO();
+  const grid = document.getElementById("heatGrid");
+  grid.innerHTML = "";
+  for(let i=0;i<28;i++){
+    const f = sumarDias(inicio, i);
+    const b = document.createElement("button");
+    b.type = "button";
+    const futuro = f > hoy;
+    let clase = "";
+    let titulo = f;
+    if(futuro){ clase = "fut"; b.disabled = true; }
+    else if(tieneDatos(f)){
+      const v = totalesDelDia(f)[metricaHeat];
+      clase = obj ? claseHeat(v/obj*100) : "hd";
+      titulo += ": " + v + " " + met.unidad + (obj ? " (" + Math.round(v/obj*100) + "% de la meta)" : "");
+    } else titulo += ": sin datos";
+    b.className = clase + (f === fechaActual ? " sel" : "");
+    b.title = titulo;
+    b.setAttribute("aria-label", titulo);
+    if(!futuro) b.onclick = ()=>{ fechaActual = f; buscadorAbiertoEn=null; buscadorSnackAbiertoEn=null; render(); };
+    grid.appendChild(b);
+  }
+  const ley = document.getElementById("heatLeyenda");
+  if(obj){
+    ley.innerHTML = `<span><i style="background:var(--panel-alt);border:1px solid var(--line)"></i>sin datos</span>
+      <span><i style="background:rgba(53,194,106,0.28)"></i>menos de 50%</span>
+      <span><i style="background:rgba(53,194,106,0.58)"></i>50–89%</span>
+      <span><i style="background:var(--accent)"></i>90–110%</span>
+      <span><i style="background:var(--warn)"></i>más de 110%</span>`;
+  } else {
+    ley.innerHTML = `<span>Poné la meta de calorías y el reparto de macros para ver el % de cada día. Mientras tanto se marcan los días con datos.</span>`;
+  }
+}
+
+// ---------- Gráfico de progreso (semana / mes / año / todo) ----------
+const PD_PESO = ["peso"];
+const PD_COMP = ["grasaPct","musculoEsqKg","grasaVisceral","aguaPct","metabolismo"];
+const PD_MED  = ["pecho","biceps","antebrazo","cintura","abdomenBajo","caderas","muslo","pantorrilla"];
+const PD_TODOS = PD_PESO.concat(PD_COMP, PD_MED);
+const PD_DERIVADOS = ["bmi","grasaKg","pesoSinGrasa"]; // se calculan solos
+const PD_COMP_VIEJOS = ["musculoEsqPct","musculosPct","musculosKg","aguaKg","huesosKg","proteinaPct","obesidadPct","edadMetabolica"]; // ya no se piden; los registros viejos los conservan
+const PD_RANGOS = {peso:[20,400],grasaPct:[3,70],musculoEsqKg:[5,90],grasaVisceral:[1,40],aguaPct:[20,80],metabolismo:[600,4500],pecho:[50,200],biceps:[10,80],antebrazo:[10,60],cintura:[40,200],abdomenBajo:[40,200],caderas:[50,200],muslo:[20,120],pantorrilla:[15,80]};
+const UNIDAD_MEDIDA = {peso:"kg",grasaPct:"%",musculoEsqKg:"kg",grasaVisceral:"",aguaPct:"%",metabolismo:"kcal",pecho:"cm",biceps:"cm",antebrazo:"cm",cintura:"cm",abdomenBajo:"cm",caderas:"cm",muslo:"cm",pantorrilla:"cm"};
+function pdEtiqueta(id){ const c = CAMPOS_MEDIDA.find(x=>x.id===id); return c ? c.etiqueta : id; }
+const METRICAS_GRAFICO = PD_TODOS.map(id => ({
+  id, nombre: id==="grasaPct" ? "Grasa corporal" : pdEtiqueta(id).replace(/\s*\([^)]*\)\s*$/,""), unidad: UNIDAD_MEDIDA[id], fuente:"medida"
+})).concat([
+  {id:"kcalConsumidas", nombre:"Calorías consumidas", unidad:"kcal", fuente:"dia"},
+  {id:"kcalQuemadas",   nombre:"Calorías quemadas",   unidad:"kcal", fuente:"dia"},
+  {id:"agua",           nombre:"Agua bebida",         unidad:"ml",   fuente:"dia"}
+]);
+
+let granularidadGrafico = "sem";
+
+function poblarSelectorGrafico(){
+  const sel = document.getElementById("graficoMetrica");
+  sel.innerHTML = METRICAS_GRAFICO.map(m => `<option value="${m.id}">${esc(m.nombre)}</option>`).join("");
+}
+
+function serieDeMetrica(m){
+  if(m.fuente === "dia"){
+    return Object.keys(estado.dias).map(f=>{
+      let valor;
+      if(m.id === "kcalConsumidas") valor = totalesDelDia(f).kcal;
+      else if(m.id === "kcalQuemadas") valor = quemadasTotales(f).total;
+      else valor = aguaTotalDe(f);
+      return {fecha:f, valor};
+    }).filter(p => p.valor > 0);
+  }
+  return medidas.filter(x => x[m.id] > 0).map(x => ({fecha:x.fecha, valor:x[m.id]}));
+}
+
+const MESES_CORTOS = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+function diaUTC(f){ const p = f.split("-").map(Number); return Date.UTC(p[0], p[1]-1, p[2]) / 864e5; }
+function isoDeDia(n){ return new Date(Math.round(n) * 864e5).toISOString().slice(0,10); }
+function etiquetaDia(n, conAnio){
+  const f = isoDeDia(n).split("-");
+  return conAnio ? MESES_CORTOS[+f[1]-1] + " " + f[0].slice(2) : (+f[2]) + " " + MESES_CORTOS[+f[1]-1];
+}
+function escalaBonita(mn, mx){
+  if(mx - mn < 1e-9){ mn -= 1; mx += 1; }
+  const bruto = (mx - mn) / 4, mag = Math.pow(10, Math.floor(Math.log10(bruto))), norm = bruto / mag;
+  const paso = (norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 2.5 ? 2.5 : norm <= 5 ? 5 : 10) * mag;
+  const lo = Math.floor(mn / paso) * paso, hi = Math.ceil(mx / paso) * paso, ticks = [];
+  for(let v = lo; v <= hi + paso/2; v += paso) ticks.push(Math.round(v*1000)/1000);
+  return {lo, hi: ticks[ticks.length-1], ticks};
+}
+
+function renderGraficoProgreso(){
+  renderBarrasRef();
+  const sel = document.getElementById("graficoMetrica");
+  const m = METRICAS_GRAFICO.find(x => x.id === sel.value) || METRICAS_GRAFICO[0];
+  const cont = document.getElementById("graficoProgreso");
+  const g = granularidadGrafico, hoy = diaUTC(hoyISO()), u = m.unidad ? " " + m.unidad : "";
+  const todos = serieDeMetrica(m).map(p => ({d:diaUTC(p.fecha), v:p.valor})).sort((a,b) => a.d - b.d);
+
+  let ini = g==="sem" ? hoy-6 : g==="mes" ? hoy-29 : g==="anio" ? hoy-364 : Math.min(todos.length ? todos[0].d : hoy, hoy-6);
+  const fin = hoy;
+  let pts = todos.filter(p => p.d >= ini && p.d <= fin);
+  if(g === "anio"){ // un punto por mes (promedio)
+    const grupos = {};
+    pts.forEach(p => { const k = isoDeDia(p.d).slice(0,7); (grupos[k] = grupos[k] || []).push(p.v); });
+    pts = Object.keys(grupos).sort().map(k => ({
+      d: Math.min(fin, Math.max(ini, diaUTC(k + "-15"))), v: grupos[k].reduce((a,b)=>a+b,0) / grupos[k].length
+    }));
+  }
+  if(!pts.length){
+    cont.innerHTML = `<div class="rep-nota">Sin datos de "${esc(m.nombre)}" en este periodo.${todos.length ? " Prueba con <b>Todo</b> o <b>Año</b>." : ""}</div>`;
+    return;
+  }
+
+  const pi = m.id === "peso" ? pesoInicialPerfil() : null;
+  const ult = pts[pts.length-1].v, prim = pts[0].v, base = pi || prim;
+  const prom = pts.reduce((a,p)=>a+p.v,0) / pts.length;
+  const vals = pts.map(p => p.v), mn = Math.min(...vals), mx = Math.max(...vals);
+  const cambio = ult - base, signo = cambio > 0 ? "+" : "";
+
+  // escala vertical con aire arriba y abajo
+  const todosV = vals.concat(pi ? [pi] : []);
+  const a = Math.min(...todosV), b = Math.max(...todosV), aire = (b - a) * 0.15 || 1;
+  const esc_ = escalaBonita(a - aire, b + aire);
+  const W = 340, H = 210, pl = 40, pr = 14, pt = 18, pb = 26;
+  const X = d => pl + (d - ini) / ((fin - ini) || 1) * (W - pl - pr);
+  const Y = v => pt + (esc_.hi - v) / (esc_.hi - esc_.lo) * (H - pt - pb);
+
+  let svg = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block" role="img" aria-label="Gráfico de ${esc(m.nombre)}">
+    <defs><linearGradient id="gArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" style="stop-color:var(--accent);stop-opacity:.35"/><stop offset="100%" style="stop-color:var(--accent);stop-opacity:0"/></linearGradient></defs>`;
+  esc_.ticks.forEach(t => {
+    svg += `<line x1="${pl}" x2="${W-pr}" y1="${Y(t).toFixed(1)}" y2="${Y(t).toFixed(1)}" stroke="var(--line)" stroke-width="1"/>
+      <text x="${pl-5}" y="${(Y(t)+3).toFixed(1)}" text-anchor="end" font-size="9" fill="var(--muted)">${Number(t.toFixed(2))}</text>`;
+  });
+  const anioLargo = g === "anio" || (fin - ini) > 200;
+  for(let i = 0; i <= 3; i++){
+    const d = ini + (fin - ini) * i / 3;
+    svg += `<text x="${X(d).toFixed(1)}" y="${H-8}" text-anchor="${i===0?"start":i===3?"end":"middle"}" font-size="9" fill="var(--muted)">${etiquetaDia(d, anioLargo)}</text>`;
+  }
+  if(pi) svg += `<line x1="${pl}" x2="${W-pr}" y1="${Y(pi).toFixed(1)}" y2="${Y(pi).toFixed(1)}" stroke="var(--warn)" stroke-width="1.5" stroke-dasharray="5 4"/>
+      <text x="${W-pr}" y="${(Y(pi)-4).toFixed(1)}" text-anchor="end" font-size="9" fill="var(--warn)">inicial ${fmt(pi)}</text>`;
+
+  let pendiente = null;
+  if(pts.length >= 3 && pts[pts.length-1].d - pts[0].d >= 5){ // línea de tendencia (mínimos cuadrados)
+    const n = pts.length, sx = pts.reduce((s,p)=>s+p.d,0), sy = pts.reduce((s,p)=>s+p.v,0);
+    const sxy = pts.reduce((s,p)=>s+p.d*p.v,0), sxx = pts.reduce((s,p)=>s+p.d*p.d,0);
+    const den = n*sxx - sx*sx;
+    if(den){
+      pendiente = (n*sxy - sx*sy) / den; const c = (sy - pendiente*sx) / n;
+      const d1 = pts[0].d, d2 = pts[n-1].d;
+      svg += `<line x1="${X(d1).toFixed(1)}" y1="${Y(pendiente*d1+c).toFixed(1)}" x2="${X(d2).toFixed(1)}" y2="${Y(pendiente*d2+c).toFixed(1)}" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="2 4" stroke-linecap="round"/>`;
+    }
+  }
+  if(pts.length >= 2){
+    const linea = pts.map((p,i) => (i?"L":"M") + X(p.d).toFixed(1) + "," + Y(p.v).toFixed(1)).join(" ");
+    svg += `<path d="${linea} L${X(pts[pts.length-1].d).toFixed(1)},${Y(esc_.lo).toFixed(1)} L${X(pts[0].d).toFixed(1)},${Y(esc_.lo).toFixed(1)} Z" fill="url(#gArea)"/>
+      <path d="${linea}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+  }
+  pts.forEach((p,i) => {
+    const ultimo = i === pts.length-1, x = X(p.d).toFixed(1), y = Y(p.v).toFixed(1);
+    const tit = (g==="anio" ? etiquetaDia(p.d, true) + " (promedio)" : isoDeDia(p.d)) + ": " + fmt(p.v) + u;
+    svg += ultimo ? `<circle cx="${x}" cy="${y}" r="9" fill="var(--accent)" opacity=".2"/><circle cx="${x}" cy="${y}" r="5" fill="var(--accent)" stroke="var(--panel)" stroke-width="2"><title>${esc(tit)}</title></circle>
+        <text x="${x}" y="${(+y-12).toFixed(1)}" text-anchor="${X(p.d) > W-60 ? "end" : "middle"}" font-size="11" font-weight="700" fill="var(--accent)">${fmt(p.v)}</text>`
+      : `<circle cx="${x}" cy="${y}" r="3.2" fill="var(--accent)"><title>${esc(tit)}</title></circle>`;
+  });
+  svg += `</svg>`;
+
+  const clase = cambio > 0 ? "gr-sube" : cambio < 0 ? "gr-baja" : "";
+  const resumen = `<div class="gr-res">
+    <div><b>${fmt(ult)}${u}</b><span>Último</span></div>
+    <div><b class="${clase}">${signo}${fmt(cambio)}${u}</b><span>${pi ? "vs inicial" : "vs primero"}</span></div>
+    <div><b>${fmt(prom)}${u}</b><span>Promedio</span></div>
+    <div><b>${fmt(mn)}–${fmt(mx)}</b><span>Mín–máx</span></div></div>`;
+  let nota = pts.length + " dato" + (pts.length===1 ? "" : "s") + (g==="anio" ? " (promedio por mes)" : "");
+  if(pendiente !== null && m.id === "peso") nota += " · tendencia: " + (pendiente*7 > 0 ? "+" : "") + fmt(pendiente*7) + " kg por semana";
+  else if(pts.length < 3) nota += " · con pocos datos la línea es corta; se irá llenando a medida que registres.";
+  cont.innerHTML = resumen + svg + `<div class="rep-nota">${nota}</div>`;
+}
+
+document.getElementById("graficoMetrica").addEventListener("change", renderGraficoProgreso);
+document.querySelectorAll("#graficoGranularidad button").forEach(b=>{
+  b.onclick = ()=>{
+    granularidadGrafico = b.dataset.g;
+    document.querySelectorAll("#graficoGranularidad button").forEach(x=>x.classList.toggle("on", x===b));
+    renderGraficoProgreso();
+  };
+});
+
+function aguaTotalDe(f){
+  const d = estado.dias[f];
+  return (d && Array.isArray(d.agua)) ? d.agua.reduce((s,x)=>s+x,0) : 0;
+}
+function renderAgua(){
+  const total = aguaTotalDe(fechaActual);
+  const meta = estado.metaAgua || 0;
+  document.getElementById("aguaTotal").textContent = total + (meta ? " / " + meta : "") + " ml";
+  const pct = meta ? total/meta*100 : null;
+  document.getElementById("aguaBarra").innerHTML = meta
+    ? cuadritos(pct, "agua", "Agua: " + total + " de " + meta + " ml")
+    : `<div class="rep-nota" style="margin:0">Poné una meta diaria para ver la barra.</div>`;
+  document.getElementById("aguaMeta").value = estado.metaAgua || "";
+  const log = document.getElementById("aguaLog");
+  log.innerHTML = "";
+  const d = estado.dias[fechaActual];
+  ((d && d.agua) || []).forEach((ml, idx)=>{
+    const chip = document.createElement("span");
+    chip.className = "agua-chip";
+    chip.innerHTML = `${ml} ml <button type="button" aria-label="Quitar ${ml} ml">✕</button>`;
+    chip.querySelector("button").onclick = ()=>{ diaDe(fechaActual).agua.splice(idx,1); guardarEstado(); render(); };
+    log.appendChild(chip);
+  });
+}
+function sumarAgua(ml){
+  if(!(ml > 0) || ml > 5000) return;
+  diaDe(fechaActual).agua.push(Math.round(ml));
+  guardarEstado();
+  render();
+}
+
+function render(){
+  const d = new Date(fechaActual+"T00:00:00");
+  const esHoy = fechaActual === hoyISO();
+  document.getElementById("fechaLabel").textContent =
+    (esHoy?"Hoy, ":"") + d.toLocaleDateString("es-ES",{weekday:"long",day:"numeric",month:"long"});
+  document.getElementById("diaSiguiente").disabled = esHoy;
+
+  dibujarSemana();
+
+  const t = totalesDelDia(fechaActual);
+  document.getElementById("mGrasa").textContent = t.grasa ? t.grasa+"g" : "–";
+  document.getElementById("mCarbh").textContent = t.carbh ? t.carbh+"g" : "–";
+  document.getElementById("mProt").textContent = t.prot ? t.prot+"g" : "–";
+  document.getElementById("mCals").textContent = t.kcal;
+
+  renderProgreso();
+  renderAgua();
+
+  const dia = diaDe(fechaActual);
+  const q = quemadasTotales(fechaActual);
+  document.getElementById("quemadasInput").value = dia.quemadas || "";
+  window._notaQuemadas = " Es solo el gasto extra del ejercicio: lo que ya quemas en reposo no se suma.";
+  document.getElementById("metaInput").value = estado.meta || "";
+
+  const ej = q.ej;
+  let sub;
+  if(!ej.hayHistorial) sub = "Sin datos de Fitness todavía: se suman solas cuando ese módulo guarde su historial.";
+  else if(ej.n === 0) sub = "Fitness no registró actividad este día.";
+  else {
+    sub = `Desde Fitness: ${ej.kcal} kcal (${ej.n} ${ej.n===1?"actividad":"actividades"}${ej.estimadas ? ", " + ej.estimadas + " estimada" + (ej.estimadas===1?"":"s") + " con tu peso" : ""}).`;
+    if(ej.sinPeso) sub += ` Pon tu peso en ⚙️ Ajustes → Perfil para estimar ${ej.sinPeso} más.`;
+  }
+  document.getElementById("qSub").textContent = sub;
+
+  document.getElementById("rConsumidas").textContent = t.kcal + " kcal";
+  document.getElementById("rQuemadas").textContent = q.total + " kcal";
+
+  const rMetaEl = document.getElementById("rMeta");
+  if(estado.meta) rMetaEl.textContent = estado.meta + " kcal";
+  else rMetaEl.innerHTML = '<a href="#" id="rMetaLink" style="color:var(--accent)">Pon tu meta en Perfil</a>';
+  const restantesEl = document.getElementById("rRestantes");
+  if(estado.meta){
+    const restantes = estado.meta - t.kcal + q.total;
+    restantesEl.textContent = restantes + " kcal";
+    restantesEl.classList.toggle("negativo", restantes<0);
+  } else {
+    restantesEl.textContent = "–";
+    restantesEl.classList.remove("negativo");
+  }
+
+  const cont = document.getElementById("comidas");
+  cont.innerHTML = "";
+  MEALS.forEach(c=>{
+    const div = document.createElement("div");
+    div.className = "comida";
+    const header = document.createElement("div");
+    header.className = "comida-header";
+    header.innerHTML = `
+      <div class="comida-nombre"><span>${c.icono}</span><span>${c.nombre}</span></div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="comida-kcal">${totalDeComidaConSnacks(fechaActual,c.id)} kcal</span>
+        <button class="btn-mas" data-comida="${c.id}">+</button>
+        <button class="btn-mas-snack" data-comida="${c.id}" title="Agregar un snack pegado a esta comida">+ 🍎</button>
+      </div>`;
+    div.appendChild(header);
+
+    const lista = document.createElement("div");
+    lista.className = "comida-lista";
+    dia.comidas[c.id].forEach((item,idx)=>{
+      const fila = document.createElement("div");
+      fila.className = "item";
+      const detalleCantidad = item.gramos!==undefined ? `${item.gramos} g` : `${item.porciones} porc.`;
+      fila.innerHTML = `
+        <div>${esc(item.nombre)}<div class="item-detalle">${detalleCantidad} · ${Math.round(item.kcal)} kcal</div></div>
+        <button class="item-borrar" data-comida="${c.id}" data-idx="${idx}">✕</button>`;
+      lista.appendChild(fila);
+    });
+    snacksPegadosA(fechaActual, c.id).forEach(({item, idx})=>{
+      const fila = document.createElement("div");
+      fila.className = "item item-snack";
+      const detalleCantidad = item.gramos!==undefined ? `${item.gramos} g` : `${item.porciones} porc.`;
+      fila.innerHTML = `
+        <div>🍎 ${esc(item.nombre)}<div class="item-detalle">${detalleCantidad} · ${Math.round(item.kcal)} kcal · snack</div></div>
+        <button class="item-borrar" data-comida="snacks" data-idx="${idx}">✕</button>`;
+      lista.appendChild(fila);
+    });
+    div.appendChild(lista);
+
+    if(buscadorAbiertoEn === c.id) div.appendChild(crearBuscador(c.id, false));
+    if(buscadorSnackAbiertoEn === c.id) div.appendChild(crearBuscador(c.id, true));
+    cont.appendChild(div);
+  });
+
+  cont.querySelectorAll(".item-borrar").forEach(btn=>{
+    btn.onclick = ()=>{
+      const {comida, idx} = btn.dataset;
+      diaDe(fechaActual).comidas[comida].splice(idx,1);
+      guardarEstado(); render();
+    };
+  });
+  cont.querySelectorAll(".btn-mas").forEach(btn=>{
+    btn.onclick = ()=>{
+      buscadorAbiertoEn = (buscadorAbiertoEn===btn.dataset.comida) ? null : btn.dataset.comida;
+      buscadorSnackAbiertoEn = null;
+      render();
+    };
+  });
+  cont.querySelectorAll(".btn-mas-snack").forEach(btn=>{
+    btn.onclick = ()=>{
+      buscadorSnackAbiertoEn = (buscadorSnackAbiertoEn===btn.dataset.comida) ? null : btn.dataset.comida;
+      buscadorAbiertoEn = null;
+      render();
+    };
+  });
+
+  renderHeat();
+}
+
+function crearBuscador(comidaId, esSnack){
+  const claveTab = esSnack ? "snack:"+comidaId : comidaId;
+  if(!tabBuscadorPorComida[claveTab]) tabBuscadorPorComida[claveTab] = "alimento";
+  const box = document.createElement("div");
+  box.className = "buscador";
+  box.innerHTML = `
+    <div class="tabs-buscador">
+      <button type="button" class="tab-alimento">🔍 Alimentos</button>
+      <button type="button" class="tab-receta">📖 Mis recetas</button>
+      <button type="button" class="tab-guardada">🍽️ Guardadas</button>
+    </div>
+    <div class="panel-alimento"></div>
+    <div class="panel-receta" style="display:none"></div>
+    <div class="panel-guardada" style="display:none"></div>
+    <button class="cerrar-buscador">Cerrar</button>`;
+
+  const tabAlimento = box.querySelector(".tab-alimento");
+  const tabReceta = box.querySelector(".tab-receta");
+  const tabGuardada = box.querySelector(".tab-guardada");
+  const panelAlimento = box.querySelector(".panel-alimento");
+  const panelReceta = box.querySelector(".panel-receta");
+  const panelGuardada = box.querySelector(".panel-guardada");
+
+  function agregarItem(nuevoItem){
+    if(esSnack){
+      nuevoItem.pegadaA = comidaId;
+      diaDe(fechaActual).comidas.snacks.push(nuevoItem);
+      buscadorSnackAbiertoEn = null;
+    } else {
+      diaDe(fechaActual).comidas[comidaId].push(nuevoItem);
+      buscadorAbiertoEn = null;
+    }
+    guardarEstado(); render();
+  }
+
+  panelAlimento.appendChild(crearPanelBusqueda({
+    conFrecuentes: true,
+    onElegir: (p, gramos)=>{
+      agregarItem({
+        nombre: p.nombre, gramos, kcal:(p.kcal100*gramos)/100,
+        grasa:(p.grasa100*gramos)/100, carbh:(p.carbh100*gramos)/100, prot:(p.prot100*gramos)/100
+      });
+    }
+  }));
+
+  function pintarTabs(){
+    const activo = tabBuscadorPorComida[claveTab];
+    tabAlimento.classList.toggle("on", activo==="alimento");
+    tabReceta.classList.toggle("on", activo==="receta");
+    tabGuardada.classList.toggle("on", activo==="guardada");
+    panelAlimento.style.display = activo==="alimento" ? "block" : "none";
+    panelReceta.style.display = activo==="receta" ? "block" : "none";
+    panelGuardada.style.display = activo==="guardada" ? "block" : "none";
+    if(activo==="receta") pintarPanelReceta();
+    if(activo==="guardada") pintarPanelGuardada();
+  }
+  function pintarPanelGuardada(){
+    if(comidasGuardadas.length===0){
+      panelGuardada.innerHTML = `<div class="estado">Todavía no tenés comidas guardadas. Creá una en "Comidas guardadas", más abajo.</div>`;
+      return;
+    }
+    panelGuardada.innerHTML = "";
+    comidasGuardadas.forEach(c=>{
+      const totalKcal = c.items.reduce((s,i)=>s+i.kcal,0);
+      const div = document.createElement("div");
+      div.className = "receta-usar";
+      div.innerHTML = `
+        <div class="ru-fila">
+          <div><b>${esc(c.nombre)}</b><div class="item-detalle">${Math.round(totalKcal)} kcal · ${c.items.length} alimento(s)</div></div>
+          <button class="btn-agregar" type="button">Agregar todo</button>
+        </div>`;
+      div.querySelector(".btn-agregar").onclick = ()=>{
+        c.items.forEach(item=> agregarItem(Object.assign({}, item)));
+      };
+      panelGuardada.appendChild(div);
+    });
+  }
+  function pintarPanelReceta(){
+    if(recetas.length===0){
+      panelReceta.innerHTML = `<div class="estado">Todavía no tenés recetas guardadas. Creá una en "Mis recetas", más abajo.</div>`;
+      return;
+    }
+    panelReceta.innerHTML = "";
+    recetas.forEach(r=>{
+      const div = document.createElement("div");
+      div.className = "receta-usar";
+      div.innerHTML = `
+        <div class="ru-fila">
+          <div><b>${esc(r.nombre)}</b><div class="item-detalle">${Math.round(r.kcalPorc)} kcal/porción</div></div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <input type="number" value="1" min="0.5" step="0.5" class="ru-cant">
+            <button class="btn-agregar" type="button">Agregar</button>
+          </div>
+        </div>`;
+      div.querySelector(".btn-agregar").onclick = ()=>{
+        const cant = parseFloat(div.querySelector(".ru-cant").value) || 1;
+        agregarItem({
+          nombre: r.nombre + (cant!==1 ? ` (${cant} porc.)` : ""),
+          porciones: cant,
+          kcal: r.kcalPorc*cant, grasa: r.grasaPorc*cant, carbh: r.carbhPorc*cant, prot: r.protPorc*cant
+        });
+      };
+      panelReceta.appendChild(div);
+    });
+  }
+  tabAlimento.onclick = ()=>{ tabBuscadorPorComida[claveTab]="alimento"; pintarTabs(); };
+  tabReceta.onclick = ()=>{ tabBuscadorPorComida[claveTab]="receta"; pintarTabs(); };
+  tabGuardada.onclick = ()=>{ tabBuscadorPorComida[claveTab]="guardada"; pintarTabs(); };
+  pintarTabs();
+
+  box.querySelector(".cerrar-buscador").onclick = ()=>{
+    if(esSnack) buscadorSnackAbiertoEn = null; else buscadorAbiertoEn = null;
+    render();
+  };
+  return box;
+}
+
+// ---------- Perfil y medidas ----------
+function abrirIDB(){
+  return new Promise((res, rej)=>{
+    if(!window.indexedDB){ rej(new Error("IndexedDB no disponible")); return; }
+    const r = indexedDB.open("dietaInformes", 1);
+    r.onupgradeneeded = ()=>{ r.result.createObjectStore("fotos"); };
+    r.onsuccess = ()=>res(r.result);
+    r.onerror = ()=>rej(r.error);
+  });
+}
+async function fotoGuardar(clave, blob){
+  const db = await abrirIDB();
+  return new Promise((res, rej)=>{
+    const tx = db.transaction("fotos", "readwrite");
+    tx.objectStore("fotos").put(blob, clave);
+    tx.oncomplete = ()=>res();
+    tx.onerror = ()=>rej(tx.error);
+  });
+}
+async function fotoLeer(clave){
+  const db = await abrirIDB();
+  return new Promise((res, rej)=>{
+    const rq = db.transaction("fotos", "readonly").objectStore("fotos").get(clave);
+    rq.onsuccess = ()=>res(rq.result || null);
+    rq.onerror = ()=>rej(rq.error);
+  });
+}
+async function fotoBorrar(clave){
+  try{
+    const db = await abrirIDB();
+    await new Promise((res, rej)=>{
+      const tx = db.transaction("fotos", "readwrite");
+      tx.objectStore("fotos").delete(clave);
+      tx.oncomplete = ()=>res();
+      tx.onerror = ()=>rej(tx.error);
+    });
+  }catch(e){ /* sin foto que borrar */ }
+}
+function claveFoto(id){ return perfilActivo + "|" + id; }
+function urlSegura(u){
+  u = String(u||"").trim();
+  return /^https?:\/\//i.test(u) ? u : "https://" + u;
+}
+
+// ---------- Leer foto de báscula con Gemini (opcional) ----------
+function claveGeminiKey(){ return "dietaGeminiKey"; } // una sola clave, no por perfil: la carga quien la tenga
+function claveGeminiModelo(){ return "dietaGeminiModelo"; }
+function claveSpoonacularKey(){ return "dietaSpoonacularKey"; } // igual que Gemini: local, no por perfil, no se sincroniza
+
+function archivoABase64(archivo){
+  return new Promise((resolve, reject)=>{
+    const r = new FileReader();
+    r.onload = ()=> resolve(r.result.split(",")[1]);
+    r.onerror = ()=> reject(new Error("No se pudo leer el archivo."));
+    r.readAsDataURL(archivo);
+  });
+}
+
+
+function pintarPerfil(){
+  document.getElementById("pfNombre").value = perfilDatos.nombre || "";
+  document.getElementById("pfGenero").value = perfilDatos.genero || "";
+  document.getElementById("pfEdad").value = perfilDatos.edad || "";
+  document.getElementById("pfAltura").value = perfilDatos.altura || "";
+  renderMedidas();
+}
+["pfNombre","pfGenero","pfEdad","pfAltura"].forEach(id=>{
+  document.getElementById(id).addEventListener("change", ()=>{
+    perfilDatos = {
+      nombre: document.getElementById("pfNombre").value.trim(),
+      genero: document.getElementById("pfGenero").value,
+      edad: parseInt(document.getElementById("pfEdad").value, 10) || null,
+      altura: parseFloat(document.getElementById("pfAltura").value) || null
+    };
+    escribirJSON(CLAVE_PERFIL_DATOS(), perfilDatos);
+    pintarTabsPerfil();
+  });
+});
+
+function renderMedidas(){
+  const cont = document.getElementById("listaMedidas");
+  const lista = medidas.slice().sort((a,b)=> a.fecha < b.fecha ? 1 : (a.fecha > b.fecha ? -1 : 0));
+  if(lista.length === 0){
+    cont.innerHTML = `<div class="empty-recetas">Todavía no guardaste ninguna medición.</div>`;
+    return;
+  }
+  cont.innerHTML = "";
+  lista.forEach((m, i)=>{
+    let pesoTxt = "";
+    if(m.peso > 0){
+      pesoTxt = fmt(m.peso) + " kg";
+      const prev = lista.slice(i+1).find(x => x.peso > 0);
+      if(prev){
+        const dif = Math.round((m.peso - prev.peso)*10)/10;
+        pesoTxt += " (" + (dif > 0 ? "+" : dif < 0 ? "−" : "±") + Math.abs(dif) + ")";
+      }
+    }
+    const partes = CAMPOS_MEDIDA.filter(c => c.id !== "peso" && m[c.id] > 0)
+      .map(c => c.etiqueta + ": " + fmt(m[c.id]));
+    const div = document.createElement("div");
+    div.className = "med-item";
+    div.innerHTML = `
+      <div class="med-cab">
+        <div><b>${esc(m.fecha)}</b> <span class="med-peso">${esc(pesoTxt)}</span></div>
+        <div class="med-acc">
+          ${(m.enlace || m.tieneFoto) ? '<button type="button" class="ver">Ver informe</button>' : ""}
+          <button type="button" class="borrar" aria-label="Borrar medición">✕</button>
+        </div>
+      </div>
+      ${partes.length ? `<div class="med-det">${esc(partes.join(" · "))}</div>` : ""}`;
+    const ver = div.querySelector(".ver");
+    if(ver) ver.onclick = ()=>abrirInforme(m);
+    div.querySelector(".borrar").onclick = ()=>borrarMedicion(m.id);
+    cont.appendChild(div);
+  });
+}
+
+async function borrarMedicion(id){
+  if(!(await confirmar("¿Borrar esta medición?",{si:"Borrar",peligro:true}))) return;
+  const m = medidas.find(x => x.id === id);
+  if(m && m.tieneFoto) await fotoBorrar(claveFoto(id));
+  medidas = medidas.filter(x => x.id !== id);
+  escribirJSON(CLAVE_MEDIDAS(), medidas);
+  renderMedidas();
+  render();
+  renderGraficoProgreso();
+}
+
+let urlFotoAbierta = null;
+async function abrirInforme(m){
+  const modal = document.getElementById("modalInforme");
+  const cuerpo = document.getElementById("miCuerpo");
+  document.getElementById("miTitulo").textContent = "Informe del " + m.fecha;
+  cuerpo.innerHTML = "";
+  if(m.enlace){
+    const p = document.createElement("div");
+    const a = document.createElement("a");
+    a.href = m.enlace; a.target = "_blank"; a.rel = "noopener noreferrer";
+    a.textContent = m.enlace;
+    p.appendChild(a);
+    cuerpo.appendChild(p);
+  }
+  modal.hidden = false;
+  if(m.tieneFoto){
+    try{
+      const blob = await fotoLeer(claveFoto(m.id));
+      if(blob){
+        urlFotoAbierta = URL.createObjectURL(blob);
+        const img = document.createElement("img");
+        img.src = urlFotoAbierta;
+        img.alt = "Foto del informe";
+        cuerpo.appendChild(img);
+      } else {
+        cuerpo.appendChild(Object.assign(document.createElement("div"), {className:"estado", textContent:"La foto no está en este navegador."}));
+      }
+    }catch(e){
+      cuerpo.appendChild(Object.assign(document.createElement("div"), {className:"estado", textContent:"No se pudo abrir la foto."}));
+    }
+  }
+}
+function cerrarInforme(){
+  document.getElementById("modalInforme").hidden = true;
+  document.getElementById("miCuerpo").innerHTML = "";
+  if(urlFotoAbierta){ URL.revokeObjectURL(urlFotoAbierta); urlFotoAbierta = null; }
+}
+document.getElementById("miCerrar").onclick = cerrarInforme;
+document.getElementById("modalInforme").addEventListener("click", e=>{ if(e.target.id === "modalInforme") cerrarInforme(); });
+document.addEventListener("keydown", e=>{ if(e.key === "Escape") cerrarInforme(); });
+
+// ---------- Eventos generales ----------
+document.getElementById("fechaSalto").onchange = e=>{ if(e.target.value && e.target.value<=hoyISO()){ fechaActual=e.target.value; buscadorAbiertoEn=null; buscadorSnackAbiertoEn=null; render(); } };
+document.getElementById("diaAnterior").onclick = ()=>{ fechaActual=sumarDias(fechaActual,-1); buscadorAbiertoEn=null; buscadorSnackAbiertoEn=null; render(); };
+document.getElementById("diaSiguiente").onclick = ()=>{ if(fechaActual===hoyISO())return; fechaActual=sumarDias(fechaActual,1); buscadorAbiertoEn=null; buscadorSnackAbiertoEn=null; render(); };
+document.getElementById("metaInput").addEventListener("change", e=>{
+  const v = parseFloat(e.target.value); estado.meta = v>0?v:null; guardarEstado(); render(); actualizarReparto(false);
+});
+document.getElementById("quemadasInput").addEventListener("change", e=>{
+  const v = parseFloat(e.target.value); diaDe(fechaActual).quemadas = v>0?v:0; guardarEstado(); render();
+});
+
+["repCarb","repProt","repGrasa"].forEach(id=>{
+  document.getElementById(id).addEventListener("input", ()=>{
+    actualizarReparto(true); renderProgreso(); renderHeat();
+  });
+});
+
+document.getElementById("btnNuevaReceta").onclick = iniciarNuevaReceta;
+document.getElementById("btnBuscarRecetas").onclick = iniciarBuscarRecetas;
+try{ iniciarBuscarRecetas(); }catch(e){ console.warn("No se pudo abrir el buscador de recetas:", e); } // el buscador queda abierto arriba al entrar en Recetas
+document.getElementById("btnNuevaComidaGuardada").onclick = iniciarNuevaComidaGuardada;
+
+document.querySelectorAll(".agua-botones button").forEach(b=>{
+  b.onclick = ()=>sumarAgua(parseInt(b.dataset.ml, 10));
+});
+document.getElementById("aguaSumarCustom").onclick = ()=>{
+  const inp = document.getElementById("aguaCustom");
+  const v = parseFloat(inp.value);
+  if(!(v > 0)){ avisar("Escribí cuántos ml tomaste."); return; }
+  if(v > 5000){ avisar("Máximo 5000 ml por vez."); return; }
+  sumarAgua(v);
+  inp.value = "";
+};
+document.getElementById("aguaDeshacer").onclick = ()=>{
+  const dia = diaDe(fechaActual);
+  if(dia.agua.length === 0) return;
+  dia.agua.pop(); guardarEstado(); render();
+};
+document.getElementById("aguaMeta").addEventListener("change", e=>{
+  const v = parseFloat(e.target.value); estado.metaAgua = v>0 ? v : null; guardarEstado(); render();
+});
+document.querySelectorAll("#heatChips button").forEach(b=>{
+  b.onclick = ()=>{ metricaHeat = b.dataset.m; renderHeat(); };
+});
+
+
+// ---------- Calendario del mes: comidas, quemadas y peso ----------
+let mesCal = hoyISO().slice(0,7), cmDiaSel = null;
+function pesosOrdenados(){ return leerJSON(CLAVE_MEDIDAS(), []).filter(x=>x && x.peso>0 && x.fecha).sort((a,b)=>a.fecha<b.fecha?-1:1); }
+function pesoInicialPerfil(){ const m = leerJSON("perfilMetasV1_"+perfilActivo, {}); return m && m.pesoInicial>0 ? m.pesoInicial : null; }
+function pesoDelDia(f, med){ // {v, propio} : el de ese día o, si no hay, el último anterior; si no, el peso inicial
+  let ult = null; for(const x of med){ if(x.fecha<=f) ult = x; else break; }
+  if(ult) return {v:ult.peso, propio: ult.fecha===f};
+  const pi = pesoInicialPerfil(); return pi ? {v:pi, propio:false} : null;
+}
+function renderCalMes(){
+  const [Y,M] = mesCal.split("-").map(Number), grid = document.getElementById("cmGrid"), med = pesosOrdenados();
+  document.getElementById("cmSalto").value = mesCal;
+  const diasMes = new Date(Y, M, 0).getDate(), lead = (new Date(Y, M-1, 1).getDay()+6)%7, meta = objetivosDia().kcal, hoy = hoyISO();
+  let h = "", sumC = 0, sumQ = 0, nDias = 0;
+  for(let i=0;i<lead;i++) h += "<span></span>";
+  for(let d=1; d<=diasMes; d++){
+    const f = mesCal + "-" + String(d).padStart(2,"0"), fut = f > hoy;
+    const c = totalesDelDia(f).kcal, q = quemadasTotales(f).total, tiene = !fut && (tieneDatos(f) || q>0), pd = fut ? null : pesoDelDia(f, med);
+    if(tiene){ sumC += c; sumQ += q; nDias++; }
+    let bg = "var(--panel-alt,#1b2330)";
+    if(tiene && meta){ const p = c/meta*100; bg = p<50?"rgba(53,194,106,0.2)":p<90?"rgba(53,194,106,0.45)":p<=110?"rgba(53,194,106,0.85)":"rgba(230,160,44,0.85)"; } else if(tiene) bg = "rgba(53,194,106,0.3)";
+    h += `<button type="button" data-f="${f}" ${fut?"disabled":""} style="min-height:76px;padding:3px 0;border-radius:8px;border:${f===cmDiaSel?"2px solid #35c26a":"1px solid #2a3242"};background:${bg};color:inherit;font-size:0.72rem;line-height:1.35;opacity:${fut?0.35:1}"><b style="font-size:0.85rem">${d}</b>${tiene?`<br>${c}<br><span style="color:#ffb454">−${q}</span>`:""}${pd?`<br><span style="color:#8fc5ff;opacity:${pd.propio?1:0.55};font-weight:${pd.propio?700:400}">${pd.v}</span>`:""}</button>`;
+  }
+  grid.innerHTML = h;
+  grid.querySelectorAll("button[data-f]").forEach(b=> b.onclick = ()=>{ cmDiaSel = b.dataset.f; renderCalMes(); cmDetalle(med); });
+  if(cmDiaSel && cmDiaSel.slice(0,7)===mesCal) cmDetalle(med); else document.getElementById("cmDetalle").innerHTML = "";
+  document.getElementById("cmResumen").textContent = nDias ? `Este mes (${nDias} días con datos): promedio ${Math.round(sumC/nDias)} kcal comidas al día · ${sumQ} kcal quemadas en total.` : "Aún no hay datos este mes.";
+}
+function cmDetalle(med){
+  const f = cmDiaSel, pd = pesoDelDia(f, med), c = totalesDelDia(f).kcal, q = quemadasTotales(f).total;
+  document.getElementById("cmDetalle").innerHTML = `<b>${f}</b>: 🍽 ${c} kcal · 🔥 ${q} kcal` + (pd ? ` · ⚖ ${pd.v} kg${pd.propio?"":" (último conocido)"}` : "") + ` <button type="button" id="cmAbrir" style="margin-left:6px;padding:4px 10px">Abrir este día</button>`;
+  document.getElementById("cmAbrir").onclick = ()=>{ fechaActual = f; buscadorAbiertoEn=null; buscadorSnackAbiertoEn=null; render(); window.scrollTo({top:0,behavior:"smooth"}); };
+}
+function cmMover(n){ const [Y,M] = mesCal.split("-").map(Number), d = new Date(Y, M-1+n, 1); mesCal = d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"); renderCalMes(); }
+
+// ---------- Calendario del mes: vista Cuadrícula / Lista ----------
+let modoCm = localStorage.getItem("nutriCalModoV1") === "lista" ? "lista" : "grid";
+function renderListaCm(){
+  const [Y,M] = mesCal.split("-").map(Number), n2 = new Date(Y, M, 0).getDate(), med = pesosOrdenados(), hoy = hoyISO(), box = document.getElementById("cmLista");
+  let h = "";
+  for(let d=1; d<=n2; d++){
+    const f = mesCal+"-"+String(d).padStart(2,"0"); if(f>hoy) break;
+    const c = totalesDelDia(f).kcal, q = quemadasTotales(f).total, pd = pesoDelDia(f, med), tiene = tieneDatos(f) || q>0, propio = pd && pd.propio;
+    if(!tiene && !propio) continue;
+    const nom = new Date(Y, M-1, d).toLocaleDateString("es-ES",{weekday:"long", day:"numeric", month:"long"});
+    h += `<button type="button" data-f="${f}" style="display:block;width:100%;text-align:left;padding:10px;margin:6px 0;border-radius:10px"><b style="text-transform:capitalize">${nom}</b><div style="font-size:0.92rem">Comidas: <b>${c}</b> kcal · Quemadas: <b style="color:#ffb454">${q}</b> kcal${pd?` · Peso: <b style="color:#8fc5ff">${pd.v}</b> kg${propio?"":" (último conocido)"}`:""}</div></button>`;
+  }
+  box.innerHTML = h || '<p class="rep-nota">No hay datos este mes.</p>';
+  box.querySelectorAll("button[data-f]").forEach(b=> b.onclick = ()=>{ fechaActual = b.dataset.f; buscadorAbiertoEn=null; buscadorSnackAbiertoEn=null; render(); window.scrollTo({top:0,behavior:"smooth"}); });
+}
+function aplicarModoCm(){
+  const l = modoCm === "lista";
+  document.getElementById("cmLista").style.display = l ? "block" : "none";
+  document.getElementById("cmGrid").style.display = l ? "none" : "grid";
+  document.querySelector("#calMesSec .heat-dias").style.display = l ? "none" : "";
+  document.getElementById("cmDetalle").style.display = l ? "none" : "";
+  document.getElementById("cmModoGrid").style.outline = l ? "none" : "2px solid #35c26a";
+  document.getElementById("cmModoLista").style.outline = l ? "2px solid #35c26a" : "none";
+  if(l) renderListaCm();
+}
+document.getElementById("cmModoGrid").onclick = ()=>{ modoCm = "grid"; localStorage.setItem("nutriCalModoV1","grid"); aplicarModoCm(); };
+document.getElementById("cmModoLista").onclick = ()=>{ modoCm = "lista"; localStorage.setItem("nutriCalModoV1","lista"); aplicarModoCm(); };
+const _rc0 = renderCalMes; renderCalMes = function(){ _rc0.apply(this, arguments); aplicarModoCm(); };
+document.getElementById("cmAnt").onclick = ()=> cmMover(-1);
+document.getElementById("cmSig").onclick = ()=> cmMover(1);
+document.getElementById("cmHoy").onclick = ()=>{ mesCal = hoyISO().slice(0,7); renderCalMes(); };
+document.getElementById("cmSalto").onchange = e=>{ if(e.target.value){ mesCal = e.target.value; renderCalMes(); } };
+
+
+// ---------- Peso y medidas del día (opcional) ----------
+function pesoRegDia(f){ return medidas.filter(x=>x && x.fecha===f && x.peso>0).slice(-1)[0] || null; }
+function regDia(f){ return medidas.filter(x=>x && x.fecha===f).slice(-1)[0] || null; }
+function pdArmar(){
+  const caja = ids => ids.map(id => `<div><label for="pd_${id}">${esc(pdEtiqueta(id))}</label><input type="number" id="pd_${id}" step="0.1" min="0" inputmode="decimal"></div>`).join("");
+  document.getElementById("pdPrincipales").innerHTML = caja(PD_PESO);
+  document.getElementById("pdExtra").innerHTML = caja(PD_COMP);
+  document.getElementById("pdMedidas").innerHTML = caja(PD_MED);
+}
+pdArmar();
+let pdClave = null; // para no borrar lo que estás escribiendo cuando la app se repinta
+let pdFechaFoto = null; // {f, desde}: fecha leída de la foto cuando no es el día que se está viendo
+function renderPesoHoy(){
+  const f = fechaActual, r = regDia(f);
+  if(pdFechaFoto && pdFechaFoto.desde !== f){ pdFechaFoto = null; document.getElementById("pdFechaNota").textContent = ""; }
+  const clave = f + "|" + PD_TODOS.map(id => r && r[id] > 0 ? r[id] : 0).join(",") + "|" + (r && r.enlace || "") + "|" + (r && r.tieneFoto ? 1 : 0);
+  if(clave === pdClave) return;
+  pdClave = clave;
+  PD_TODOS.forEach(id => { const inp = document.getElementById("pd_"+id); if(inp) inp.value = r && r[id] > 0 ? r[id] : ""; });
+  document.getElementById("pdEnlace").value = r && r.enlace ? r.enlace : "";
+  const hayP = !!r && PD_PESO.concat(PD_COMP).some(id => r[id] > 0), hayM = !!r && PD_MED.some(id => r[id] > 0), ult = pesoDelDia(f, pesosOrdenados());
+  document.getElementById("pd_peso").placeholder = (!(r && r.peso > 0) && ult) ? String(ult.v) : "kg";
+  document.getElementById("pesoHoyEstado").textContent = hayP ? "guardado" : "";
+  document.getElementById("pesoHoyNota").textContent = hayP ? "Guardado en este día. Aparece en el gráfico y en el calendario."
+    : (ult ? "Sin registro este día. Último peso conocido: " + ult.v + " kg." : "Aún sin registro. Todo es opcional.");
+  document.getElementById("medHoyEstado").textContent = hayM ? "guardado" : "";
+  document.getElementById("pesoHoyQuitar").style.display = hayP ? "" : "none";
+  document.getElementById("medHoyQuitar").style.display = hayM ? "" : "none";
+  document.getElementById("pdVerInforme").style.display = (r && (r.enlace || r.tieneFoto)) ? "" : "none";
+  if(r && PD_COMP.some(id => r[id] > 0)) document.getElementById("pdMas").open = true;
+  if(hayM) document.getElementById("mdDia").open = true;
+}
+function pesoHoyRefrescar(){ pdClave = null; renderMedidas(); render(); renderGraficoProgreso(); renderCalMes(); }
+function pdLeerValores(ids){
+  const vals = {}; let fuera = "";
+  ids.forEach(id=>{
+    const raw = String(document.getElementById("pd_"+id).value).replace(",",".").trim();
+    if(raw === "") return;
+    const v = parseFloat(raw), rg = PD_RANGOS[id];
+    if(!(v >= rg[0] && v <= rg[1])) fuera += pdEtiqueta(id) + " (entre " + rg[0] + " y " + rg[1] + "). ";
+    else vals[id] = Math.round(v*10)/10;
+  });
+  return {vals, fuera};
+}
+function pdLimpiarSiVacio(r){
+  if(!CAMPOS_MEDIDA.some(c => r[c.id] > 0) && !r.enlace && !r.tieneFoto) medidas = medidas.filter(x => x !== r);
+}
+// esPeso=true: peso + composición + foto/enlace del informe. esPeso=false: medidas con cinta.
+async function pdGuardar(esPeso){
+  const ids = esPeso ? PD_PESO.concat(PD_COMP) : PD_MED;
+  const lec = pdLeerValores(ids);
+  if(lec.fuera){ avisar("Revisa estos valores, se ven fuera de lo normal: " + lec.fuera); return; }
+  const vals = lec.vals;
+  const archivo = esPeso ? document.getElementById("pdFoto").files[0] : null;
+  const guardarFoto = !!archivo && document.getElementById("pdGuardarFoto").checked;
+  const enlace = esPeso ? document.getElementById("pdEnlace").value.trim() : "";
+  if(!Object.keys(vals).length && !guardarFoto && !enlace){ avisar("Escribe al menos un dato."); return; }
+  const f = (esPeso && pdFechaFoto) ? pdFechaFoto.f : fechaActual;
+  let r = regDia(f);
+  if(!r){ r = {id:"m"+Date.now(), fecha:f}; medidas.push(r); }
+  ids.forEach(id => { if(id in vals) r[id] = vals[id]; else delete r[id]; });
+  if(esPeso){
+    if(enlace) r.enlace = urlSegura(enlace); else delete r.enlace;
+    // lo que se calcula solo (no se pide en el formulario)
+    if(r.peso > 0){
+      const alt = perfilDatos && perfilDatos.altura;
+      if(alt > 0) r.bmi = Math.round(r.peso / Math.pow(alt/100, 2) * 10) / 10;
+      if(r.grasaPct > 0){ r.grasaKg = Math.round(r.peso * r.grasaPct / 10) / 10; r.pesoSinGrasa = Math.round((r.peso - r.grasaKg) * 10) / 10; }
+      else { delete r.grasaKg; delete r.pesoSinGrasa; }
+    } else PD_DERIVADOS.forEach(id => delete r[id]);
+  }
+  if(guardarFoto){
+    try{ await fotoGuardar(claveFoto(r.id), archivo); r.tieneFoto = true; }
+    catch(e){ avisar("No se pudo guardar la foto en este navegador. Los datos sí se guardaron."); }
+  }
+  if(esPeso){
+    document.getElementById("pdFoto").value = "";
+    document.getElementById("pdGuardarFoto").checked = false;
+    document.getElementById("pdIaEstado").textContent = "";
+    document.getElementById("pdFechaNota").textContent = "";
+    pdFechaFoto = null; fechaActual = f;
+  }
+  escribirJSON(CLAVE_MEDIDAS(), medidas); pesoHoyRefrescar();
+}
+document.getElementById("pesoHoyGuardar").onclick = ()=> pdGuardar(true);
+document.getElementById("medHoyGuardar").onclick = ()=> pdGuardar(false);
+document.getElementById("pesoHoyQuitar").onclick = async ()=>{
+  const r = regDia(fechaActual); if(!r) return;
+  if(!(await confirmar("¿Quitar el peso, la composición corporal y el informe (enlace y foto) de este día?",{si:"Quitar",peligro:true}))) return;
+  PD_PESO.concat(PD_COMP, PD_DERIVADOS, PD_COMP_VIEJOS).forEach(id => delete r[id]);
+  delete r.enlace;
+  if(r.tieneFoto){ try{ await fotoBorrar(claveFoto(r.id)); }catch(e){} delete r.tieneFoto; }
+  pdLimpiarSiVacio(r);
+  escribirJSON(CLAVE_MEDIDAS(), medidas); pesoHoyRefrescar();
+};
+document.getElementById("medHoyQuitar").onclick = async ()=>{
+  const r = regDia(fechaActual); if(!r) return;
+  if(!(await confirmar("¿Quitar las medidas de este día?",{si:"Quitar",peligro:true}))) return;
+  PD_MED.forEach(id => delete r[id]);
+  pdLimpiarSiVacio(r);
+  escribirJSON(CLAVE_MEDIDAS(), medidas); pesoHoyRefrescar();
+};
+document.getElementById("pdVerInforme").onclick = ()=>{ const r = regDia(fechaActual); if(r) abrirInforme(r); };
+// Leer la foto de la báscula: solo lee y rellena los campos; no guarda nada (la foto solo se guarda si marcas la casilla)
+document.getElementById("pdLeer").onclick = async ()=>{
+  const est = document.getElementById("pdIaEstado"), nota = document.getElementById("pdFechaNota"), archivo = document.getElementById("pdFoto").files[0];
+  const key = IAClaves.tieneGemini() ? "ok" : "";
+  const modelo = (localStorage.getItem(claveGeminiModelo()) || "").trim() || "gemini-3.1-flash-lite";
+  nota.textContent = ""; pdFechaFoto = null;
+  if(!archivo){ est.textContent = "Primero elige la foto de la báscula."; return; }
+  if(!key){ est.innerHTML = 'Falta la clave de Gemini. Ponla una vez en <a href="ajustes.html">⚙️ Ajustes</a>.'; return; }
+  est.textContent = "Leyendo la foto...";
+  try{
+    const base64 = await archivoABase64(archivo);
+    const idsLeer = PD_PESO.concat(PD_COMP);
+    const prompt = "Esta imagen es la pantalla de una báscula inteligente o app de composición corporal (OKOK). Devuelve SOLO un objeto JSON, sin texto extra ni ```, con estas claves exactas: " +
+      idsLeer.concat(["fecha"]).map(id => '"' + id + '"').join(", ") + ". Usa null si el dato no aparece. Copia los números tal como se ven, con punto decimal y sin unidades. " +
+      "musculoEsqKg es la masa muscular esquelética en kg (si solo sale en %, pon null). metabolismo es el metabolismo basal en kcal. aguaPct y grasaPct son porcentajes. " +
+      "fecha es la fecha de la medición que aparece en la pantalla, en formato AAAA-MM-DD (si sale 2026/10/04 devuelve \"2026-10-04\"); null si no aparece.";
+    const data = await IAClaves.gemini({contents:[{parts:[{inline_data:{mime_type:archivo.type || "image/jpeg", data:base64}}, {text:prompt}]}]});
+    const texto = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    const campos = JSON.parse(texto.replace(/```json|```/g, "").trim());
+    let n = 0; const raros = [];
+    idsLeer.forEach(id=>{
+      const v = campos[id]; if(typeof v !== "number" || !(v > 0)) return;
+      const rg = PD_RANGOS[id];
+      if(v < rg[0] || v > rg[1]){ raros.push(pdEtiqueta(id) + " (leyó " + v + ")"); return; }
+      document.getElementById("pd_"+id).value = v; n++;
+    });
+    if(PD_COMP.some(id => document.getElementById("pd_"+id).value)) document.getElementById("pdMas").open = true;
+    // fecha de la pesada: si la foto es de otro día, se guarda en ese día
+    const fv = typeof campos.fecha === "string" ? campos.fecha.trim() : "";
+    if(/^\d{4}-\d{2}-\d{2}$/.test(fv) && isoDeDia(diaUTC(fv)) === fv && fv <= hoyISO()){
+      if(fv !== fechaActual){
+        pdFechaFoto = {f: fv, desde: fechaActual};
+        nota.textContent = "La foto es del " + fv.split("-").reverse().join("/") + ": al guardar, el peso irá a ese día.";
+      }
+    }
+    est.textContent = (n ? "Se completaron " + n + " campos. REVISA los números con la foto y toca Guardar peso. La foto no se guarda salvo que marques la casilla. " : "No se pudo leer ningún dato. Escríbelos a mano. ") +
+      (raros.length ? "No rellené por verse raros: " + raros.join(", ") + "." : "");
+  }catch(e){ est.textContent = "No se pudo leer la foto: " + e.message; }
+};
+// leer siempre: al elegir la foto se lee sola (el botón queda para reintentar)
+document.getElementById("pdFoto").onchange = ()=>{ if(document.getElementById("pdFoto").files[0]) document.getElementById("pdLeer").onclick(); };
+const _render0 = render; render = function(){ _render0.apply(this, arguments); renderPesoHoy(); renderBarrasRef(); };
+document.getElementById("rMeta").addEventListener("click", ev=>{
+  if(ev.target && ev.target.id === "rMetaLink"){
+    ev.preventDefault();
+    mostrarPestana("per");
+    const o = document.getElementById("objetivosSec"); o.open = true;
+    o.scrollIntoView({behavior:"smooth", block:"start"});
+    document.getElementById("metaInput").focus();
+  }
+});
+
+// ---------- Pestañas ----------
+function mostrarPestana(p){
+  if(!document.querySelector('.panel[data-panel="'+p+'"]')) p = "dia";
+  document.querySelectorAll(".panel").forEach(x=> x.hidden = x.dataset.panel !== p);
+  document.querySelectorAll("#tabsSec button").forEach(b=> b.classList.toggle("on", b.dataset.p === p));
+  try{ localStorage.setItem("nutriPestanaV1", p); }catch(e){}
+}
+document.querySelectorAll("#tabsSec button").forEach(b=> b.onclick = ()=>{ mostrarPestana(b.dataset.p); window.scrollTo({top:0}); });
+let _p0 = "dia"; try{ _p0 = localStorage.getItem("nutriPestanaV1") || "dia"; }catch(e){}
+mostrarPestana(_p0);
+
+// ---------- Barras de referencia: IMC y grasa corporal ----------
+var NF = v => String(Math.round(v*10)/10).replace(".", ",");
+var GRASA_TABLA = { // cortes de Gallagher (2000): [bajo <a, normal a–b, alto b–c, muy alto ≥c]
+  Mujer:  {"20":[21,33,39], "40":[23,34,40], "60":[24,36,42], min:10, max:50, oms:35},
+  Hombre: {"20":[8,20,25],  "40":[11,22,28], "60":[13,25,30], min:4,  max:40, oms:25}
+};
+function barraRef(zonas, min, max, valor, oms){
+  let prev = min, seg = "", etq = "";
+  zonas.forEach(z => { const w = (z[0]-prev)/(max-min)*100; seg += `<i style="width:${w}%;background:${z[2]}"></i>`; etq += `<span style="width:${w}%">${z[1]}</span>`; prev = z[0]; });
+  const pos = Math.max(0, Math.min(100, (valor-min)/(max-min)*100));
+  const om = oms ? `<b class="ref-oms" style="left:${(oms-min)/(max-min)*100}%"></b>` : "";
+  return `<div class="ref-wrap"><div class="ref-barra">${seg}</div>${om}<span class="ref-marca" style="left:${pos}%">▼</span></div><div class="ref-etq">${etq}</div>`;
+}
+function renderBarrasRef(){
+  if(typeof GRASA_TABLA === "undefined") return;
+  const e1 = document.getElementById("barraIMC"), e2 = document.getElementById("barraGrasa");
+  if(!e1 || !e2) return;
+  const pd = perfilDatos || {}, med = pesosOrdenados(), h = pd.altura;
+  const peso = med.length ? med[med.length-1].peso : pesoInicialPerfil();
+  if(!(h > 0)) e1.innerHTML = `<div class="rep-nota">Falta la altura. Ponla en la pestaña Perfil.</div>`;
+  else if(!(peso > 0)) e1.innerHTML = `<div class="rep-nota">Falta un peso. Regístralo en la pestaña Día.</div>`;
+  else {
+    const hm2 = Math.pow(h/100, 2), imc = peso/hm2;
+    const nombre = imc < 18.5 ? "Bajo peso" : imc < 25 ? "Ideal" : imc < 30 ? "Sobrepeso" : "Obesidad";
+    let frase;
+    if(imc >= 25) frase = "Te faltan " + NF(Math.ceil((peso - 24.9*hm2)*10)/10) + " kg para entrar en el rango ideal.";
+    else if(imc < 18.5) frase = "Te faltan " + NF(Math.ceil((18.5*hm2 - peso)*10)/10) + " kg para llegar al rango ideal.";
+    else frase = "Estás dentro del rango ideal (18,5 a 24,9).";
+    e1.innerHTML = barraRef([[18.5,"Bajo","#4aa8ff"],[25,"Ideal","#35c26a"],[30,"Sobrepeso","#f0a93b"],[40,"Obesidad","#e5533d"]], 15, 40, imc) +
+      `<div style="font-size:0.88rem;margin-top:6px"><b>IMC ${NF(imc)} · ${nombre}</b> <span style="color:var(--muted)">(${NF(peso)} kg, ${h} cm)</span></div><div class="rep-nota" style="margin-top:2px">${frase} ${ayu("El IMC no distingue músculo de grasa.")}</div>`;
+  }
+  const t = GRASA_TABLA[pd.genero], edad = pd.edad;
+  if(!t) { e2.innerHTML = `<div class="rep-nota">Elige Mujer u Hombre en el género del Perfil para ver esta barra.</div>`; return; }
+  if(!(edad >= 20 && edad <= 79)) { e2.innerHTML = `<div class="rep-nota">${edad ? "Esta tabla cubre de 20 a 79 años." : "Falta la edad. Ponla en la pestaña Perfil."}</div>`; return; }
+  const desde = isoDeDia(diaUTC(hoyISO()) - 6), sem = medidas.filter(x => x && x.grasaPct > 0 && x.fecha >= desde);
+  if(!sem.length) { e2.innerHTML = `<div class="rep-nota">Sin mediciones de grasa en los últimos 7 días.</div>`; return; }
+  const prom = sem.reduce((a,x) => a + x.grasaPct, 0) / sem.length;
+  const c = t[edad < 40 ? "20" : edad < 60 ? "40" : "60"];
+  const nom = prom < c[0] ? "Bajo" : prom < c[1] ? "Normal" : prom < c[2] ? "Alto" : "Muy alto";
+  e2.innerHTML = barraRef([[c[0],"Bajo","#4aa8ff"],[c[1],"Normal","#35c26a"],[c[2],"Alto","#f0a93b"],[t.max,"Muy alto","#e5533d"]], t.min, t.max, prom, t.oms) +
+    `<div style="font-size:0.88rem;margin-top:6px"><b>${NF(prom)} % · ${nom}</b> <span style="color:var(--muted)">(${sem.length} medición${sem.length===1?"":"es"})</span></div>` +
+    `<div class="rep-nota" style="margin-top:2px">Marca blanca: ${t.oms} % ${ayu("Referencia de la OMS. Es orientativo: la báscula tiene margen de error y esta tabla (Gallagher, 2000) es más permisiva que ese corte.")}</div>`;
+}
+['pfNombre','pfGenero','pfEdad','pfAltura'].forEach(id => document.getElementById(id).addEventListener("change", renderBarrasRef));
+renderBarrasRef();
+
+poblarSelectorGrafico();
+renderGraficoProgreso();
+pintarTabsPerfil();
+pintarPerfil();
+renderRecetas();
+renderComidasGuardadas();
+renderReparto();
+render();
