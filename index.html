@@ -56,7 +56,7 @@
 <a href="ajustes.html" id="btnAjustes" title="Ajustes y claves" aria-label="Ajustes y claves" style="position:fixed;top:14px;left:14px;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--card);display:flex;align-items:center;justify-content:center;text-decoration:none;font-size:1.1rem;z-index:50">⚙️</a>
 <main>
   <header>
-    <img src="icono.png" alt="Dos gatas, una dorada y una violeta">
+    <img id="gatoPerfil" src="icono.png" alt="Dos gatas, una dorada y una violeta">
     <div><h1 id="saludo">Nuestra App</h1><div class="fecha" id="fechaHoy"></div></div>
   </header>
 
@@ -265,6 +265,7 @@
     document.getElementById("fechaHoy").textContent = new Date().toLocaleDateString("es-ES", {weekday:"long", day:"numeric", month:"long"});
     if(!p){ document.getElementById("saludo").textContent = "Nuestra App"; cont.innerHTML = '<p class="vacio">Entra con tu cuenta para ver tu resumen del día.</p>'; return; }
     var nombre = (lj("dietaPerfilDatosV1_"+p, {}) || {}).nombre;
+    var gi = document.getElementById("gatoPerfil"); if(gi){ gi.src = (p === "Filha") ? "gato-filha.png" : "gato-mamy.png"; gi.alt = (p === "Filha") ? "Tu gata violeta" : "Tu gata dorada"; }
     document.getElementById("saludo").textContent = "Hola, " + ((typeof nombre === "string" && nombre.trim()) ? nombre.trim() : p);
     var h = "";
 

@@ -263,8 +263,17 @@ function ui(){
   const fs = document.querySelector(".perfiles")?.closest("fieldset");
   if(fs){ if(perfil === "Filha") fs.style.display = "none"; else { const lg = fs.querySelector("legend"); if(lg) lg.textContent = "1. ¿Cómo estás hoy?"; } }
   pill = document.createElement("button"); pill.type = "button";
-  pill.style.cssText = "position:fixed;left:10px;bottom:10px;z-index:9999;display:flex;align-items:center;gap:4px;padding:3px 10px 3px 4px;border-radius:20px;border:1px solid #2a3242;background:#1b2330;color:#e8ecf2;font-size:.85rem;cursor:pointer;";
-  pill.innerHTML = gato(perfil,26) + `<b>${LETRA[perfil]}</b><span>☁️</span>`; document.body.appendChild(pill);
+  pill.style.cssText = "display:flex;align-items:center;gap:4px;padding:3px 10px 3px 4px;border-radius:20px;border:1px solid #2a3242;background:#1b2330;color:#e8ecf2;font-size:.85rem;cursor:pointer;";
+  pill.innerHTML = gato(perfil,26) + `<b>${LETRA[perfil]}</b><span>☁️</span>`;
+  const barra = document.createElement("div"); barra.style.cssText = "position:fixed;left:10px;bottom:10px;z-index:9999;display:flex;align-items:center;gap:8px;";
+  barra.appendChild(pill);
+  // Atajo para volver al inicio («Hola…») desde cualquier pantalla, menos desde el propio inicio.
+  if(!/(^|\/)(index\.html)?$/.test(location.pathname)){
+    const casa = document.createElement("a"); casa.href = "index.html"; casa.title = "Volver al inicio"; casa.setAttribute("aria-label", "Volver al inicio"); casa.textContent = "🏠";
+    casa.style.cssText = "display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;border:1px solid #2a3242;background:#1b2330;color:#e8ecf2;font-size:1.05rem;text-decoration:none;";
+    barra.appendChild(casa);
+  }
+  document.body.appendChild(barra);
   pill.onclick = () => {
     if(sinConexion){
       const d = pantalla(`<div style="display:flex;justify-content:center">${gato(perfil,72)}</div><h2>${LETRA[perfil]} · ${auth.currentUser?.email || ""}</h2><p style="color:#8a94a3">Sin conexión. Tus cambios se guardan en este aparato y se subirán cuando vuelva internet.</p>
