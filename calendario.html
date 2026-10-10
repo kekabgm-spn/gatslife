@@ -433,7 +433,16 @@
         <option value="180">3 horas antes</option>
         <option value="1440">1 día antes</option>
         <option value="2880">2 días antes</option>
+        <option value="libre">Libre (tú eliges)…</option>
       </select>
+      <div id="bloqueAvisoLibre" class="fila-rep" style="margin-top:8px;display:none">
+        <input type="number" id="fAvisoN" min="1" max="999" value="2" inputmode="numeric">
+        <select id="fAvisoU" style="flex:1">
+          <option value="1">minutos antes</option>
+          <option value="60" selected>horas antes</option>
+          <option value="1440">días antes</option>
+        </select>
+      </div>
       <p class="nota" style="margin-top:6px">Suena con la app abierta (o en segundo plano). Si no pones hora, avisa a las 9:00. Para que avise con el móvil cerrado, usa «Añadir al calendario del móvil».</p>
     </div>
 
@@ -1283,7 +1292,7 @@ function abrirForm(id, horaPre){
   $("fVeces").value = e && e.veces ? e.veces : 4;
   const finV = e && e.repite && e.repite !== "no" ? (e.veces ? "veces" : (e.hasta ? "hasta" : "siempre")) : "siempre";
   document.querySelectorAll('input[name="finRep"]').forEach(r => { r.checked = r.value === finV; });
-  $("fAviso").value = e && e.aviso !== null && e.aviso !== undefined && e.aviso !== "" ? String(e.aviso) : "";
+  setAvisoForm(e ? e.aviso : null);
   $("btnIcs").style.display = e ? "inline-block" : "none";
   $("fNotas").value = e ? (e.notas || "") : "";
   $("fImporte").value = e ? (e.importe || "") : "";
@@ -1343,7 +1352,7 @@ function guardarForm(){
     cada: repite === "personal" ? cada : null,
     unidad: repite === "personal" ? unidad : null,
     veces: finRep === "veces" ? veces : null,
-    aviso: $("fAviso").value === "" ? null : parseInt($("fAviso").value,10),
+    aviso: leerAvisoForm(),
     dias: repite === "semanal" ? (formDias.length ? formDias.slice().sort() : [diaSem(fecha)]) : [],
     sub: formCat === "uni" ? formSub : "",
     hasta: repite !== "no" && hasta ? hasta : null,
@@ -1506,8 +1515,9 @@ document.addEventListener("change", ev => {
     pintarChipsForm();
   } else if(t.name === "finRep"){
     pintarChipsForm();
-  } else if(t.id === "fAviso" && t.value !== ""){
-    pedirPermisoAvisos();
+  } else if(t.id === "fAviso"){
+    $("bloqueAvisoLibre").style.display = t.value === "libre" ? "flex" : "none";
+    if(t.value !== "") pedirPermisoAvisos();
   } else if(t.id === "fEsp"){
     $("fEspTxt").style.display = t.value === "__libre" ? "block" : "none";
   } else if(t.id === "archivoImportar" && t.files && t.files[0]){
@@ -1531,8 +1541,31 @@ function etqAviso(m){
   m = +m;
   if(m === 0) return "a la hora";
   if(m < 60) return m + " min antes";
-  if(m < 1440) return (m/60) + (m === 60 ? " hora antes" : " horas antes");
-  return (m/1440) + (m === 1440 ? " día antes" : " días antes");
+  if(m < 1440){ const h = Math.round(m/60*10)/10; return h + (h === 1 ? " hora antes" : " horas antes"); }
+  const d = Math.round(m/1440*10)/10; return d + (d === 1 ? " día antes" : " días antes");
+}
+const AVISOS_FIJOS = [0,10,30,60,180,1440,2880];
+function setAvisoForm(a){
+  const sinAviso = a === null || a === undefined || a === "";
+  if(sinAviso){ $("fAviso").value = ""; }
+  else if(AVISOS_FIJOS.includes(+a)){ $("fAviso").value = String(a); }
+  else {
+    $("fAviso").value = "libre";
+    const m = +a;
+    if(m % 1440 === 0){ $("fAvisoN").value = m/1440; $("fAvisoU").value = "1440"; }
+    else if(m % 60 === 0){ $("fAvisoN").value = m/60; $("fAvisoU").value = "60"; }
+    else { $("fAvisoN").value = m; $("fAvisoU").value = "1"; }
+  }
+  $("bloqueAvisoLibre").style.display = $("fAviso").value === "libre" ? "flex" : "none";
+}
+function leerAvisoForm(){
+  const v = $("fAviso").value;
+  if(v === "") return null;
+  if(v === "libre"){
+    const n = Math.max(1, Math.min(999, parseInt($("fAvisoN").value,10) || 1));
+    return n * parseInt($("fAvisoU").value,10);
+  }
+  return parseInt(v,10);
 }
 function pedirPermisoAvisos(){
   try{ if("Notification" in window && Notification.permission === "default") Notification.requestPermission(); }catch(_){}
