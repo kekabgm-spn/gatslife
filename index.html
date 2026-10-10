@@ -239,6 +239,11 @@
     document.getElementById("saludo").textContent = "Hola, " + ((typeof nombre === "string" && nombre.trim()) ? nombre.trim() : p);
     var h = "";
 
+    // Aviso: 30 días (o nunca) sin descargar una copia de seguridad. La fecha se guarda en este aparato desde Ajustes.
+    var cu = localStorage.getItem("copiaUltimaV1"), dc = null;
+    if(/^\d{4}-\d{2}-\d{2}$/.test(cu || "")) dc = Math.max(0, Math.round((new Date(f+"T00:00:00") - new Date(cu+"T00:00:00")) / 86400000));
+    if(dc === null || dc >= 30) h += tarjeta("💾 Copia de seguridad", "ajustes.html", "Ajustes", '<p class="vacio">'+(dc === null ? 'No hay registro de ninguna copia descargada desde este aparato.' : 'Hace '+dc+' días que no descargas una copia en este aparato.')+'</p>');
+
     // Calorías
     var c = calorias(p, f), cc;
     if(c.meta){

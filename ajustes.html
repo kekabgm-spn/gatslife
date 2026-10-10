@@ -25,9 +25,11 @@ button{margin-top:10px;padding:11px 16px;border-radius:10px;border:1px solid var
 <label>Grasas (g)</label><input id="m_grasa" type="number" inputmode="numeric">
 <p class="n" id="m_aviso"></p>
 <button onclick="gPerfil()">Guardar perfil</button><span class="ok" id="m_ok"></span></div>
-<h2 style="font-size:1.05rem;margin:22px 0 0">Copia de seguridad<button type="button" class="ayu" data-t="Guarda todos tus datos de este aparato en un archivo. Las claves de API no se incluyen. Para volver a cargarlo, elige el archivo: se reemplaza lo que haya con el mismo nombre y no se borra nada más." title="Guarda todos tus datos de este aparato en un archivo. Las claves de API no se incluyen. Para volver a cargarlo, elige el archivo: se reemplaza lo que haya con el mismo nombre y no se borra nada más." aria-label="Más información" aria-expanded="false">i</button></h2>
-<div class="c"><button onclick="exportarCopia()">⬇️ Descargar copia</button><button onclick="document.getElementById('fCopia').click()" style="margin-left:8px">⬆️ Restaurar copia</button>
-<input type="file" id="fCopia" accept="application/json,.json" style="display:none" onchange="importarCopia(this.files[0])"><p class="n" id="cp_msg"></p></div>
+<h2 style="font-size:1.05rem;margin:22px 0 0">Copia de seguridad<button type="button" class="ayu" data-t="Una sola copia con todo: tus datos de este aparato y lo compartido (Casa, Calendario, Invitaciones) tal como está ahora en la nube. Las claves de API no se incluyen. Al restaurar, antes se descarga sola una copia de lo que hay ahora, y lo restaurado se sube a la nube." title="Una sola copia con todo: tus datos de este aparato y lo compartido (Casa, Calendario, Invitaciones) tal como está ahora en la nube. Las claves de API no se incluyen. Al restaurar, antes se descarga sola una copia de lo que hay ahora, y lo restaurado se sube a la nube." aria-label="Más información" aria-expanded="false">i</button></h2>
+<div class="c"><p class="n" id="cp_estado" style="margin-top:0"></p>
+<button id="cp_bajar" onclick="exportarCopia()">⬇️ Descargar copia</button><button id="cp_subir" onclick="document.getElementById('fCopia').click()" style="margin-left:8px">⬆️ Restaurar copia</button>
+<input type="file" id="fCopia" accept="application/json,.json" style="display:none" onchange="importarCopia(this.files[0])"><p class="n" id="cp_msg"></p>
+<p class="n">Restaurar necesita conexión, porque lo restaurado también se sube a la nube. También acepta los archivos de copia antiguos de Calendario y de Ejercicios.</p></div>
 <h2 style="font-size:1.05rem;margin:22px 0 0">Reiniciar mis datos</h2>
 <div class="c"><p class="n" style="margin-top:0">Borra tus datos personales (comidas, ejercicio, salud, metas e historial) de este aparato y de la nube. No toca Casa, Calendario compartido ni Invitaciones, ni las claves. Tus otros aparatos se vaciarán solos la próxima vez que abras la app con conexión.</p>
 <button id="rBtn" type="button" onclick="rAbrir()" style="border-color:#e5484d;color:#e5484d">🗑️ Reiniciar mis datos…</button>
@@ -104,24 +106,128 @@ function grafico(){ if(!document.getElementById("grafPeso")) return;
 cargaP();
 </script></main><script>
 const SECRETAS=["dietaGeminiKey","dietaGeminiKey2","dietaSpoonacularKey","fam_ex_yt_key","fam_ex_yt_key2"];
-const esControl=k=>k.indexOf("nube")===0||SECRETAS.indexOf(k)>=0;
-function exportarCopia(){
+// Datos que son del aparato y no se guardan en la copia ni se restauran (perfil activo, marcas de control).
+const NO_COPIAR=["dietaPerfilActivo","copiaUltimaV1","migracionNombresV1"];
+const esControl=k=>k.indexOf("nube")===0||SECRETAS.indexOf(k)>=0||NO_COPIAR.indexOf(k)>=0;
+const hoyL=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
+const conTope=(p,ms)=>Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej(new Error("tiempo agotado")),ms))]);
+const errTxt=e=>e&&e.message?e.message:String(e);
+let copiaOcupada=false;
+function ocupar(si){copiaOcupada=si;["cp_bajar","cp_subir"].forEach(i=>{const b=document.getElementById(i);if(b)b.disabled=si;});}
+
+// ---------- Aviso de 30 días sin copia (se guarda en este aparato) ----------
+function diasSinCopia(){
+  const u=localStorage.getItem("copiaUltimaV1");if(!/^\d{4}-\d{2}-\d{2}$/.test(u||""))return null;
+  return Math.max(0,Math.round((new Date(hoyL()+"T00:00:00")-new Date(u+"T00:00:00"))/86400000));
+}
+function pintarEstadoCopia(){
+  const el=document.getElementById("cp_estado"),d=diasSinCopia();
+  if(d===null){el.textContent="⚠️ No hay registro de ninguna copia descargada desde este aparato.";el.style.color="#c98a00";}
+  else if(d>=30){el.textContent="⚠️ Hace "+d+" días que no descargas una copia en este aparato.";el.style.color="#c98a00";}
+  else{el.textContent="Última copia descargada en este aparato: "+(d===0?"hoy":"hace "+d+(d===1?" día":" días"))+".";el.style.color="";}
+}
+
+// ---------- Descargar ----------
+function compartidosListos(){return navigator.onLine&&!!(window.Familia&&window.Familia.listo&&window.Familia.leerCompartidos);}
+async function armarCopia(){
   const datos={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(!esControl(k))datos[k]=localStorage.getItem(k);}
-  const blob=new Blob([JSON.stringify({app:"nuestra-app",version:1,fecha:new Date().toISOString(),datos},null,1)],{type:"application/json"});
-  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="nuestra-app-copia-"+new Date().toISOString().slice(0,10)+".json";
+  let compartidos=null,nota="";
+  if(compartidosListos()){
+    try{compartidos=await conTope(window.Familia.leerCompartidos(),12000);}catch(e){nota="no se pudo leer lo compartido ("+errTxt(e)+")";}
+  }else nota="no hay conexión o la sincronización no está activa, así que la copia no incluye lo compartido";
+  return {copia:{app:"nuestra-app",version:2,fecha:new Date().toISOString(),perfil:localStorage.getItem("dietaPerfilActivo"),datos,compartidos},nota};
+}
+function bajar(obj,nombre){
+  const blob=new Blob([JSON.stringify(obj,null,1)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=nombre;
   document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);
-  cp_msg.textContent="✓ Copia descargada ("+Object.keys(datos).length+" elementos).";
+}
+async function exportarCopia(op){
+  op=op||{};const msg=document.getElementById("cp_msg"),propio=!copiaOcupada;
+  if(propio)ocupar(true);
+  msg.textContent="Preparando copia…";
+  try{
+    const r=await armarCopia(),c=r.copia;
+    bajar(c,(op.prefijo||"nuestra-app-copia-")+hoyL()+".json");
+    if(!op.noMarcar){localStorage.setItem("copiaUltimaV1",hoyL());pintarEstadoCopia();}
+    const cs=c.compartidos?" + Casa "+c.compartidos.casa.length+", Calendario "+c.compartidos.calendario.length+", Invitaciones "+c.compartidos.invitaciones.length:"";
+    msg.textContent="✓ Copia descargada ("+Object.keys(c.datos).length+" datos de este aparato"+cs+")."+(r.nota?" ⚠️ "+r.nota+".":"");
+    return c;
+  }catch(e){msg.textContent="⚠️ No se pudo preparar la copia: "+errTxt(e);throw e;}
+  finally{if(propio)ocupar(false);}
+}
+
+// ---------- Restaurar ----------
+function nombresNuevos(t){return String(t).split('"Kakin"').join('"Mamy"').split('"Hija"').join('"Filha"').split('_Kakin"').join('_Mamy"').split('_Hija"').join('_Filha"');}
+const DE_CONTENIDO=["calEventosV1","calEspecialistasV2","calVistaV1","tareasKokuk_v1","tareasFiltros_v1"];
+// Entiende la copia nueva y también los archivos antiguos de Calendario y de Ejercicios.
+function leerArchivoCopia(j,yo){
+  if(j&&j.app==="nuestra-app"&&j.datos&&typeof j.datos==="object")
+    return {fecha:j.fecha,datos:j.datos,compartidos:(j.compartidos&&typeof j.compartidos==="object")?j.compartidos:null};
+  if(j&&j.app==="calendario"&&Array.isArray(j.eventos)){
+    const ev=j.eventos.filter(e=>e&&typeof e.titulo==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(e.fecha||""))
+      .map((e,i)=>Object.assign({hechos:[],omitir:[],repite:"no",para:"Ambas"},e,{id:e.id||("r"+Date.now().toString(36)+i)}));
+    const datos={};if(Array.isArray(j.especialistas))datos.calEspecialistasV2=JSON.stringify(j.especialistas);
+    return {fecha:j.exportado,datos,compartidos:{calendario:ev}};
+  }
+  if(j&&Array.isArray(j.rutina)&&j.perfil){
+    const pj=j.perfil==="Kakin"?"Mamy":j.perfil==="Hija"?"Filha":j.perfil;
+    if(pj!==yo)throw new Error("Esta copia de Ejercicios es del perfil "+pj+" y tú eres "+yo+". No se cambió nada.");
+    const datos={};datos["fam_ex_rutina_"+yo]=JSON.stringify(j.rutina);
+    if(Array.isArray(j.videosGuardados))datos["fam_ex_videos_"+yo]=JSON.stringify(j.videosGuardados);
+    if(Array.isArray(j.favoritos))datos["fam_ex_favoritos_"+yo]=JSON.stringify(j.favoritos);
+    return {fecha:j.generado,datos,compartidos:null};
+  }
+  throw new Error("Este archivo no es una copia de Nuestra App.");
 }
 function importarCopia(f){
-  if(!f)return;const r=new FileReader();
-  r.onload=()=>{try{
-    const j=JSON.parse(r.result);if(j.app!=="nuestra-app"||!j.datos)throw new Error("Este archivo no es una copia de Nuestra App.");
-    const ks=Object.keys(j.datos).filter(k=>!esControl(k));
-    if(!confirm("Se restaurarán "+ks.length+" elementos de la copia del "+String(j.fecha||"").slice(0,10)+". Lo que tengas con el mismo nombre se reemplaza. ¿Continuar?"))return;
-    ks.forEach(k=>localStorage.setItem(k,String(j.datos[k])));
-    Object.keys(localStorage).filter(k=>k.indexOf("nubeVinc_")===0).forEach(k=>localStorage.removeItem(k));
-    cp_msg.textContent="✓ Copia restaurada. Al abrir otra pantalla elige «Los de este navegador» para subirla a la nube.";
-  }catch(e){cp_msg.textContent="⚠️ "+e.message;}document.getElementById("fCopia").value="";};
+  const msg=document.getElementById("cp_msg"),inp=document.getElementById("fCopia");
+  if(!f)return;
+  if(copiaOcupada){msg.textContent="Espera a que termine lo anterior.";inp.value="";return;}
+  const r=new FileReader();
+  r.onerror=()=>{msg.textContent="⚠️ No se pudo leer el archivo.";inp.value="";};
+  r.onload=async()=>{
+    ocupar(true);
+    try{
+      const yo=window.Familia&&window.Familia.perfil;
+      if(!navigator.onLine||!yo||!window.Familia.listo||!window.Familia.restaurarCompartidos||!window.__nubeEnviar)
+        throw new Error("Hace falta conexión y la sincronización activa para restaurar (lo restaurado se sube a la nube). Espera unos segundos o recarga la página. No se cambió nada.");
+      let j;try{j=JSON.parse(r.result);}catch(e){throw new Error("Este archivo no es una copia de Nuestra App.");}
+      const c=leerArchivoCopia(j,yo),otro=yo==="Mamy"?"Filha":"Mamy",claves={};let saltadas=0;
+      Object.keys(c.datos).forEach(k0=>{
+        if(esControl(k0))return;
+        let k=k0,v=String(c.datos[k0]);const m=k0.match(/^(.*)_(Kakin|Hija)$/);
+        if(m){k=m[1]+"_"+(m[2]==="Kakin"?"Mamy":"Filha");v=nombresNuevos(v);}
+        else if(DE_CONTENIDO.indexOf(k0)>=0)v=nombresNuevos(v);
+        if(k.endsWith("_"+otro)){saltadas++;return;}
+        claves[k]=v;
+      });
+      const nk=Object.keys(claves).length,cs=c.compartidos||{},lin=[];
+      if(nk)lin.push("• "+nk+" datos de este aparato (se reemplazan los que tengan el mismo nombre; no se borra nada más)"+(saltadas?". "+saltadas+" del otro perfil no se restauran":""));
+      const nom={casa:"tareas de Casa",calendario:"eventos del calendario",invitaciones:"invitaciones"};
+      ["casa","calendario","invitaciones"].forEach(n=>{if(Array.isArray(cs[n]))lin.push("• "+cs[n].length+" "+nom[n]+" COMPARTIDOS: reemplazan lo que hay ahora en la nube, para las dos");});
+      if(!c.compartidos)lin.push("• Esta copia no trae lo compartido (Casa, Calendario, Invitaciones): eso se queda como está.");
+      if(!nk&&!c.compartidos)throw new Error("La copia no tiene nada que restaurar para tu perfil. No se cambió nada.");
+      if(!confirm("Restaurar la copia del "+String(c.fecha||"").slice(0,10)+":\n"+lin.join("\n")+"\n\nAntes se descargará sola una copia de lo que hay ahora, por si te arrepientes. ¿Continuar?")){msg.textContent="Cancelado. No se cambió nada.";return;}
+      msg.textContent="Descargando una copia de lo que hay ahora…";
+      const pre=await exportarCopia({prefijo:"nuestra-app-antes-de-restaurar-",noMarcar:true});
+      if(c.compartidos&&!pre.compartidos)throw new Error("No se pudo guardar antes una copia de lo compartido, así que no se restauró nada.");
+      msg.textContent="Restaurando…";
+      Object.keys(claves).forEach(k=>localStorage.setItem(k,claves[k]));
+      const subido=nk?await window.__nubeEnviar():true;
+      let txt="✓ Restaurados "+nk+" datos de este aparato"+(subido?" y subidos a la nube":". ⚠️ Quedaron pendientes de subir: se subirán solos cuando haya conexión")+".";
+      if(c.compartidos){
+        try{
+          const rs=await window.Familia.restaurarCompartidos(c.compartidos),pz=[];
+          Object.keys(rs).forEach(n=>pz.push(rs[n].omitida?nom[n]+": omitidas (la copia las traía vacías y en la nube hay "+rs[n].hayAhora+")":nom[n]+": "+rs[n].despues));
+          txt+=" Compartido → "+pz.join("; ")+".";
+        }catch(e){txt+=" ⚠️ Lo compartido NO se restauró del todo: "+errTxt(e)+" Tienes la copia previa descargada.";}
+      }
+      msg.textContent=txt+" Una copia previa quedó descargada como «nuestra-app-antes-de-restaurar».";
+      cargaP();shRefrescar();
+    }catch(e){msg.textContent="⚠️ "+errTxt(e);}
+    finally{ocupar(false);inp.value="";}
+  };
   r.readAsText(f);
 }
 function elegirPerfil(p){PF=p;var t=document.getElementById("tabsP");if(t)t.style.display="none";cargaP();}
@@ -134,11 +240,13 @@ async function rEjecutar(){
   if(!navigator.onLine){msg.textContent="⚠️ Hace falta conexión a internet. No se borró nada.";return;}
   go.disabled=true;msg.textContent="Descargando copia y borrando…";
   try{
-    exportarCopia();
+    await exportarCopia({prefijo:"nuestra-app-antes-de-reiniciar-",noMarcar:true});
     await window.__nubeReiniciar();
     msg.textContent="✓ Datos reiniciados. Recargando…";setTimeout(function(){location.reload()},1200);
   }catch(e){msg.textContent="⚠️ No se borró nada: "+(e&&e.message?e.message:e);go.disabled=false;}
 }
+
+pintarEstadoCopia();
 
 // ---------- Datos compartidos: copia y migración (Fase 3) ----------
 let shCopiaHecha=false, shModo=null;

@@ -341,7 +341,7 @@ Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localS
     <button type="button" class="secundario" id="fecha-reg-hoy">Hoy</button>
   </div>
   <div id="rutina-lista"></div>
-  <button class="secundario" type="button" onclick="exportarRespaldoEjercicios()" style="margin-top:0.6rem">💾 Descargar copia de seguridad</button>
+  <p style="margin-top:0.6rem;font-size:0.85rem;color:var(--muted)">💾 La copia de seguridad está en <a href="ajustes.html">⚙️ Ajustes</a> (una sola para toda la app).</p>
 </fieldset>
 
 
@@ -412,27 +412,6 @@ function renderVideosGuardados(){
     return '<div class="rutina-item"><span>'+nombre+'</span>'+
       '<button onclick="quitarDeGuardados(\''+it.id+'\')">Quitar</button></div>';
   }).join('');
-}
-
-function exportarRespaldoEjercicios(){
-  const datos = {
-    version: 1,
-    generado: new Date().toISOString(),
-    perfil: perfil,
-    rutina: obtenerRutina(),
-    videosGuardados: obtenerVideosGuardados(),
-    favoritos: JSON.parse(localStorage.getItem('fam_ex_favoritos_' + perfil) || '[]')
-  };
-  const blob = new Blob([JSON.stringify(datos, null, 2)], {type: 'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  const fecha = new Date().toISOString().slice(0,10);
-  a.href = url;
-  a.download = 'copia-ejercicios-' + perfil + '-' + fecha + '.json';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
 }
 </script>
 

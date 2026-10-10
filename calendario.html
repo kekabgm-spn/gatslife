@@ -328,12 +328,7 @@
   <details class="ajuste">
     <summary>💾 Copia de seguridad</summary>
     <div class="cuerpo">
-      <div class="btns">
-        <button type="button" class="sec" data-acc="exportar">Descargar copia</button>
-        <button type="button" class="sec" data-acc="importar">Restaurar desde archivo</button>
-        <input type="file" id="archivoImportar" accept="application/json,.json" hidden>
-      </div>
-      <div class="nota" id="respaldoMsg"></div>
+      <div class="nota">La copia de seguridad ahora es una sola y está en <a href="ajustes.html">⚙️ Ajustes</a>. Incluye el calendario, las tareas y todo lo demás.</div>
     </div>
   </details>
 </div>
@@ -1388,43 +1383,6 @@ function eliminarSoloEste(){
 }
 
 /* =========================================================
-   Copia de seguridad
-   ========================================================= */
-function exportar(){
-  const datos = {app:"calendario", version:1, exportado:new Date().toISOString(), eventos, especialistas};
-  const blob = new Blob([JSON.stringify(datos, null, 2)], {type:"application/json"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "calendario-respaldo-" + hoyISO() + ".json";
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
-  $("respaldoMsg").textContent = "Copia descargada (" + eventos.length + " eventos).";
-}
-function importar(archivo){
-  const lector = new FileReader();
-  lector.onload = ()=>{
-    try{
-      const d = JSON.parse(lector.result);
-      if(!d || !Array.isArray(d.eventos)) throw new Error("formato");
-      const validos = d.eventos.filter(e => e && typeof e.titulo === "string" && /^\d{4}-\d{2}-\d{2}$/.test(e.fecha || "") && CATS.some(c => c.id === e.cat));
-      if(!confirm("Esto reemplaza tus " + eventos.length + " eventos actuales por " + validos.length + " del archivo. ¿Seguimos?")) return;
-      eventos = validos.map(e => Object.assign({hechos:[], omitir:[], repite:"no", para:"Ambas"}, e, {id: e.id || nuevoId()}));
-      guardarEventos();
-      if(Array.isArray(d.especialistas)){
-        localStorage.setItem(CLAVE_ESP, JSON.stringify(d.especialistas));
-        especialistas = cargarEsp();
-        renderEsp();
-      }
-      $("respaldoMsg").textContent = "Restaurados " + eventos.length + " eventos.";
-      render();
-    }catch(err){
-      $("respaldoMsg").textContent = "No pude leer ese archivo: no parece una copia del calendario.";
-    }
-  };
-  lector.readAsText(archivo);
-}
-
-/* =========================================================
    Eventos de la interfaz
    ========================================================= */
 document.addEventListener("click", ev => {
@@ -1494,8 +1452,6 @@ document.addEventListener("click", ev => {
     case "ver-prox": proxAbierto = !proxAbierto; renderProximas(); break;
     case "ver-bc": bcAbierto = !bcAbierto; renderBuscaCitas(); break;
     case "ics": { const e = eventos.find(x => x.id === editId); if(e) descargarIcs(e); break; }
-    case "exportar": exportar(); break;
-    case "importar": $("archivoImportar").click(); break;
   }
 });
 document.addEventListener("change", ev => {
@@ -1518,8 +1474,6 @@ document.addEventListener("change", ev => {
     if(t.value !== "") pedirPermisoAvisos();
   } else if(t.id === "fEsp"){
     $("fEspTxt").style.display = t.value === "__libre" ? "block" : "none";
-  } else if(t.id === "archivoImportar" && t.files && t.files[0]){
-    importar(t.files[0]); t.value = "";
   }
 });
 document.addEventListener("keydown", ev => {

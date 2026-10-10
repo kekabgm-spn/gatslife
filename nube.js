@@ -260,6 +260,9 @@ window.__nubeReiniciar = async () => {
   T = {}; pend = []; guardar(); raw("nubeRein_"+uid, String(t));
 };
 
+// Fase 4: tras restaurar una copia, Ajustes pide subir ya lo restaurado y comprueba si quedó algo pendiente.
+window.__nubeEnviar = async () => { if(!uid || sinConexion || !window.__nubeOn) return false; await enviar(); return pend.length === 0; };
+
 // ---------- pastilla y ajustes de pantalla ----------
 let pill;
 function estado(ico, txt){ if(pill){ pill.querySelector("span").textContent = ico; pill.title = txt; } }

@@ -251,8 +251,59 @@ function conectarFamilia(f){
     }
   };
 
+  // ---------- Fase 4: copia y restauración de lo compartido (se usan desde la copia única de Ajustes) ----------
+  // Devuelve las tres listas tal como están ahora en la nube, en el formato que esté activo.
+  async function leerCompartidos(){
+    await esperarModo();
+    const r = {};
+    for(const n of Object.keys(CAMPOS)){
+      r[n] = convertirNombres(modo === "nuevo" ? await leerNuevo(n) : await leerAnterior(n));
+    }
+    return r;
+  }
+  // Sustituye lo que hay en la nube por las listas que se pasan (solo las que vengan en «datos»).
+  // Una lista vacía en la copia NO se aplica si en la nube hay algo: se avisa en el resultado (freno de seguridad).
+  async function restaurarCompartidos(datos){
+    await esperarModo();
+    if(!navigator.onLine) throw new Error("Hace falta conexión a internet.");
+    const res = {};
+    for(const n of Object.keys(CAMPOS)){
+      if(!datos || !Array.isArray(datos[n])) continue;
+      const lista = convertirNombres(datos[n]), vistos = new Map();
+      lista.forEach((it, i) => {
+        if(!it || typeof it !== "object") return;
+        const c = (it.id === undefined || it.id === null || it.id === "") ? Object.assign({}, it, { id: "res-" + n + "-" + i }) : it;
+        const k = idDoc(c.id), previo = vistos.get(k);
+        vistos.set(k, { it: c, o: previo ? previo.o : i });
+      });
+      const hayAhora = modo === "nuevo" ? (await getDocs(collection(db, "familia", n, "items"))).size : (await leerAnterior(n)).length;
+      if(vistos.size === 0 && hayAhora > 0){ res[n] = { omitida: true, hayAhora }; continue; }
+      if(modo === "nuevo"){
+        const col = collection(db, "familia", n, "items"), previos = await getDocs(col), sobran = [];
+        previos.forEach(d => { if(!vistos.has(d.id)) sobran.push(() => deleteDoc(doc(db, "familia", n, "items", d.id))); });
+        const fns = [];
+        vistos.forEach((v, id) => fns.push(() => setDoc(doc(db, "familia", n, "items", id), { j: JSON.stringify(v.it), o: v.o, por: f.perfil, en: Date.now(), res: true })));
+        await correr(fns, 8);       // primero se escribe lo de la copia…
+        await correr(sobran, 8);    // …y solo después se quita lo que sobra
+        const s = await getDocs(col), leidos = new Map();
+        s.forEach(d => leidos.set(d.id, d.data().j));
+        let bien = leidos.size === vistos.size;
+        vistos.forEach((v, id) => { if(leidos.get(id) !== JSON.stringify(v.it)) bien = false; });
+        if(!bien) throw new Error("La comprobación de «" + n + "» no coincide tras restaurar. Vuelve a intentarlo.");
+      } else {
+        const arr = Array.from(vistos.values()).sort((a, b) => a.o - b.o).map(v => v.it);
+        await setDoc(doc(db, "familia", n), { [CAMPOS[n]]: arr, actualizadoPor: f.perfil, actualizadoEn: Date.now() });
+        if((await leerAnterior(n)).length !== arr.length) throw new Error("La comprobación de «" + n + "» no coincide tras restaurar. Vuelve a intentarlo.");
+      }
+      res[n] = { antes: hayAhora, despues: vistos.size };
+    }
+    return res;
+  }
+
   window.Familia = {
     listo: true,
+    leerCompartidos,
+    restaurarCompartidos,
     perfil: f.perfil,
     escucharCasa(cb){ canalCasa.escuchar(cb); },
     guardarCasa(tareas){ canalCasa.guardar(tareas); },
