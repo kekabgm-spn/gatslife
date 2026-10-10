@@ -1,9 +1,9 @@
 // nube.js — entrada con Google + copia en la nube (Firebase). Fase 1: Nutrición y Ejercicios.
-let initializeApp, getAuth, GoogleAuthProvider, signInWithCredential, onAuthStateChanged, signOut, getFirestore, doc, getDoc, setDoc, getDocs, collection, onSnapshot, updateDoc;
+let initializeApp, getAuth, GoogleAuthProvider, signInWithCredential, onAuthStateChanged, signOut, getFirestore, doc, getDoc, setDoc, getDocs, collection, onSnapshot, updateDoc, deleteDoc;
 try{
   ({ initializeApp } = await import("https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js"));
   ({ getAuth, GoogleAuthProvider, signInWithCredential, onAuthStateChanged, signOut } = await import("https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js"));
-  ({ getFirestore, doc, getDoc, setDoc, getDocs, collection, onSnapshot, updateDoc } = await import("https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js"));
+  ({ getFirestore, doc, getDoc, setDoc, getDocs, collection, onSnapshot, updateDoc, deleteDoc } = await import("https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js"));
 }catch(e){
   const d = document.createElement("div");
   d.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:99998;background:#7a1f1f;color:#fff;padding:10px 14px;font:14px system-ui,sans-serif;text-align:center";
@@ -30,7 +30,17 @@ const gato = (p, px=64) => `<img src="${IMG_GATO[p]}" alt="" width="${px}" heigh
 const raw = (k,v) => window.__nubeRaw(k,v);
 const ls = k => localStorage.getItem(k);
 
-let uid, perfil, mias = [], T = {}, pend = [], timer;
+let uid, perfil, mias = [], T = {}, pend = [], timer, sinConexion = false;
+const PERFILES_OK = ["Mamy","Filha"];
+const viejoDe = k => k.replace(/_(Mamy|Filha)$/, (m, p) => p === "Mamy" ? "_Kakin" : "_Hija");
+const conTiempo = (p, ms = 8000) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(Object.assign(new Error("tiempo agotado"), { code:"deadline-exceeded" })), ms))]);
+const esErrorRed = e => !navigator.onLine || ["unavailable","deadline-exceeded","auth/network-request-failed"].includes(e && e.code) || /offline|network|failed to fetch/i.test(String((e && e.message) || ""));
+// Perfil de esta cuenta guardado en el aparato (para poder entrar sin internet).
+function perfilGuardado(u){
+  let p = ls("nubePerfil_"+u) || ls("dietaPerfilActivo");
+  if(p === "Kakin") p = "Mamy"; else if(p === "Hija") p = "Filha";
+  return PERFILES_OK.includes(p) ? p : null;
+}
 const guardar = () => { raw("nubeT_"+uid, JSON.stringify(T)); raw("nubePend_"+uid, JSON.stringify(pend)); };
 
 // ---------- pantallas ----------
@@ -114,16 +124,66 @@ async function enviar(){
   try{ for(const k of [...pend]) await subirClave(k); estado("☁️","Todo guardado"); }
   catch(e){ console.error(e); estado("⚠️","No se pudo guardar: "+(e.code||e.message)); }
 }
+// ---------- entrar sin conexión ----------
+function avisoSinConexion(volvio){
+  let b = document.getElementById("nube-sinred");
+  if(!b){
+    b = document.createElement("div"); b.id = "nube-sinred";
+    b.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:99996;background:#7a5a12;color:#fff;padding:8px 12px;font:13px system-ui,sans-serif;display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;text-align:center";
+    b.innerHTML = '<span></span><button type="button" data-a="re" style="padding:5px 12px;border-radius:8px;border:1px solid #fff;background:transparent;color:#fff;font-weight:700;cursor:pointer"></button><button type="button" data-a="x" aria-label="Cerrar aviso" style="padding:5px 9px;border-radius:8px;border:1px solid #fff;background:transparent;color:#fff;cursor:pointer">✕</button>';
+    b.querySelector('[data-a="re"]').onclick = () => location.reload();
+    b.querySelector('[data-a="x"]').onclick = () => b.remove();
+    document.body.appendChild(b);
+  }
+  b.querySelector("span").textContent = volvio
+    ? "🌐 Volvió internet. Toca «Sincronizar» para subir tus cambios."
+    : "📴 Sin conexión (o muy lenta): trabajas con los datos de este aparato. Se subirán cuando vuelva internet.";
+  b.querySelector('[data-a="re"]').textContent = volvio ? "Sincronizar" : "Reintentar";
+}
+function entrarSinConexion(user, p){
+  perfil = p; mias = PERFILES_OK.includes(p) ? PREF.map(x => x + p) : [];
+  try{ T = JSON.parse(ls("nubeT_"+uid) || "{}"); }catch(e){ T = {}; }
+  try{ pend = JSON.parse(ls("nubePend_"+uid) || "[]"); }catch(e){ pend = []; }
+  if(ls("dietaPerfilActivo") !== perfil){
+    raw("dietaPerfilActivo", perfil);
+    const veces = Number(sessionStorage.getItem("nubeRec") || 0);
+    if(veces < 2){ sessionStorage.setItem("nubeRec", veces + 1); location.reload(); return; }
+  }
+  sessionStorage.removeItem("nubeRec");
+  sinConexion = true;
+  quitar(); window.__nubeOn = true; ui(); escuchar(true);
+  estado("📴", "Sin conexión: tus cambios se guardan en este aparato y se subirán al volver internet");
+  avisoSinConexion(false);
+  // Tareas y Calendario comparten datos con la otra cuenta: sin conexión se quedan con lo de este aparato.
+  const poner = () => { window.Familia = Object.assign(window.Familia || {}, { listo:false, perfil }); };
+  poner(); setTimeout(poner, 0); window.addEventListener("load", poner);
+}
+function errorEntrada(e){
+  const red = esErrorRed(e);
+  const msg = red
+    ? "No hay conexión y este aparato todavía no sabe quién eres. Conéctate a internet una vez para poder entrar sin conexión la próxima vez."
+    : "Si dice permission-denied, tu correo todavía no está en las reglas de Firebase.";
+  const d = pantalla(`<h1>No se pudo entrar</h1><p style="color:#ff9b6b">${e.code || e.message}</p><p style="color:#8a94a3">${msg}</p><button data-a="re" style="${BTN}">Reintentar</button><button data-a="salir" style="${BTN}border-color:#8a94a3;color:#8a94a3;">Salir de la cuenta</button>`);
+  d.querySelector('[data-a="re"]').onclick = () => location.reload();
+  d.querySelector('[data-a="salir"]').onclick = async () => {
+    if(!navigator.onLine && !confirm("Estás sin conexión: si sales de la cuenta, no podrás volver a entrar hasta que tengas internet. ¿Salir de todos modos?")) return;
+    await signOut(auth); location.reload();
+  };
+}
+
 async function iniciar(user){
-  uid = user.uid; pantalla("<p>Sincronizando…</p>");
+  uid = user.uid;
+  pantalla('<p>Sincronizando…</p><p style="color:#8a94a3;font-size:.85rem">Si no hay internet, entrará con los datos de este aparato.</p>');
+  if(!navigator.onLine){ const pg = perfilGuardado(uid); if(pg){ entrarSinConexion(user, pg); return; } }
   try{
-    const ref = doc(db,"usuarios",uid); const s = await getDoc(ref);
+    const ref = doc(db,"usuarios",uid); const s = await conTiempo(getDoc(ref));
     perfil = s.exists() ? s.data().perfil : await elegirPerfil(user, ref);
     // Cuentas creadas antes del cambio de nombres: Kakin -> Mamy, Hija -> Filha
     if(perfil === "Kakin") perfil = "Mamy"; else if(perfil === "Hija") perfil = "Filha";
+    raw("nubePerfil_"+uid, perfil);
     mias = PREF.map(p => p + perfil);
     T = JSON.parse(ls("nubeT_"+uid) || "{}"); pend = JSON.parse(ls("nubePend_"+uid) || "[]");
-    const snap = await getDocs(collection(db,"usuarios",uid,"datos")); const nube = {}; snap.forEach(x => nube[x.id] = x.data());
+    const snap = await conTiempo(getDocs(collection(db,"usuarios",uid,"datos"))); const nube = {}; snap.forEach(x => nube[x.id] = x.data());
     // Datos guardados en la nube con los nombres viejos (nombre_Kakin / nombre_Hija): se leen como si fueran los nuevos
     const cambiarNombres = t => String(t).split('"Kakin"').join('"Mamy"').split('"Hija"').join('"Filha"');
     for(const id of Object.keys(nube)){
@@ -134,6 +194,12 @@ async function iniciar(user){
     }
     const grande = k => (ls(k) || "").length > 120;
     let modo = "auto", cambio = false;
+    // Si en otro aparato (o aquí) se usó «Reiniciar mis datos», estos datos locales también se borran.
+    const reinNube = Number(nube["_reinicio"] && nube["_reinicio"].t) || 0;
+    if(reinNube > Number(ls("nubeRein_"+uid) || 0)){
+      mias.forEach(k => { localStorage.removeItem(k); localStorage.removeItem(viejoDe(k)); });
+      T = {}; pend = []; guardar(); raw("nubeRein_"+uid, String(reinNube)); cambio = true;
+    }
     if(ls("nubeVinc_"+uid) !== "1"){
       const hayNube = mias.some(k => nube[k]), hayLocal = mias.some(grande);
       modo = (hayNube && hayLocal) ? await preguntar() : (hayNube ? "nube" : "local");
@@ -159,21 +225,40 @@ async function iniciar(user){
     window.dispatchEvent(new Event("familia-lista"));
   }catch(e){
     console.error(e);
-    const d = pantalla(`<h1>No se pudo entrar</h1><p style="color:#ff9b6b">${e.code || e.message}</p><p style="color:#8a94a3">Si dice permission-denied, tu correo todavía no está en las reglas de Firebase.</p><button style="${BTN}">Salir</button>`);
-    d.querySelector("button").onclick = async () => { await signOut(auth); location.reload(); };
+    if(window.__nubeOn) return;   // el fallo fue después de entrar: no se vuelve a montar nada
+    const pg = esErrorRed(e) ? perfilGuardado(uid) : null;
+    if(pg){ entrarSinConexion(user, pg); return; }
+    errorEntrada(e);
   }
 }
-function escuchar(){
+function escuchar(sin){
   window.addEventListener("nube-cambio", () => {
     for(const k in window.__nubeSucias) if(mias.includes(k) && !pend.includes(k)) pend.push(k);
-    window.__nubeSucias = {}; guardar(); estado("⏳","Guardando…");
+    window.__nubeSucias = {}; guardar();
+    if(sin){ estado("📴", "Sin conexión: guardado en este aparato, se subirá al volver internet"); return; }
+    estado("⏳","Guardando…");
     clearTimeout(timer); timer = setTimeout(enviar, 1500);
   });
+  if(sin){ window.addEventListener("online", () => { estado("🌐", "Volvió internet: toca para sincronizar"); avisoSinConexion(true); }); return; }
   window.addEventListener("online", enviar);
   document.addEventListener("visibilitychange", () => { if(document.hidden) enviar(); });
   setInterval(() => { if(pend.length) enviar(); }, 30000);
   if(pend.length) enviar();
 }
+
+// «Reiniciar mis datos» (se usa desde Ajustes): borra tus datos personales en la nube y en este aparato.
+// Deja una marca en la nube para que tus otros aparatos también se vacíen la próxima vez que abran la app con conexión.
+// No toca lo compartido (Casa, Calendario, Invitaciones), ni las claves, ni tu ficha de perfil.
+window.__nubeReiniciar = async () => {
+  if(!uid || !perfil || !window.__nubeOn) throw new Error("La sincronización no está activa. Recarga la página e inténtalo de nuevo.");
+  if(sinConexion || !navigator.onLine) throw new Error("Hace falta conexión a internet para reiniciar.");
+  const ids = [...new Set([...mias, ...mias.map(viejoDe)])];
+  for(const k of ids) await conTiempo(deleteDoc(doc(db,"usuarios",uid,"datos",k)), 15000);
+  const t = Date.now();
+  await conTiempo(setDoc(doc(db,"usuarios",uid,"datos","_reinicio"), { t }), 15000);
+  ids.forEach(k => localStorage.removeItem(k));
+  T = {}; pend = []; guardar(); raw("nubeRein_"+uid, String(t));
+};
 
 // ---------- pastilla y ajustes de pantalla ----------
 let pill;
@@ -187,6 +272,13 @@ function ui(){
   pill.style.cssText = "position:fixed;left:10px;bottom:10px;z-index:9999;display:flex;align-items:center;gap:4px;padding:3px 10px 3px 4px;border-radius:20px;border:1px solid #2a3242;background:#1b2330;color:#e8ecf2;font-size:.85rem;cursor:pointer;";
   pill.innerHTML = gato(perfil,26) + `<b>${LETRA[perfil]}</b><span>☁️</span>`; document.body.appendChild(pill);
   pill.onclick = () => {
+    if(sinConexion){
+      const d = pantalla(`<div style="display:flex;justify-content:center">${gato(perfil,72)}</div><h2>${LETRA[perfil]} · ${auth.currentUser?.email || ""}</h2><p style="color:#8a94a3">Sin conexión. Tus cambios se guardan en este aparato y se subirán cuando vuelva internet.</p>
+        <button data-a="re" style="${BTN}">Reintentar conexión</button><button data-a="cerrar" style="${BTN}">Volver</button>`);
+      d.querySelector('[data-a="re"]').onclick = () => location.reload();
+      d.querySelector('[data-a="cerrar"]').onclick = quitar;
+      return;
+    }
     const d = pantalla(`<div style="display:flex;justify-content:center">${gato(perfil,72)}</div><h2>${LETRA[perfil]} · ${auth.currentUser?.email || ""}</h2>
       <button data-a="sync" style="${BTN}">Sincronizar ahora</button><button data-a="salir" style="${BTN}">Salir de la cuenta</button><button data-a="cerrar" style="${BTN}">Volver</button>`);
     d.querySelectorAll("button").forEach(b => b.onclick = async () => {

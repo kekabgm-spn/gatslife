@@ -11,7 +11,9 @@ main{max-width:560px;margin:0 auto}a.v{color:var(--accent);text-decoration:none}
 label{display:block;margin:10px 0 4px;font-size:.88rem}input{width:100%;padding:10px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--ink);font-size:1rem}
 button{margin-top:10px;padding:11px 16px;border-radius:10px;border:1px solid var(--accent);background:transparent;color:var(--accent);font-weight:700;font-size:.95rem}
 .n{color:var(--muted);font-size:.8rem;margin:6px 0 0}.ok{color:var(--accent);font-size:.85rem;margin-left:8px}
-</style></head><body><main>
+</style>
+<script>(function(){var o=Storage.prototype.setItem;window.__nubeRaw=function(k,v){o.call(localStorage,k,v)};window.__nubeSucias={};window.__nubeOn=false;Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localStorage&&window.__nubeOn){window.__nubeSucias[k]=1;window.dispatchEvent(new Event("nube-cambio"))}};setTimeout(function(){if(!window.__nubeVivo){var d=document.createElement("div");d.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99998;background:#7a1f1f;color:#fff;padding:10px 14px;font:14px system-ui,sans-serif;text-align:center";d.textContent="⚠️ La entrada con Google no cargó: tus datos NO se están guardando en la nube. Recarga la página; si sigue igual, avísame.";(document.body||document.documentElement).appendChild(d)}},6000);})();</script>
+</head><body><main>
 <a class="v" href="index.html">← Volver</a><h1>⚙️ Ajustes y claves</h1>
 <h2 style="font-size:1.05rem;margin:16px 0 0">Perfil</h2><div class="c" id="tabsP" style="display:flex;gap:8px"><button id="pMamy" onclick="selP('Mamy')" style="flex:1;margin:0">Mamy</button><button id="pFilha" onclick="selP('Filha')" style="flex:1;margin:0">Filha</button></div>
 <div class="c"><b>👤 Mi perfil y metas diarias</b><button type="button" class="ayu" data-t="Es lo mismo que «Meta» y «Reparto de macros» de Nutrición: si lo cambias aquí o allí, se ve igual en los dos sitios. Sirven de meta en Nutrición y para calcular las calorías quemadas en Fitness." title="Es lo mismo que «Meta» y «Reparto de macros» de Nutrición: si lo cambias aquí o allí, se ve igual en los dos sitios. Sirven de meta en Nutrición y para calcular las calorías quemadas en Fitness." aria-label="Más información" aria-expanded="false">i</button>
@@ -26,6 +28,13 @@ button{margin-top:10px;padding:11px 16px;border-radius:10px;border:1px solid var
 <h2 style="font-size:1.05rem;margin:22px 0 0">Copia de seguridad<button type="button" class="ayu" data-t="Guarda todos tus datos de este aparato en un archivo. Las claves de API no se incluyen. Para volver a cargarlo, elige el archivo: se reemplaza lo que haya con el mismo nombre y no se borra nada más." title="Guarda todos tus datos de este aparato en un archivo. Las claves de API no se incluyen. Para volver a cargarlo, elige el archivo: se reemplaza lo que haya con el mismo nombre y no se borra nada más." aria-label="Más información" aria-expanded="false">i</button></h2>
 <div class="c"><button onclick="exportarCopia()">⬇️ Descargar copia</button><button onclick="document.getElementById('fCopia').click()" style="margin-left:8px">⬆️ Restaurar copia</button>
 <input type="file" id="fCopia" accept="application/json,.json" style="display:none" onchange="importarCopia(this.files[0])"><p class="n" id="cp_msg"></p></div>
+<h2 style="font-size:1.05rem;margin:22px 0 0">Reiniciar mis datos</h2>
+<div class="c"><p class="n" style="margin-top:0">Borra tus datos personales (comidas, ejercicio, salud, metas e historial) de este aparato y de la nube. No toca Casa, Calendario compartido ni Invitaciones, ni las claves. Tus otros aparatos se vaciarán solos la próxima vez que abras la app con conexión.</p>
+<button id="rBtn" type="button" onclick="rAbrir()" style="border-color:#e5484d;color:#e5484d">🗑️ Reiniciar mis datos…</button>
+<div id="rCaja" style="display:none"><p class="n">Antes de borrar se descargará una copia de seguridad en este aparato. Hace falta conexión a internet.</p>
+<label for="rTxt">Escribe REINICIAR para confirmar</label><input id="rTxt" type="text" autocomplete="off" autocapitalize="characters">
+<button id="rGo" type="button" onclick="rEjecutar()" disabled style="border-color:#e5484d;color:#e5484d">Borrar mis datos</button><button type="button" onclick="rCerrar()" style="margin-left:8px">Cancelar</button>
+<p class="n" id="rMsg"></p></div></div>
 <h2 style="font-size:1.05rem;margin:22px 0 0">Claves<button type="button" class="ayu" data-t="Las claves se guardan solo en este aparato. Tendrás que ponerlas una vez en cada móvil u ordenador. Nunca las compartas ni las pegues en el código." title="Las claves se guardan solo en este aparato. Tendrás que ponerlas una vez en cada móvil u ordenador. Nunca las compartas ni las pegues en el código." aria-label="Más información" aria-expanded="false">i</button></h2><p class="n" id="notaClaves"></p>
 <div id="lista"></div>
 <script src="claves.js"></script>
@@ -109,5 +118,21 @@ function importarCopia(f){
   }catch(e){cp_msg.textContent="⚠️ "+e.message;}document.getElementById("fCopia").value="";};
   r.readAsText(f);
 }
+function elegirPerfil(p){PF=p;var t=document.getElementById("tabsP");if(t)t.style.display="none";cargaP();}
+function rAbrir(){document.getElementById("rCaja").style.display="block";document.getElementById("rTxt").value="";document.getElementById("rGo").disabled=true;document.getElementById("rMsg").textContent="";}
+function rCerrar(){document.getElementById("rCaja").style.display="none";}
+document.getElementById("rTxt").oninput=function(e){document.getElementById("rGo").disabled=e.target.value.trim().toUpperCase()!=="REINICIAR";};
+async function rEjecutar(){
+  const msg=document.getElementById("rMsg"),go=document.getElementById("rGo");
+  if(!window.__nubeReiniciar){msg.textContent="⚠️ La sincronización no está activa en esta pantalla. Recarga la página e inténtalo de nuevo. No se borró nada.";return;}
+  if(!navigator.onLine){msg.textContent="⚠️ Hace falta conexión a internet. No se borró nada.";return;}
+  go.disabled=true;msg.textContent="Descargando copia y borrando…";
+  try{
+    exportarCopia();
+    await window.__nubeReiniciar();
+    msg.textContent="✓ Datos reiniciados. Recargando…";setTimeout(function(){location.reload()},1200);
+  }catch(e){msg.textContent="⚠️ No se borró nada: "+(e&&e.message?e.message:e);go.disabled=false;}
+}
 </script>
+<script type="module" src="nube.js" onerror="var d=document.createElement('div');d.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99998;background:#7a1f1f;color:#fff;padding:10px 14px;font:14px system-ui,sans-serif;text-align:center';d.textContent='⚠️ El archivo nube.js no se pudo descargar (revisa que esté subido a GitHub con ese nombre exacto).';document.body.appendChild(d)"></script>
 </body></html>
