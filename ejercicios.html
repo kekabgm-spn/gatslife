@@ -626,13 +626,32 @@ function hoyISO(){
 function agregarAHistorialCompartido(item){
   try{
     const hist = JSON.parse(localStorage.getItem(claveHistorialCompartido()) || '[]');
-    const entrada = { fecha: (window.fechaReg || hoyISO()), tipo: item.tipoEjercicio || 'otro', nombre: item.titulo, minutos: item.minutos };
+    const entrada = { fecha: (window.fechaReg || hoyISO()), tipo: item.tipoEjercicio || 'otro', nombre: item.titulo, minutos: item.minutos, rutinaId: item.id }; // rutinaId: para poder quitarla si se destilda «Hecho»
     if(item.conReloj === false) entrada.reloj = false; // salió sin reloj: sus pasos no están en el total del día
     hist.push(entrada);
     localStorage.setItem(claveHistorialCompartido(), JSON.stringify(hist));
     recalcularPasos();
     if(typeof renderHistorial === 'function') renderHistorial();
   }catch(e){ /* si falla, no rompe la app; el "Hecho" local igual queda marcado */ }
+}
+
+// Quita del historial lo que se había añadido al marcar «Hecho». Busca por rutinaId; en entradas antiguas
+// (sin rutinaId) busca la más reciente con el mismo nombre, tipo y minutos, que no sea del reloj.
+function quitarDelHistorialCompartido(item){
+  try{
+    const hist = JSON.parse(localStorage.getItem(claveHistorialCompartido()) || '[]');
+    let i = -1;
+    for(let j = hist.length - 1; j >= 0; j--){ if(hist[j] && hist[j].rutinaId && hist[j].rutinaId === item.id){ i = j; break; } }
+    if(i < 0){
+      for(let j = hist.length - 1; j >= 0; j--){
+        const h = hist[j];
+        if(h && !h.hid && !h.rutinaId && h.nombre === item.titulo && h.tipo === (item.tipoEjercicio || 'otro') && h.minutos === item.minutos){ i = j; break; }
+      }
+    }
+    if(i >= 0){ hist.splice(i, 1); localStorage.setItem(claveHistorialCompartido(), JSON.stringify(hist)); }
+    recalcularPasos();
+    if(typeof renderHistorial === 'function') renderHistorial();
+  }catch(e){ /* si falla, no rompe la app */ }
 }
 
 // Cada vez que cambia una caminata/carrera anotada a mano hay que recalcular los "pasos sueltos" (regla en pasos.js).
@@ -939,6 +958,11 @@ function agregarARutina(item, btn){
 }
 
 function quitarDeRutina(id){
+  const it = obtenerRutina().find(x=>x.id===id);
+  if(it && it.enHistorial){
+    if(!confirm('Esta actividad ya está marcada como hecha. Si la quitas, también se borra del historial y deja de contar en las calorías. ¿Quitarla?')) return;
+    quitarDelHistorialCompartido(it);
+  }
   const lista = obtenerRutina().filter(x=>x.id!==id);
   localStorage.setItem(claveRutina(), JSON.stringify(lista));
   renderRutina();
@@ -954,7 +978,11 @@ function marcarHecho(id){
     it.hecho = !it.hecho;
     if(it.hecho && !it.enHistorial){
       agregarAHistorialCompartido(it);
-      it.enHistorial = true; // evita duplicar si se destilda y se vuelve a marcar
+      it.enHistorial = true;
+    } else if(!it.hecho && it.enHistorial){
+      // Al destildar, la actividad deja de contar: se quita del historial (y de las calorías de Nutrición).
+      quitarDelHistorialCompartido(it);
+      it.enHistorial = false;
     }
   }
   localStorage.setItem(claveRutina(), JSON.stringify(lista));
