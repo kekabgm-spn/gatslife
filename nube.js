@@ -19,7 +19,7 @@ const auth = getAuth(app), db = getFirestore(app);
 window.__nubeToken = async () => { try{ await auth.authStateReady(); return auth.currentUser ? await auth.currentUser.getIdToken() : null; }catch(e){ return null; } };
 
 // Solo se sincronizan estos datos, y solo los de tu perfil (terminan en _Mamy o _Filha).
-const PREF = ["dietaDiarioV3_","dietaRecetasV1_","dietaComidasGuardadasV1_","dietaRepartoV1_","dietaFrecuentesV1_","dietaFiltrosV1_","dietaMedidasV1_","dietaPerfilDatosV1_","ejercicioHistorial_","huaweiDiaV1_","huaweiPasosKcalV1_","fam_ex_rutina_","fam_ex_favoritos_","fam_ex_videos_","fam_ex_perfilbusq_","saludCondicionesV1_","saludCirugiasV1_","saludMedicacionV1_","saludMedTomasV1_","saludBancoMedV1_","saludPruebasV1_","saludArticV1_","saludSintomasV1_","perfilMetasV1_"];
+const PREF = ["dietaDiarioV3_","dietaRecetasV1_","dietaComidasGuardadasV1_","dietaRepartoV1_","dietaFrecuentesV1_","dietaFiltrosV1_","dietaMedidasV1_","dietaPerfilDatosV1_","ejercicioHistorial_","huaweiDiaV1_","huaweiPasosKcalV1_","huaweiQuemadoV1_","fam_ex_rutina_","fam_ex_favoritos_","fam_ex_videos_","fam_ex_perfilbusq_","saludCondicionesV1_","saludCirugiasV1_","saludMedicacionV1_","saludMedTomasV1_","saludBancoMedV1_","saludPruebasV1_","saludArticV1_","saludSintomasV1_","perfilMetasV1_"];
 const IMG_GATO = {
   Mamy: "gato-mamy.png",
   Filha: "gato-filha.png"
@@ -32,7 +32,6 @@ const ls = k => localStorage.getItem(k);
 
 let uid, perfil, mias = [], T = {}, pend = [], timer, sinConexion = false;
 const PERFILES_OK = ["Mamy","Filha"];
-const viejoDe = k => k.replace(/_(Mamy|Filha)$/, (m, p) => p === "Mamy" ? "_Kakin" : "_Hija");
 const conTiempo = (p, ms = 8000) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(Object.assign(new Error("tiempo agotado"), { code:"deadline-exceeded" })), ms))]);
 const esErrorRed = e => !navigator.onLine || ["unavailable","deadline-exceeded","auth/network-request-failed"].includes(e && e.code) || /offline|network|failed to fetch/i.test(String((e && e.message) || ""));
 // Perfil de esta cuenta guardado en el aparato (para poder entrar sin internet).
@@ -184,20 +183,12 @@ async function iniciar(user){
     mias = PREF.map(p => p + perfil);
     T = JSON.parse(ls("nubeT_"+uid) || "{}"); pend = JSON.parse(ls("nubePend_"+uid) || "[]");
     const snap = await conTiempo(getDocs(collection(db,"usuarios",uid,"datos"))); const nube = {}; snap.forEach(x => nube[x.id] = x.data());
-    // Datos guardados en la nube con los nombres viejos (nombre_Kakin / nombre_Hija): se leen como si fueran los nuevos
-    const cambiarNombres = t => String(t).split('"Kakin"').join('"Mamy"').split('"Hija"').join('"Filha"');
-    for(const id of Object.keys(nube)){
-      const m = id.match(/^(.*)_(Kakin|Hija)$/);
-      if(!m) continue;
-      const nuevoId = m[1] + "_" + (m[2] === "Kakin" ? "Mamy" : "Filha");
-      if(!nube[nuevoId]) nube[nuevoId] = Object.assign({}, nube[id], { valor: cambiarNombres(nube[id].valor) });
-    }
     const grande = k => (ls(k) || "").length > 120;
     let modo = "auto", cambio = false;
     // Si en otro aparato (o aquí) se usó «Reiniciar mis datos», estos datos locales también se borran.
     const reinNube = Number(nube["_reinicio"] && nube["_reinicio"].t) || 0;
     if(reinNube > Number(ls("nubeRein_"+uid) || 0)){
-      mias.forEach(k => { localStorage.removeItem(k); localStorage.removeItem(viejoDe(k)); });
+      mias.forEach(k => localStorage.removeItem(k));
       T = {}; pend = []; guardar(); raw("nubeRein_"+uid, String(reinNube)); cambio = true;
     }
     if(ls("nubeVinc_"+uid) !== "1"){
@@ -252,7 +243,7 @@ function escuchar(sin){
 window.__nubeReiniciar = async () => {
   if(!uid || !perfil || !window.__nubeOn) throw new Error("La sincronización no está activa. Recarga la página e inténtalo de nuevo.");
   if(sinConexion || !navigator.onLine) throw new Error("Hace falta conexión a internet para reiniciar.");
-  const ids = [...new Set([...mias, ...mias.map(viejoDe)])];
+  const ids = [...mias];
   for(const k of ids) await conTiempo(deleteDoc(doc(db,"usuarios",uid,"datos",k)), 15000);
   const t = Date.now();
   await conTiempo(setDoc(doc(db,"usuarios",uid,"datos","_reinicio"), { t }), 15000);

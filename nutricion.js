@@ -81,7 +81,7 @@ function leerEquiv(){ const e = leerJSON(CLAVE_EQUIV, {}); return (e && typeof e
 function guardarEquiv(clave, unidad, g){ const e = leerEquiv(); (e[clave] = e[clave] || {})[unidad] = g; escribirJSON(CLAVE_EQUIV, e); }
 function claveAlim(p){ return p.code || slug((p.nombre||"") + "-" + (p.marca||"")); }
 // MET aproximados (equivalente metabólico) para estimar kcal cuando Fitness guarda minutos pero no calorías.
-const MET = {caminata:3.5, corrida:9, natacion:6, fuerza:4, cardio:6, movilidad:2.3, yoga:2.5, otro:4};
+const MET = {caminata:3.5, corrida:9, natacion:6, fuerza:4, cardio:6, movilidad:2.3, yoga:2.5, otro:4, bici:7.5, sentadillas:5.0, flexiones:8.0, abdominales:3.8, plancha:3.0, pesas:5.0, elastico:3.8, silla:2.5, alongamento:2.3, baile:4.5, limpieza:3.0, cocinar:2.0, jardineria:4.0, ropa:2.0, compras:2.3};
 
 function cargarPerfilActivo(){
   const p = localStorage.getItem(CLAVE_PERFIL_ACTIVO);

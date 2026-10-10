@@ -17,14 +17,8 @@ function conectarFamilia(f){
   const CAMPOS = { casa: "tareas", calendario: "eventos", invitaciones: "items" };
   const refMarca = doc(db, "familia", "_migracion");
 
-  // Datos compartidos escritos antes del cambio de nombres (Kakin -> Mamy, Hija -> Filha)
-  function convertirNombres(lista){
-    const viejo = JSON.stringify(lista);
-    if(viejo.indexOf('"Kakin"') >= 0 || viejo.indexOf('"Hija"') >= 0){
-      return JSON.parse(viejo.split('"Kakin"').join('"Mamy"').split('"Hija"').join('"Filha"'));
-    }
-    return lista;
-  }
+  // (Fase 7b) Ya no se convierten nombres viejos: se deja la lista tal cual.
+  const convertirNombres = lista => lista;
   // Ejecuta varias tareas asíncronas con un máximo de n a la vez; si alguna falla, lanza el primer error al final.
   async function correr(fns, n){
     let i = 0, fallo = null;

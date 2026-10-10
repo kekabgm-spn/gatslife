@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="manifest" href="manifest.json">
 <script src="claves.js"></script>
-<script src="migracion.js"></script>
 <script src="tema.js"></script>
 <script src="pasos.js" onerror="window.addEventListener('DOMContentLoaded',function(){var d=document.createElement('div');d.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99998;background:#7a1f1f;color:#fff;padding:10px 14px;font:14px system-ui,sans-serif;text-align:center';d.textContent='⚠️ El archivo pasos.js no se pudo descargar (revisa que esté subido a GitHub con ese nombre exacto).';document.body.appendChild(d)})"></script>
 <title>Fitness</title>
@@ -318,6 +317,11 @@ Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localS
         <option value="alongamento">Alongamiento / estiramiento</option>
         <option value="yoga">Yoga</option>
         <option value="baile">Baile</option>
+        <option value="limpieza">Limpieza de la casa</option>
+        <option value="cocinar">Cocinar</option>
+        <option value="jardineria">Jardinería</option>
+        <option value="ropa">Ropa (lavar, planchar, tender)</option>
+        <option value="compras">Compras a pie</option>
         <option value="otro">Otra</option>
       </select>
     </div>
@@ -332,6 +336,8 @@ Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localS
     <button class="secundario" style="margin-top:0" onclick="agregarActividadManual()">Agregar</button>
   </div>
   <label class="check" id="actividad-reloj-cont" style="margin:-0.4rem 0 0.9rem"><input type="checkbox" id="actividad-reloj" checked> Llevaba el reloj puesto<button type="button" class="ayu" data-t="Sus pasos ya están en el total del día: se descuentan de «pasos sueltos» para no contarlos dos veces. Si salías sin reloj, desmárcalo." title="Sus pasos ya están en el total del día: se descuentan de «pasos sueltos» para no contarlos dos veces. Si salías sin reloj, desmárcalo." aria-label="Más información" aria-expanded="false">i</button></label>
+
+  <p style="margin:-0.3rem 0 0.9rem;font-size:0.8rem;color:var(--gris)">Limpieza, cocinar, jardinería, ropa y compras: anótalas solo si el reloj no las midió bien. Si el reloj ya las contó (o tienes activado «contar pasos sueltos» y llevabas el reloj), se sumarían dos veces. Las kcal son una estimación: solo se cuenta el gasto extra sobre el reposo.</p>
 
   <div id="balance-kcal" style="background:#0c1210;border-radius:8px;padding:10px 14px;margin-bottom:0.9rem;font-size:0.85rem"></div>
 
@@ -554,7 +560,8 @@ function buscarPorFuente(zona, cantidad, tipo){
 // --- Estimación de calorías quemadas (fórmula estándar MET × peso × tiempo, no es una medición real) ---
 // Misma tabla MET y mismas claves que usa Dieta (ejercicioHistorial), para que el número no cambie según dónde se mire
 const MET = {caminata:3.5, corrida:9, natacion:6, fuerza:4, cardio:6, movilidad:2.3, yoga:2.5, otro:4,
-  bici:7.5, sentadillas:5.0, flexiones:8.0, abdominales:3.8, plancha:3.0, pesas:5.0, elastico:3.8, silla:2.5, alongamento:2.3, baile:4.5};
+  bici:7.5, sentadillas:5.0, flexiones:8.0, abdominales:3.8, plancha:3.0, pesas:5.0, elastico:3.8, silla:2.5, alongamento:2.3, baile:4.5,
+  limpieza:3.0, cocinar:2.0, jardineria:4.0, ropa:2.0, compras:2.3};
 const DURACION_MIN = {'corto':8, 'medio':15, 'largo':20};
 
 function metDe(item){
@@ -740,7 +747,8 @@ async function buscarParaDia(dia, zona, tipoDia){
 
 const NOMBRE_ACTIVIDAD = {caminata:'Caminata', corrida:'Corrida', natacion:'Natación', otro:'Otra',
   bici:'Bicicleta', sentadillas:'Sentadillas', flexiones:'Flexiones', abdominales:'Abdominales', plancha:'Plancha',
-  pesas:'Pesas / fuerza', elastico:'Banda elástica', silla:'Ejercicio en silla', alongamento:'Alongamiento', baile:'Baile'};
+  pesas:'Pesas / fuerza', elastico:'Banda elástica', silla:'Ejercicio en silla', alongamento:'Alongamiento', baile:'Baile',
+  limpieza:'Limpieza de la casa', cocinar:'Cocinar', jardineria:'Jardinería', ropa:'Ropa (lavar, planchar, tender)', compras:'Compras a pie'};
 
 async function agregarActividadManual(){
   const tipo = document.getElementById('actividad-tipo').value;

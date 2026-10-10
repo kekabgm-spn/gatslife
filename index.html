@@ -4,7 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.json">
-<script src="migracion.js"></script>
 <script src="tema.js"></script>
 <title>Nuestra App</title>
 <link rel="icon" type="image/png" href="icono.png">
@@ -76,11 +75,11 @@
 <script>(function(){var o=Storage.prototype.setItem;window.__nubeRaw=function(k,v){o.call(localStorage,k,v)};window.__nubeSucias={};window.__nubeOn=false;Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localStorage&&window.__nubeOn){window.__nubeSucias[k]=1;window.dispatchEvent(new Event("nube-cambio"))}};setTimeout(function(){if(!window.__nubeVivo){var d=document.createElement("div");d.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99998;background:#7a1f1f;color:#fff;padding:10px 14px;font:14px system-ui,sans-serif;text-align:center";d.textContent="⚠️ La entrada con Google no cargó: tus datos NO se están guardando en la nube. Recarga la página; si sigue igual, avísame.";(document.body||document.documentElement).appendChild(d)}},6000);})();</script>
 
 <script>
-// ---------- Pantalla «Hoy»: solo LEE los datos de las otras pantallas; no modifica nada ----------
+// ---------- Pantalla «Hoy»: lee los datos de las otras pantallas. Lo único que escribe es el «total quemado (Huawei)» del día ----------
 (function(){
   var PERFILES = ["Mamy","Filha"];
   var COMIDAS = ["desayuno","almuerzo","cena","snacks"];
-  var MET = {caminata:3.5, corrida:9, natacion:6, fuerza:4, cardio:6, movilidad:2.3, yoga:2.5, otro:4}; // igual que Nutrición
+  var MET = {caminata:3.5, corrida:9, natacion:6, fuerza:4, cardio:6, movilidad:2.3, yoga:2.5, otro:4, bici:7.5, sentadillas:5.0, flexiones:8.0, abdominales:3.8, plancha:3.0, pesas:5.0, elastico:3.8, silla:2.5, alongamento:2.3, baile:4.5, limpieza:3.0, cocinar:2.0, jardineria:4.0, ropa:2.0, compras:2.3}; // igual que Nutrición
   var PERFIL_CATS = { Mamy:["medico","inss","proyecto","casa","coche","fin","social","familia","otros"],
                       Filha:["uni","practicas","ensayo","medico","casa","fin","social","familia","otros"] };
   var UNIDAD = {mg:"mg", comprimidos:"comp.", ml:"ml", gotas:"gotas", otro:""};
@@ -231,6 +230,36 @@
     return d.toLocaleDateString("es-ES", {weekday:"long", day:"numeric", month:"short"});
   }
 
+  // ---------- Déficit del día (solo informativo): total quemado que tú escribes (Huawei) − comido ----------
+  var KQ = "huaweiQuemadoV1_";
+  function totalQuemado(p, f){ var m = lj(KQ+p, {}); var v = m && +m[f]; return v > 0 ? v : 0; }
+  window.guardarQuemadoHoy = function(){
+    var p = miPerfil(), f = iso(new Date()), el = document.getElementById("huaQ");
+    if(!p || !el) return;
+    var txt = String(el.value || "").replace(",", ".").trim(), v = parseFloat(txt);
+    var m = lj(KQ+p, {}); if(!m || typeof m !== "object" || Array.isArray(m)) m = {};
+    if(txt === ""){ delete m[f]; }
+    else if(!(v > 0 && v < 20000)){ if(window.avisar) window.avisar("Escribe un número de calorías entre 1 y 19.999, o déjalo vacío para borrarlo."); return; }
+    else m[f] = Math.round(v);
+    var ks = Object.keys(m).sort(); while(ks.length > 120) delete m[ks.shift()];   // se guardan los últimos 120 días
+    localStorage.setItem(KQ+p, JSON.stringify(m));
+    render();
+  };
+  function bloqueDeficit(p, f, c){
+    var q = totalQuemado(p, f);
+    var b = '<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line)">'
+      + '<div class="nota" style="margin:0 0 6px"><b>Déficit del día (Huawei)</b> · solo informativo, no cambia lo que te queda</div>'
+      + '<div style="display:flex;gap:8px;align-items:center">'
+      + '<input id="huaQ" type="number" inputmode="numeric" min="0" step="1" placeholder="Total quemado hoy (Huawei)" value="'+(q || "")+'" aria-label="Total quemado hoy según Huawei" style="flex:1;min-width:0;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:.9rem">'
+      + '<button type="button" onclick="guardarQuemadoHoy()" style="padding:8px 12px;border-radius:8px;border:1px solid var(--accent);background:transparent;color:var(--accent);font-weight:700;cursor:pointer">Guardar</button></div>';
+    if(q > 0){
+      var def = q - c.comido;
+      b += '<div class="fila" style="margin-top:6px"><span>Quemado − comido</span><b>'+(def >= 0 ? "" : "−")+fmt(Math.abs(def))+' kcal</b></div>';
+      if(c.n === 0) b += '<p class="nota">Todavía no hay comidas anotadas hoy: este número no es un déficit real.</p>';
+    }
+    return b + '</div>';
+  }
+
   function render(){
     var cont = document.getElementById("hoy"), p = miPerfil(), f = iso(new Date());
     document.getElementById("fechaHoy").textContent = new Date().toLocaleDateString("es-ES", {weekday:"long", day:"numeric", month:"long"});
@@ -260,6 +289,7 @@
         + '<div class="fila"><span>Ejercicio</span><b>+'+fmt(c.ejercicio)+' kcal</b></div>'
         + '<p class="nota">Pon tu meta diaria en Nutrición para ver cuántas te quedan.</p>';
     }
+    cc += bloqueDeficit(p, f, c);
     h += tarjeta("🍽️ Calorías", "nutricion.html", "Nutrición", cc);
 
     // Pasos

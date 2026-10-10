@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<script src="migracion.js"></script><script src="tema.js"></script>
+<script src="tema.js"></script>
 <title>Ajustes y claves</title><link rel="icon" type="image/png" href="icono.png">
 <style>
 :root{--bg:#10151f;--card:#1b2330;--line:#2a3242;--ink:#e8ecf2;--muted:#8a94a3;--accent:#35c26a;color-scheme:dark}
@@ -43,9 +43,6 @@ button{margin-top:10px;padding:11px 16px;border-radius:10px;border:1px solid var
 <button id="sh_copia" type="button" onclick="shCopia()" disabled>⬇️ 1. Descargar copia de lo compartido</button>
 <button id="sh_migrar" type="button" onclick="shMigrar()" disabled style="margin-left:8px">🔄 2. Migrar al formato nuevo</button>
 <p class="n" id="sh_msg"></p></div>
-<h2 style="font-size:1.05rem;margin:22px 0 0">Comprobar nombres viejos<button type="button" class="ayu" data-t="Busca datos guardados con los nombres antiguos (Kakin, Hija) en este aparato y en la nube. Solo lee, no cambia nada. Hay que pulsarlo en cada aparato de cada persona antes de retirar el código de traspaso de nombres." title="Busca datos guardados con los nombres antiguos (Kakin, Hija) en este aparato y en la nube. Solo lee, no cambia nada. Hay que pulsarlo en cada aparato de cada persona antes de retirar el código de traspaso de nombres." aria-label="Más información" aria-expanded="false">i</button></h2>
-<div class="c"><p class="n" style="margin-top:0">Solo lee: no cambia nada. Púlsalo en cada aparato (móvil y ordenador) de las dos.</p>
-<button id="nv_btn" type="button" onclick="nvComprobar()">🔎 Comprobar</button><p class="n" id="nv_msg" style="white-space:pre-line"></p></div>
 <h2 style="font-size:1.05rem;margin:22px 0 0">Claves<button type="button" class="ayu" data-t="Las claves se guardan solo en este aparato. Tendrás que ponerlas una vez en cada móvil u ordenador. Nunca las compartas ni las pegues en el código." title="Las claves se guardan solo en este aparato. Tendrás que ponerlas una vez en cada móvil u ordenador. Nunca las compartas ni las pegues en el código." aria-label="Más información" aria-expanded="false">i</button></h2><p class="n" id="notaClaves"></p>
 <div id="lista"></div>
 <script src="claves.js"></script>
@@ -250,41 +247,6 @@ async function rEjecutar(){
 }
 
 pintarEstadoCopia();
-
-// ---------- Comprobar nombres viejos (Fase 7): solo lee ----------
-const VIEJO=t=>String(t).indexOf('"Kakin"')>=0||String(t).indexOf('"Hija"')>=0;
-async function nvComprobar(){
-  const msg=document.getElementById("nv_msg"),btn=document.getElementById("nv_btn"),res=[],aviso=[];
-  btn.disabled=true;msg.textContent="Comprobando…";
-  try{
-    // 1) Este aparato
-    for(let i=0;i<localStorage.length;i++){
-      const k=localStorage.key(i);if(k.indexOf("nube")===0)continue;
-      if(/_(Kakin|Hija)$/.test(k))res.push("Este aparato: dato con nombre viejo «"+k+"»");
-      else if(k==="dietaPerfilActivo"&&/^(Kakin|Hija)$/.test(localStorage.getItem(k)))res.push("Este aparato: perfil activo con nombre viejo");
-      else if(DE_CONTENIDO.indexOf(k)>=0&&VIEJO(localStorage.getItem(k)))res.push("Este aparato: «"+k+"» menciona nombres viejos");
-    }
-    // 2) Nube: tus datos personales
-    const F=window.__familia;
-    if(F&&navigator.onLine){
-      const snap=await conTope(F.getDocs(F.collection(F.db,"usuarios",F.uid,"datos")),15000);
-      snap.forEach(d=>{
-        if(d.id==="_reinicio")return;
-        if(/_(Kakin|Hija)$/.test(d.id))res.push("Nube (tus datos): documento con nombre viejo «"+d.id+"»");
-        else if(VIEJO((d.data()||{}).valor))res.push("Nube (tus datos): «"+d.id+"» menciona nombres viejos");
-      });
-      // 3) Nube: lo compartido, tal como está guardado (sin convertir)
-      if(window.Familia&&window.Familia.listo&&window.Familia.migracion){
-        const c=await conTope(window.Familia.migracion.copia(),15000),act=c.modo==="nuevo"?c.nuevo:c.anterior;
-        ["casa","calendario","invitaciones"].forEach(n=>{if(VIEJO(JSON.stringify(act[n]||[])))res.push("Nube (compartido): «"+n+"» menciona nombres viejos");});
-      }else aviso.push("No se pudo comprobar lo compartido (la sincronización no está activa).");
-    }else aviso.push("Sin conexión: solo se comprobó este aparato, no la nube.");
-  }catch(e){aviso.push("La comprobación no terminó: "+errTxt(e));}
-  const quien=(window.Familia&&window.Familia.perfil)||"esta cuenta";
-  if(!res.length&&!aviso.length)msg.textContent="✔ Sin nombres viejos en este aparato ni en la nube de "+quien+". Falta pulsarlo también en los demás aparatos y en la cuenta de la otra persona.";
-  else msg.textContent=(res.length?"⚠️ Se encontraron "+res.length+":\n"+res.join("\n")+"\n":"")+(aviso.length?aviso.join("\n"):"");
-  btn.disabled=false;
-}
 
 // ---------- Datos compartidos: copia y migración (Fase 3) ----------
 let shCopiaHecha=false, shModo=null;
