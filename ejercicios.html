@@ -121,19 +121,14 @@
 function __nubeAvisoDetalle(t){var d=document.getElementById("__nubeErrReal");if(!d){d=document.createElement("div");d.id="__nubeErrReal";d.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#7a1f1f;color:#fff;padding:10px 14px;font:13px monospace;text-align:left;white-space:pre-wrap;max-height:40vh;overflow:auto";(document.body||document.documentElement).appendChild(d)}d.textContent+="⚠️ "+t+"\n"}
 window.addEventListener("error",function(e){__nubeAvisoDetalle("Error: "+(e.message||e.error||"")+" @ "+(e.filename||"")+":"+(e.lineno||"")) },true);
 window.addEventListener("unhandledrejection",function(e){__nubeAvisoDetalle("Promesa fallida: "+(e.reason&&(e.reason.message||e.reason)||e.reason))});
-Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localStorage&&window.__nubeOn){window.__nubeSucias[k]=1;window.dispatchEvent(new Event("nube-cambio"))}};setTimeout(function(){if(!window.__nubeVivo){var d=document.createElement("div");d.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99998;background:#7a1f1f;color:#fff;padding:10px 14px;font:14px system-ui,sans-serif;text-align:center";d.textContent="⚠️ La entrada con Google no cargó: tus datos NO se están guardando en la nube. Avísale a Claude (en el computador: F12 → Console → copia el mensaje rojo).";(document.body||document.documentElement).appendChild(d)}},6000);})();</script>
+Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localStorage&&window.__nubeOn){window.__nubeSucias[k]=1;window.dispatchEvent(new Event("nube-cambio"))}};setTimeout(function(){if(!window.__nubeVivo){var d=document.createElement("div");d.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99998;background:#7a1f1f;color:#fff;padding:10px 14px;font:14px system-ui,sans-serif;text-align:center";d.textContent="⚠️ La entrada con Google no cargó: tus datos NO se están guardando en la nube. Recarga la página; si sigue igual, avísame.";(document.body||document.documentElement).appendChild(d)}},6000);})();</script>
 </head>
 <body>
 <button id="btnTema" onclick="alternarTema()" title="Cambiar tema" aria-label="Cambiar entre tema claro y oscuro" style="position:fixed;top:12px;right:12px;z-index:500;width:36px;height:36px;border-radius:50%;border:1px solid var(--gris);background:var(--nuit2);color:var(--creme);font-size:1rem;cursor:pointer">☀️</button>
 <div class="wrap">
 <nav class="navapp" aria-label="Áreas de la app"><a href="nutricion.html">NUTRICIÓN</a><a href="ejercicios.html" aria-current="page">FITNESS</a><a href="tareas.html">TAREAS</a><a href="calendario.html">CALENDARIO</a><a href="salud.html">SALUD</a><a href="huawei.html">HUAWEI</a></nav>
 
-<h1>🏋️ Fitness</h1>
-<p class="sub">Busca videos reales según tu perfil (sexo, edad y objetivo) y anota lo que haces. Cada una arma su propia rutina.</p>
-
-<div class="aviso">
-  Esta herramienta busca <b>videos reales que ya existen en YouTube</b>, filtrados por lo que pidas. No inventa rutinas ni indica cargas — vos elegís qué mirar y qué agregar a tu rutina. Las claves se guardan solo en <b>este navegador</b>.
-</div>
+<h1>🏋️ Fitness<button type="button" class="ayu" data-t="Busca videos reales según tu perfil (sexo, edad y objetivo) y anota lo que haces. Cada una arma su propia rutina. Esta herramienta busca videos reales que ya existen en YouTube, filtrados por lo que pidas. No inventa rutinas ni indica cargas: tú eliges qué mirar y qué agregar a tu rutina." title="Busca videos reales según tu perfil (sexo, edad y objetivo) y anota lo que haces. Cada una arma su propia rutina. Esta herramienta busca videos reales que ya existen en YouTube, filtrados por lo que pidas. No inventa rutinas ni indica cargas: tú eliges qué mirar y qué agregar a tu rutina." aria-label="Más información" aria-expanded="false">i</button></h1>
 
 
 
@@ -172,16 +167,11 @@ Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localS
   <button type="button" class="secundario" style="margin:0" onclick="irAActividadManual()">➕ Anotar actividad</button>
 </div>
 
-<fieldset>
-  <legend>Clave de YouTube</legend>
-  <p style="font-size:0.85rem;margin:0">La clave se pone una sola vez en <a href="ajustes.html">⚙️ Ajustes</a>, junto con las demás.</p>
-</fieldset>
 
 
 
 <fieldset>
-  <legend>🎯 Tu perfil de búsqueda (<span id="pb-nombre">Mamy</span>)</legend>
-  <p style="font-size:0.8rem;color:var(--gris2);margin:0 0 0.4rem">Los videos se buscan pensando en este perfil. Sexo y edad son los mismos de Nutrición → Perfil: se cambian en cualquiera de los dos sitios.</p>
+  <legend>🎯 Tu perfil de búsqueda (<span id="pb-nombre">Mamy</span>)<button type="button" class="ayu" data-t="Los videos se buscan pensando en este perfil. Sexo y edad son los mismos de Nutrición → Perfil: se cambian en cualquiera de los dos sitios." title="Los videos se buscan pensando en este perfil. Sexo y edad son los mismos de Nutrición → Perfil: se cambian en cualquiera de los dos sitios." aria-label="Más información" aria-expanded="false">i</button></legend>
   <div class="fila">
     <div>
       <label for="pb-genero">Sexo</label>
@@ -207,16 +197,14 @@ Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localS
 </fieldset>
 
 <fieldset>
-  <legend>⚡ Búsquedas precisas</legend>
-  <p style="font-size:0.8rem;color:var(--gris2);margin:0 0 0.6rem">Un toque y busca en YouTube justo eso, ya ajustado a tu perfil. La lista cambia según tu edad y si marcaste bajo impacto.</p>
+  <legend>⚡ Búsquedas precisas<button type="button" class="ayu" data-t="Un toque y busca en YouTube justo eso, ya ajustado a tu perfil. La lista cambia según tu edad y si marcaste bajo impacto." title="Un toque y busca en YouTube justo eso, ya ajustado a tu perfil. La lista cambia según tu edad y si marcaste bajo impacto." aria-label="Más información" aria-expanded="false">i</button></legend>
   <div class="atajos" id="atajos"></div>
 </fieldset>
 
 
 
 <fieldset>
-  <legend>📅 Tu rutina semanal (reparto equilibrado)</legend>
-  <p style="font-size:0.8rem;color:var(--gris2);margin:0 0 0.6rem">Pensada para bajar peso y tonificar sin ganar volumen: 3 días de cardio, 3 de tonificar y 1 de estirar. Cada día trae su tipo; la intensidad, la duración y el equipo salen de los filtros de más abajo. Si un día no querés hacer nada, no lo armás. Tocá "Buscar" en el día que quieras.</p>
+  <legend>📅 Tu rutina semanal (reparto equilibrado)<button type="button" class="ayu" data-t="Pensada para bajar peso y tonificar sin ganar volumen: 3 días de cardio, 3 de tonificar y 1 de estirar. Cada día trae su tipo; la intensidad, la duración y el equipo salen de los filtros de más abajo. Si un día no querés hacer nada, no lo armás. Tocá &quot;Buscar&quot; en el día que quieras." title="Pensada para bajar peso y tonificar sin ganar volumen: 3 días de cardio, 3 de tonificar y 1 de estirar. Cada día trae su tipo; la intensidad, la duración y el equipo salen de los filtros de más abajo. Si un día no querés hacer nada, no lo armás. Tocá &quot;Buscar&quot; en el día que quieras." aria-label="Más información" aria-expanded="false">i</button></legend>
   <div id="rotacion-semanal"></div>
 </fieldset>
 
@@ -225,14 +213,12 @@ Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localS
 <fieldset>
   <legend>Qué buscar (filtros)</legend>
 
-  <label>Fuente</label>
+  <label>Fuente<button type="button" class="ayu" data-t="wger es una base de ejercicios de código abierto, gratis y sin clave — trae imagen, músculo trabajado y equipo, sin ser un video. 🎞️ GIFs en español: unos 1.300 ejercicios con animación, sin anuncios ni clave. No distingue ejercicios suaves de fuertes ni filtra por intensidad o duración: en días regulares o malos, mirá bien el GIF antes de hacerlo. No tiene movilidad ni yoga." title="wger es una base de ejercicios de código abierto, gratis y sin clave — trae imagen, músculo trabajado y equipo, sin ser un video. 🎞️ GIFs en español: unos 1.300 ejercicios con animación, sin anuncios ni clave. No distingue ejercicios suaves de fuertes ni filtra por intensidad o duración: en días regulares o malos, mirá bien el GIF antes de hacerlo. No tiene movilidad ni yoga." aria-label="Más información" aria-expanded="false">i</button></label>
   <div class="fila" style="margin-bottom:0.4rem">
     <button type="button" class="chip on" id="fuente-youtube" onclick="elegirFuente('youtube')" style="flex:1;text-align:center">🎥 YouTube (video real)</button>
     <button type="button" class="chip" id="fuente-wger" onclick="elegirFuente('wger')" style="flex:1;text-align:center">📚 wger (ficha con imagen)</button>
     <button type="button" class="chip" id="fuente-gifs" onclick="elegirFuente('gifs')" style="flex:1;text-align:center">🎞️ GIFs en español</button>
   </div>
-  <p style="font-size:0.76rem;color:var(--gris);margin:0 0 0.6rem">wger es una base de ejercicios de código abierto, gratis y sin clave — trae imagen, músculo trabajado y equipo, sin ser un video.</p>
-  <p style="font-size:0.76rem;color:var(--gris);margin:0 0 0.6rem">🎞️ GIFs en español: unos 1.300 ejercicios con animación, sin anuncios ni clave. No distingue ejercicios suaves de fuertes ni filtra por intensidad o duración: en días regulares o malos, mirá bien el GIF antes de hacerlo. No tiene movilidad ni yoga.</p>
 
   <label>Zona del cuerpo (elegí una o varias)</label>
   <div id="zonas"></div>
@@ -287,8 +273,7 @@ Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localS
 
 
 <fieldset>
-  <legend>🎬 Videos guardados para después</legend>
-  <p class="pendiente" style="margin-top:0">Los que guardás acá son solo para mirar más tarde: no cuentan calorías ni aparecen en "Mi rutina". Cuando hagas un ejercicio de alguno de estos videos, anotalo en la pestaña "✅ Mi rutina", en "+ Actividad manual", con los minutos reales que hiciste.</p>
+  <legend>🎬 Videos guardados para después<button type="button" class="ayu" data-t="Los que guardás acá son solo para mirar más tarde: no cuentan calorías ni aparecen en &quot;Mi rutina&quot;. Cuando hagas un ejercicio de alguno de estos videos, anotalo en la pestaña &quot;✅ Mi rutina&quot;, en &quot;+ Actividad manual&quot;, con los minutos reales que hiciste." title="Los que guardás acá son solo para mirar más tarde: no cuentan calorías ni aparecen en &quot;Mi rutina&quot;. Cuando hagas un ejercicio de alguno de estos videos, anotalo en la pestaña &quot;✅ Mi rutina&quot;, en &quot;+ Actividad manual&quot;, con los minutos reales que hiciste." aria-label="Más información" aria-expanded="false">i</button></legend>
   <div id="videos-guardados-lista"></div>
 </fieldset>
 
@@ -299,7 +284,7 @@ Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localS
 <div id="panel-hechos" role="tabpanel" hidden>
 
 <fieldset>
-  <legend>👣 Pasos (<span id="pasos-nombre">Mamy</span>)</legend>
+  <legend>👣 Pasos (<span id="pasos-nombre">Mamy</span>)<button type="button" class="ayu" data-t="Donde también se activa «Contar también los pasos que no son de una actividad». Los pasos de una caminata o carrera ya van dentro de esa actividad y no se cuentan dos veces; si la actividad aún no llegó a Drive, sus pasos cuentan como sueltos hasta el siguiente sync. Lo mismo para las caminatas o carreras que anotas a mano en «Mi rutina»: se estiman con ≈100 pasos por minuto caminando y ≈160 corriendo, y se descuentan de los pasos sueltos (si marcaste «sin reloj», no se descuentan). Los pasos son una estimación (pasos × peso × 0,0003), no una medición. Un día solo con pasos no se marca como «día con ejercicio»." title="Donde también se activa «Contar también los pasos que no son de una actividad». Los pasos de una caminata o carrera ya van dentro de esa actividad y no se cuentan dos veces; si la actividad aún no llegó a Drive, sus pasos cuentan como sueltos hasta el siguiente sync. Lo mismo para las caminatas o carreras que anotas a mano en «Mi rutina»: se estiman con ≈100 pasos por minuto caminando y ≈160 corriendo, y se descuentan de los pasos sueltos (si marcaste «sin reloj», no se descuentan). Los pasos son una estimación (pasos × peso × 0,0003), no una medición. Un día solo con pasos no se marca como «día con ejercicio»." aria-label="Más información" aria-expanded="false">i</button></legend>
   <div id="pasos-box"></div>
 </fieldset>
 
@@ -307,14 +292,13 @@ Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localS
 
 <fieldset>
   <legend>⚖️ Peso (viene de Dieta)</legend>
-  <p style="font-size:0.78rem;color:var(--gris);margin:0 0 0.4rem">El peso vive en Dieta → Día → Peso, no se carga acá para no duplicar el dato. Este sitio lo lee automáticamente si los dos están publicados en el mismo dominio.</p>
   <div id="peso-desde-dieta" style="font-size:0.9rem"></div>
 </fieldset>
 
 
 
 <fieldset>
-  <legend>Mi rutina — para hacer (<span id="perfil-actual-nombre">Mamy</span>)</legend>
+  <legend>Mi rutina — para hacer (<span id="perfil-actual-nombre">Mamy</span>)<button type="button" class="ayu" data-t="Lo que marques como «Hecho» se suma al total de hoy y a Nutrición. Solo se cuenta el gasto extra del ejercicio, sin lo que ya gastas en reposo, para no contarlo dos veces. Una actividad anotada con «Agregar» no cuenta todavía: cuando la hagas, toca «Marcar hecho». Entonces pasa al historial de abajo y se suma a Nutrición. Las caminatas y carreras también se descuentan de los pasos sueltos (ver «👣 Pasos» más arriba)." title="Lo que marques como «Hecho» se suma al total de hoy y a Nutrición. Solo se cuenta el gasto extra del ejercicio, sin lo que ya gastas en reposo, para no contarlo dos veces. Una actividad anotada con «Agregar» no cuenta todavía: cuando la hagas, toca «Marcar hecho». Entonces pasa al historial de abajo y se suma a Nutrición. Las caminatas y carreras también se descuentan de los pasos sueltos (ver «👣 Pasos» más arriba)." aria-label="Más información" aria-expanded="false">i</button></legend>
 
   <div class="fila" style="align-items:flex-end;margin-bottom:0.9rem">
     <div>
@@ -347,7 +331,7 @@ Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localS
     </div>
     <button class="secundario" style="margin-top:0" onclick="agregarActividadManual()">Agregar</button>
   </div>
-  <label class="check" id="actividad-reloj-cont" style="margin:-0.4rem 0 0.9rem"><input type="checkbox" id="actividad-reloj" checked> Llevaba el reloj puesto <span style="color:var(--gris2);font-size:0.78rem">(sus pasos ya están en el total del día: se descuentan de «pasos sueltos» para no contarlos dos veces. Si salías sin reloj, desmárcalo)</span></label>
+  <label class="check" id="actividad-reloj-cont" style="margin:-0.4rem 0 0.9rem"><input type="checkbox" id="actividad-reloj" checked> Llevaba el reloj puesto<button type="button" class="ayu" data-t="Sus pasos ya están en el total del día: se descuentan de «pasos sueltos» para no contarlos dos veces. Si salías sin reloj, desmárcalo." title="Sus pasos ya están en el total del día: se descuentan de «pasos sueltos» para no contarlos dos veces. Si salías sin reloj, desmárcalo." aria-label="Más información" aria-expanded="false">i</button></label>
 
   <div id="balance-kcal" style="background:#0c1210;border-radius:8px;padding:10px 14px;margin-bottom:0.9rem;font-size:0.85rem"></div>
 
@@ -357,7 +341,6 @@ Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localS
     <button type="button" class="secundario" id="fecha-reg-hoy">Hoy</button>
   </div>
   <div id="rutina-lista"></div>
-  <p class="pendiente">Una actividad anotada con «Agregar» no cuenta todavía: cuando la hagas, toca «Marcar hecho». Entonces pasa al historial de abajo y se suma a Nutrición. Las caminatas y carreras también se descuentan de los pasos sueltos (ver «👣 Pasos» más arriba).</p>
   <button class="secundario" type="button" onclick="exportarRespaldoEjercicios()" style="margin-top:0.6rem">💾 Descargar copia de seguridad</button>
 </fieldset>
 
@@ -684,7 +667,7 @@ function renderPesoDesdeDieta(){
   const cont = document.getElementById('peso-desde-dieta');
   cont.innerHTML = peso
     ? '✅ Peso encontrado en Dieta: <b>' + peso + ' kg</b>'
-    : '⚠️ No hay peso cargado para ' + perfil + ' (o los dos sitios no están en el mismo dominio todavía). Ponlo en ⚙️ Ajustes → Mi perfil. Sin peso no se pueden estimar los kcal.';
+    : '⚠️ No hay peso cargado para ' + perfil + '. Ponlo en ⚙️ Ajustes → Mi perfil. Sin peso no se pueden estimar los kcal.';
   cont.innerHTML += '<div style="margin-top:8px;font-size:1rem">🔥 Hoy: ' + textoHoyKcal(kcalHoyEjercicio()) + '</div>';
   if(window.fechaReg && window.fechaReg !== hoyISO()){ cont.innerHTML += '<div style="margin-top:4px;font-size:1rem;color:#e0a02c">🔥 ' + window.fechaReg + ': ' + textoHoyKcal(kcalHoyEjercicio(window.fechaReg)) + '</div>'; }
 }
@@ -1002,8 +985,9 @@ function renderRutina(){
   if(!pesoKg){
     balanceDiv.innerHTML = '<span style="color:var(--gris2)">Falta tu peso: ponlo en ⚙️ Ajustes → Perfil para ver la estimación acá.</span>';
   } else {
-    balanceDiv.innerHTML = '<span style="color:var(--gris2);font-size:0.82rem">Lo que marques como «Hecho» se suma al total de arriba («Hoy»). Solo se cuenta el gasto <b>extra</b> del ejercicio, sin lo que ya gastas en reposo, para no contarlo dos veces.</span>';
+    balanceDiv.innerHTML = '';
   }
+  balanceDiv.style.display = pesoKg ? 'none' : '';
 
   if(lista.length===0){ cont.innerHTML = '<p class="empty">Todavía no agregaste ningún ejercicio.</p>'; return; }
 
@@ -1338,7 +1322,7 @@ function renderPasos(){
     '<div style="font-size:0.88rem;margin-top:4px">🏃 ' + nf(act) + ' en actividades del reloj' + (man ? ' · ✍️ ≈' + nf(man) + ' en caminatas anotadas a mano' : '') + ' · 🚶 ' + nf(sueltos) + ' sueltos</div>' +
     '<div style="font-size:0.85rem;margin-top:4px;color:var(--gris2)">' + kTxt + '</div>' +
     '<div style="margin-top:10px;font-size:0.8rem;color:var(--gris2)">Últimos 7 días' + (media != null ? ' · media ' + nf(media) + ' pasos/día' : '') + '</div>' + barras +
-    '<p class="pendiente" style="text-align:left;margin-top:10px">Se actualizan al sincronizar en <a href="huawei.html" style="color:var(--acc)">⌚ Huawei</a>, donde también se activa «Contar también los pasos que no son de una actividad». Los pasos de una caminata o carrera ya van dentro de esa actividad y no se cuentan dos veces; si la actividad aún no llegó a Drive, sus pasos cuentan como sueltos hasta el siguiente sync. Lo mismo para las caminatas o carreras que anotas a mano en «Mi rutina»: se estiman con ≈100 pasos por minuto caminando y ≈160 corriendo, y se descuentan de los pasos sueltos (si marcaste «sin reloj», no se descuentan). Los pasos son una estimación (pasos × peso × 0,0003), no una medición. Un día solo con pasos no se marca como «día con ejercicio».</p>';
+    '<p class="pendiente" style="text-align:left;margin-top:10px">Se actualizan al sincronizar en <a href="huawei.html" style="color:var(--acc)">⌚ Huawei</a>.</p>';
 }
 window.addEventListener('focus', renderPasos);
 window.addEventListener('storage', e => { if(e.key && e.key.indexOf('huawei') === 0) renderPasos(); });

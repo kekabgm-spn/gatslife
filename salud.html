@@ -158,7 +158,7 @@
   #si-form > div, #panel-articulaciones .form-add > div{margin-bottom:12px;}
   #si-form label{margin-top:2px;}
 </style>
-<script>(function(){var o=Storage.prototype.setItem;window.__nubeRaw=function(k,v){o.call(localStorage,k,v)};window.__nubeSucias={};window.__nubeOn=false;Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localStorage&&window.__nubeOn){window.__nubeSucias[k]=1;window.dispatchEvent(new Event("nube-cambio"))}};setTimeout(function(){if(!window.__nubeVivo){var d=document.createElement("div");d.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99998;background:#7a1f1f;color:#fff;padding:10px 14px;font:14px system-ui,sans-serif;text-align:center";d.textContent="⚠️ La entrada con Google no cargó: tus datos NO se están guardando en la nube.";(document.body||document.documentElement).appendChild(d)}},6000);})();</script>
+<script>(function(){var o=Storage.prototype.setItem;window.__nubeRaw=function(k,v){o.call(localStorage,k,v)};window.__nubeSucias={};window.__nubeOn=false;Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localStorage&&window.__nubeOn){window.__nubeSucias[k]=1;window.dispatchEvent(new Event("nube-cambio"))}};setTimeout(function(){if(!window.__nubeVivo){var d=document.createElement("div");d.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99998;background:#7a1f1f;color:#fff;padding:10px 14px;font:14px system-ui,sans-serif;text-align:center";d.textContent="⚠️ La entrada con Google no cargó: tus datos NO se están guardando en la nube. Recarga la página; si sigue igual, avísame.";(document.body||document.documentElement).appendChild(d)}},6000);})();</script>
 </head>
 <body>
 <button id="btnTema" onclick="alternarTema()" title="Cambiar tema" aria-label="Cambiar entre tema claro y oscuro" style="position:fixed;top:12px;right:12px;z-index:500;width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-size:1rem;cursor:pointer">☀️</button>
@@ -172,7 +172,7 @@
   <a href="huawei.html">HUAWEI</a>
 </nav>
 
-<h1>Salud</h1>
+<h1>Salud<button type="button" class="ayu" data-t="Las condiciones, cirugías, medicación y pruebas se guardan por perfil y se sincronizan entre dispositivos, igual que Dieta y Fitness. Los archivos adjuntos muy grandes puede que no se sincronicen a la nube." title="Las condiciones, cirugías, medicación y pruebas se guardan por perfil y se sincronizan entre dispositivos, igual que Dieta y Fitness. Los archivos adjuntos muy grandes puede que no se sincronicen a la nube." aria-label="Más información" aria-expanded="false">i</button></h1>
 
 <div class="tabs-perfil" id="tabsPerfil">
   <button type="button" data-perfil="Mamy">Mamy</button>
@@ -197,13 +197,12 @@
     <button type="button" class="btn-cancelar" id="ar-sig" aria-label="Día siguiente">▶</button>
     <button type="button" class="btn-guardar" id="ar-hoy">Hoy</button>
   </div>
-  <div class="tabs-perfil"><button type="button" id="ar-v-ant" class="on">Vista anterior</button><button type="button" id="ar-v-pos">Vista posterior</button></div>
-  <p class="aviso" style="margin:0 0 8px">Toca una articulación del cuerpo. Se enciende en rojo lo que tenga algún valor. Toca de nuevo un punto ya marcado para quitarlo. Lo que marques se guarda en el día elegido.</p>
+  <div class="tabs-perfil"><button type="button" id="ar-v-ant" class="on">Vista anterior</button><button type="button" id="ar-v-pos">Vista posterior</button><button type="button" class="ayu" data-t="Toca una articulación del cuerpo. Se enciende en rojo lo que tenga algún valor. Toca de nuevo un punto ya marcado para quitarlo. Lo que marques se guarda en el día elegido." title="Toca una articulación del cuerpo. Se enciende en rojo lo que tenga algún valor. Toca de nuevo un punto ya marcado para quitarlo. Lo que marques se guarda en el día elegido." aria-label="Más información" aria-expanded="false">i</button></div>
   <svg id="ar-svg" viewBox="0 0 200 410" style="width:100%;max-width:340px;display:block;margin:0 auto"></svg>
   <div id="ar-resumen"></div>
   <div id="ar-ficha"></div>
   <h2 style="margin-top:22px">Funcionalidad del día</h2>
-  <p class="aviso" style="margin:0 0 8px">Dificultad: 0 ninguna · 1 leve · 2 moderada · 3 grave · 4 extrema. Es una lista propia, no el cuestionario oficial WHODAS.</p>
+  <p class="aviso" style="margin:0 0 8px">Dificultad: 0 ninguna · 1 leve · 2 moderada · 3 grave · 4 extrema.</p>
   <div id="ar-func"></div>
   <h2 style="margin-top:22px">Días registrados</h2>
   <div id="ar-hist"></div>
@@ -312,8 +311,7 @@
   <div id="lista-medicacion"></div>
 
   <details style="margin-top:14px">
-    <summary style="cursor:pointer;color:var(--muted);font-size:0.85rem">📚 Mi banco de nombres (para autocompletar)</summary>
-    <p class="aviso">Escribí un nombre por línea. Al añadir una pastilla, empezás a escribir y te sugiere el nombre. Los nombres que uses también se suman solos. Se guarda en tu cuenta.</p>
+    <summary style="cursor:pointer;color:var(--muted);font-size:0.85rem">📚 Mi banco de nombres (para autocompletar)<button type="button" class="ayu" data-t="Escribí un nombre por línea. Al añadir una pastilla, empezás a escribir y te sugiere el nombre. Los nombres que uses también se suman solos. Se guarda en tu cuenta." title="Escribí un nombre por línea. Al añadir una pastilla, empezás a escribir y te sugiere el nombre. Los nombres que uses también se suman solos. Se guarda en tu cuenta." aria-label="Más información" aria-expanded="false">i</button></summary>
     <textarea id="banco-med-texto" rows="6" style="width:100%" placeholder="Un nombre por línea"></textarea>
     <button type="button" class="btn-guardar" id="banco-med-guardar" style="margin-top:8px">Guardar banco</button>
   </details>
@@ -360,8 +358,6 @@
   <div id="lista-citas"></div>
   <a class="link-calendario" href="calendario.html">Ir al Calendario →</a>
 </section>
-
-<p class="aviso">Las condiciones, cirugías, medicación y pruebas se guardan por perfil y se sincronizan entre dispositivos, igual que Dieta y Fitness. Los archivos adjuntos muy grandes puede que no se sincronicen a la nube.</p>
 
 </div>
 

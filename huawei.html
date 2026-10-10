@@ -14,7 +14,7 @@
 function __nubeAvisoDetalle(t){var d=document.getElementById("__nubeErrReal");if(!d){d=document.createElement("div");d.id="__nubeErrReal";d.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#7a1f1f;color:#fff;padding:10px 14px;font:13px monospace;text-align:left;white-space:pre-wrap;max-height:40vh;overflow:auto";(document.body||document.documentElement).appendChild(d)}d.textContent+="⚠️ "+t+"\n"}
 window.addEventListener("error",function(e){__nubeAvisoDetalle("Error: "+(e.message||e.error||"")+" @ "+(e.filename||"")+":"+(e.lineno||"")) },true);
 window.addEventListener("unhandledrejection",function(e){__nubeAvisoDetalle("Promesa fallida: "+(e.reason&&(e.reason.message||e.reason)||e.reason))});
-Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localStorage&&window.__nubeOn){window.__nubeSucias[k]=1;window.dispatchEvent(new Event("nube-cambio"))}};setTimeout(function(){if(!window.__nubeVivo){var d=document.createElement("div");d.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99998;background:#7a1f1f;color:#fff;padding:10px 14px;font:14px system-ui,sans-serif;text-align:center";d.textContent="⚠️ La entrada con Google no cargó: tus datos NO se están guardando en la nube. Avísale a Claude (en el computador: F12 → Console → copia el mensaje rojo).";(document.body||document.documentElement).appendChild(d)}},6000);})();</script>
+Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localStorage&&window.__nubeOn){window.__nubeSucias[k]=1;window.dispatchEvent(new Event("nube-cambio"))}};setTimeout(function(){if(!window.__nubeVivo){var d=document.createElement("div");d.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99998;background:#7a1f1f;color:#fff;padding:10px 14px;font:14px system-ui,sans-serif;text-align:center";d.textContent="⚠️ La entrada con Google no cargó: tus datos NO se están guardando en la nube. Recarga la página; si sigue igual, avísame.";(document.body||document.documentElement).appendChild(d)}},6000);})();</script>
 <style>
   :root{--bg:#10151f;--card:#1b2330;--line:#2a3242;--ink:#e8ecf2;--mut:#8a94a3;--accent:#35c26a;color-scheme:dark;}
   :root[data-theme="light"]{--bg:#f4f6f8;--card:#fff;--line:#d7dce3;--ink:#1b2330;--mut:#5d6877;--accent:#1f9d52;color-scheme:light;}
@@ -59,7 +59,7 @@ Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localS
   <div id="kcal"></div>
   <label style="display:flex;gap:8px;align-items:flex-start;margin-top:10px;font-size:.85rem"><input type="checkbox" id="chkPasos" style="margin-top:3px"><span>Contar también los <b>pasos que no son de una actividad</b> como calorías extra <span class="nota">(recomendado dejarlo apagado hasta entender cómo se calcula tu meta)</span></span></label>
   <div id="avisoPasos" class="nota"></div>
-  <details><summary>¿Cómo funcionan las calorías? (con las capturas de Huawei)</summary>
+  <details><summary>¿Cómo funcionan las calorías?</summary>
     <ul>
       <li><b>Total quemadas = En reposo + Activas.</b> Ej.: 1.766 = 1.594 + 172. El «reposo» es lo que gasta tu cuerpo solo por estar vivo.</li>
       <li><b>El «déficit» de Huawei</b> es quemadas − consumidas. Si no anotas comida en Huawei, «consumidas» es 0 y el déficit sale igual al total quemado (1.766). <b>No es un déficit real.</b></li>
