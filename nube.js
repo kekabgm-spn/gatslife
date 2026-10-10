@@ -166,7 +166,7 @@ function errorEntrada(e){
   const d = pantalla(`<h1>No se pudo entrar</h1><p style="color:#ff9b6b">${e.code || e.message}</p><p style="color:#8a94a3">${msg}</p><button data-a="re" style="${BTN}">Reintentar</button><button data-a="salir" style="${BTN}border-color:#8a94a3;color:#8a94a3;">Salir de la cuenta</button>`);
   d.querySelector('[data-a="re"]').onclick = () => location.reload();
   d.querySelector('[data-a="salir"]').onclick = async () => {
-    if(!navigator.onLine && !confirm("Estás sin conexión: si sales de la cuenta, no podrás volver a entrar hasta que tengas internet. ¿Salir de todos modos?")) return;
+    if(!navigator.onLine && !(await window.confirmar("Estás sin conexión: si sales de la cuenta, no podrás volver a entrar hasta que tengas internet. ¿Salir de todos modos?"))) return;
     await signOut(auth); location.reload();
   };
 }

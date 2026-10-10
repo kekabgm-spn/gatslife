@@ -315,7 +315,7 @@ if(window.Familia && window.Familia.listo) conectarInvitaciones();
 
 function crearInvitacion(nombre){
   const p = miPerfil();
-  if(!p){ alert("Todavía no se identificó tu cuenta — esperá unos segundos y probá de nuevo."); return; }
+  if(!p){ avisar("Todavía no se identificó tu cuenta — esperá unos segundos y probá de nuevo."); return; }
   const otra = laOtra();
   invitaciones.push({
     id: "inv" + Date.now(), nombre, creadoPor: p, destinatario: otra, estado: "pendiente"
@@ -388,7 +388,7 @@ function sonarAlarma(){
 }
 
 function iniciarTimer(id, minutos){
-  if(!minutos || minutos<=0){ alert("Escribí un número de minutos mayor que cero."); return; }
+  if(!minutos || minutos<=0){ avisar("Escribí un número de minutos mayor que cero."); return; }
   if("Notification" in window && Notification.permission === "default"){
     Notification.requestPermission();
   }
@@ -499,7 +499,7 @@ function marcarCompletada(t){
   delete t.pospuestaHasta;
   if(t.lista === "casa" || t.lista === "invitadas"){
     const p = miPerfil();
-    if(!p){ alert("Todavía no se identificó tu cuenta — esperá unos segundos y probá de nuevo."); return; }
+    if(!p){ avisar("Todavía no se identificó tu cuenta — esperá unos segundos y probá de nuevo."); return; }
     if(t.tipo === "repetitiva" && t.reseteo === "auto"){
       t.historialPor = t.historialPor || { Mamy:[], Filha:[] };
       t.historialPor[p] = t.historialPor[p] || [];
@@ -542,7 +542,7 @@ function estadoTarea(t){
   return estaCompletadaHoy(t) ? "hecha" : "pendiente";
 }
 function posponer(t, dias){
-  if(!dias || dias<=0){ alert("Escribí un número de días mayor que cero."); return; }
+  if(!dias || dias<=0){ avisar("Escribí un número de días mayor que cero."); return; }
   t.pospuestaHasta = fechaMasDias(dias);
   t.veces = (t.veces||0)+1;
   posponerAbiertoEn = null;
@@ -650,8 +650,8 @@ function pintarTareaEnSeccion(sec, t){
     <button type="button" class="tarea-reloj ${timers[t.id]!==undefined?"activo":""}" title="Temporizador">⏱️</button>
     <button type="button" class="tarea-borrar">✕</button>`;
   div.querySelector(".tarea-check").onclick = ()=>marcarCompletada(t);
-  div.querySelector(".tarea-borrar").onclick = ()=>{
-    if(confirm(`¿Borrar "${t.nombre}"?`)) borrarTarea(t.id);
+  div.querySelector(".tarea-borrar").onclick = async ()=>{
+    if(await confirmar(`¿Borrar "${t.nombre}"?`, {si:"Borrar", peligro:true})) borrarTarea(t.id);
   };
   div.querySelector(".tarea-posponer").onclick = ()=>{
     posponerAbiertoEn = (posponerAbiertoEn===t.id) ? null : t.id;
@@ -786,14 +786,14 @@ document.querySelectorAll("#tabsLista button").forEach(b=>{
 document.getElementById("filtroEstado").onchange = e=>{ filtroEstado = e.target.value; render(); };
 document.getElementById("filtroFrec").onchange = e=>{ filtroFrec = e.target.value; render(); };
 
-document.getElementById("accionLote").onchange = e=>{
+document.getElementById("accionLote").onchange = async e=>{
   const modo = e.target.value; e.target.value = "";
   if(!modo) return;
   const esFrec = modo.startsWith("frec:");
   const objetivo = esFrec ? visibles.filter(t=>t.tipo==="repetitiva") : visibles;
-  if(objetivo.length===0){ alert("No hay tareas a las que aplicar esto con los filtros actuales."); return; }
+  if(objetivo.length===0){ avisar("No hay tareas a las que aplicar esto con los filtros actuales."); return; }
   const txt = esFrec ? "Cambiar la frecuencia a «"+modo.slice(5)+"» en" : {opcional:"Marcar como opcionales", congelada:"Congelar", normal:"Devolver a normales"}[modo];
-  if(!confirm(txt+" "+objetivo.length+" tareas (las que se ven con los filtros actuales)?")) return;
+  if(!(await confirmar(txt+" "+objetivo.length+" tareas (las que se ven con los filtros actuales)?"))) return;
   objetivo.forEach(t=>{ if(esFrec) t.frecuencia = modo.slice(5); else if(modo==="normal") delete t.modo; else t.modo = modo; });
   guardarEstado(); render();
 };
@@ -905,7 +905,7 @@ function cerrarFormulario(){
 }
 function guardarNuevaTarea(){
   const nombre = document.getElementById("fNombre").value.trim();
-  if(!nombre){ alert("Escribí un nombre para la tarea."); return; }
+  if(!nombre){ avisar("Escribí un nombre para la tarea."); return; }
   const tipo = grupoValor("fTipo");
   const nueva = {
     id: Date.now().toString(36),
@@ -1140,18 +1140,18 @@ document.getElementById("btnInvitar").onclick = ()=>{
     <button type="button" class="btn-nueva" id="btnEnviarInvitacion">Enviar invitación a ${laOtra()||"la otra persona"}</button>`;
   document.getElementById("btnEnviarInvitacion").onclick = ()=>{
     const nombre = document.getElementById("invNombre").value.trim();
-    if(!nombre){ alert("Ponele un nombre a la tarea."); return; }
+    if(!nombre){ avisar("Ponele un nombre a la tarea."); return; }
     crearInvitacion(nombre);
     cont.style.display = "none";
   };
 };
 
-function reducirTareasCasa(auto){
+async function reducirTareasCasa(auto){
   const viejas = estado.tareas.filter(esSemillaVieja);
   const propias = estado.tareas.filter(t=>(t.lista==="casa") && !esSemillaVieja(t) && !esSemillaNueva(t)).length;
   const filas = construirSemillaCasa();
   if(viejas.length){
-    if(auto !== true && !confirm("Esto va a reemplazar las "+viejas.length+" tareas de casa que creó la app por una lista de "+filas.length+" tareas agrupadas.\n• Las tareas que añadiste tú ("+propias+") se quedan.\n• Se pierde lo marcado y el historial de las tareas reemplazadas (en «Hecho recientemente»).\nSi quieres conservarlo, descarga antes una copia en ⚙️ Ajustes.\n¿Continuar?")) return;
+    if(auto !== true && !(await confirmar("Esto va a reemplazar las "+viejas.length+" tareas de casa que creó la app por una lista de "+filas.length+" tareas agrupadas.\n• Las tareas que añadiste tú ("+propias+") se quedan.\n• Se pierde lo marcado y el historial de las tareas reemplazadas (en «Hecho recientemente»).\nSi quieres conservarlo, descarga antes una copia en ⚙️ Ajustes.\n¿Continuar?"))) return;
     estado.tareas = estado.tareas.filter(t=>!esSemillaVieja(t));
   }
   filas.forEach((f,i)=>{ if(!estado.tareas.some(t=>t.id==="casa_seed50_"+i)) estado.tareas.push(tareaDeSemilla(f,i)); });

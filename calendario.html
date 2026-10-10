@@ -1436,7 +1436,7 @@ document.addEventListener("click", ev => {
     case "eliminar": {
       const e = eventos.find(x => x.id === editId); if(!e) break;
       if(e.repite && e.repite !== "no") $("delOpts").hidden = false;
-      else if(confirm("¿Eliminar “" + e.titulo + "”?")) eliminarSerie();
+      else confirmar("¿Eliminar “" + e.titulo + "”?", {si:"Eliminar", peligro:true}).then(ok => { if(ok) eliminarSerie(); });
       break;
     }
     case "del-este": eliminarSoloEste(); break;

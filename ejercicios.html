@@ -742,17 +742,17 @@ const NOMBRE_ACTIVIDAD = {caminata:'Caminata', corrida:'Corrida', natacion:'Nata
   bici:'Bicicleta', sentadillas:'Sentadillas', flexiones:'Flexiones', abdominales:'Abdominales', plancha:'Plancha',
   pesas:'Pesas / fuerza', elastico:'Banda elástica', silla:'Ejercicio en silla', alongamento:'Alongamiento', baile:'Baile'};
 
-function agregarActividadManual(){
+async function agregarActividadManual(){
   const tipo = document.getElementById('actividad-tipo').value;
   const otra = document.getElementById('actividad-otra').value.trim();
   const min = document.getElementById('actividad-min').value.trim();
   const nombre = tipo === 'otro' ? (otra || 'Actividad') : NOMBRE_ACTIVIDAD[tipo];
-  if(tipo === 'otro' && !otra){ alert('Escribí el nombre de la actividad.'); return; }
+  if(tipo === 'otro' && !otra){ avisar('Escribí el nombre de la actividad.'); return; }
   // Aviso: si el reloj ya grabó una caminata/corrida ese día, anotarla otra vez la contaría dos veces.
   if(tipo === 'caminata' || tipo === 'corrida'){
     const fecha = window.fechaReg || hoyISO();
     if(hcLeer().some(h => h && h.fecha === fecha && h.tipo === tipo && String(h.hid||'').indexOf('hw:') === 0)){
-      if(!confirm('El reloj ya registró ' + (tipo === 'caminata' ? 'una caminata' : 'una carrera') + ' ese día (la ves en "Mi historial"). Si es la misma, no hace falta anotarla: se contaría dos veces.\n\n¿Anotarla igual porque es otra distinta?')) return;
+      if(!(await confirmar('El reloj ya registró ' + (tipo === 'caminata' ? 'una caminata' : 'una carrera') + ' ese día (la ves en "Mi historial"). Si es la misma, no hace falta anotarla: se contaría dos veces.\n\n¿Anotarla igual porque es otra distinta?'))) return;
     }
   }
   const item = {
@@ -919,10 +919,10 @@ function agregarARutina(item, btn){
   renderRutina();
 }
 
-function quitarDeRutina(id){
+async function quitarDeRutina(id){
   const it = obtenerRutina().find(x=>x.id===id);
   if(it && it.enHistorial){
-    if(!confirm('Esta actividad ya está marcada como hecha. Si la quitas, también se borra del historial y deja de contar en las calorías. ¿Quitarla?')) return;
+    if(!(await confirmar('Esta actividad ya está marcada como hecha. Si la quitas, también se borra del historial y deja de contar en las calorías. ¿Quitarla?'))) return;
     quitarDelHistorialCompartido(it);
   }
   const lista = obtenerRutina().filter(x=>x.id!==id);
@@ -1059,8 +1059,8 @@ function renderHistorial(){
       ? '<ul style="list-style:none;padding:0;margin:6px 0">' + idx.map(filaDet).join('') + '</ul>'
       : '<div>Sin ejercicios registrados ese día.</div>')
       + (hcDiaSel > hoy ? '' : '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center"><select id="hc-add-tipo" style="width:auto">'+opts+'</select><input id="hc-add-otra" placeholder="Nombre" style="display:none;width:130px"><input id="hc-add-min" type="number" min="1" placeholder="Min" style="width:80px"><label id="hc-add-reloj-cont" style="font-size:0.8rem;display:none;align-items:center;gap:4px"><input type="checkbox" id="hc-add-reloj" checked style="width:auto"> con reloj</label><button type="button" class="secundario" id="hc-add-btn">+ Añadir a este día</button></div>');
-    det.querySelectorAll('[data-del]').forEach(bt=> bt.onclick = ()=>{
-      if(!confirm('¿Quitar este ejercicio del día?')) return;
+    det.querySelectorAll('[data-del]').forEach(bt=> bt.onclick = async ()=>{
+      if(!(await confirmar('¿Quitar este ejercicio del día?',{si:"Quitar",peligro:true}))) return;
       const h2 = hcLeer(); h2.splice(+bt.dataset.del, 1);
       localStorage.setItem(claveHistorialCompartido(), JSON.stringify(h2)); recalcularPasos(); renderHistorial();
     });
@@ -1071,7 +1071,7 @@ function renderHistorial(){
       sel.onchange = ()=>{ document.getElementById('hc-add-otra').style.display = sel.value==='otro' ? 'inline-block' : 'none'; pintarReloj(); };
       document.getElementById('hc-add-btn').onclick = ()=>{
         const tipo = sel.value, otra = document.getElementById('hc-add-otra').value.trim();
-        if(tipo==='otro' && !otra){ alert('Escribe el nombre de la actividad.'); return; }
+        if(tipo==='otro' && !otra){ avisar('Escribe el nombre de la actividad.'); return; }
         const h2 = hcLeer();
         const nueva = { fecha: hcDiaSel, tipo: tipo, nombre: tipo==='otro' ? otra : NOMBRE_ACTIVIDAD[tipo], minutos: parseFloat(document.getElementById('hc-add-min').value) || 10 };
         if((tipo==='caminata' || tipo==='corrida') && !document.getElementById('hc-add-reloj').checked) nueva.reloj = false;

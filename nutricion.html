@@ -1304,7 +1304,7 @@ function tarjetaProducto(p, gramosIni, onAgregar, onQuitar, conComida){
     eqIn.oninput = ()=>{ const v = parseFloat(eqIn.value); if(v > 0){ guardarEquiv(clave, uni, v); pintar(); } };
     ficha.querySelector(".btn-agregar").onclick = ()=>{
       const g = n * gUni(uni);
-      if(!(g > 0)){ alert("Pon primero una cantidad."); return; }
+      if(!(g > 0)){ avisar("Pon primero una cantidad."); return; }
       onAgregar(p, r1(g), {n, uni, comida: selCom ? selCom.value : undefined});
     };
     pintar();
@@ -1415,8 +1415,8 @@ function crearPanelBusqueda(opts){
   box.querySelector(".pz-agregar").onclick = ()=>{
     const nombre = box.querySelector(".pz-nombre").value.trim();
     const kcal = parseFloat(box.querySelector(".pz-kcal").value);
-    if(!nombre){ alert("Ponele un nombre al alimento."); return; }
-    if(!(kcal>=0)){ alert("Escribí las calorías."); return; }
+    if(!nombre){ avisar("Ponele un nombre al alimento."); return; }
+    if(!(kcal>=0)){ avisar("Escribí las calorías."); return; }
     // Se guarda como "100g = las kcal escritas" para que encaje con el mismo cálculo que usa el resto del buscador,
     // agregándolo directo con 100 (o sea: la cantidad completa que pusiste).
     opts.onElegir({ nombre, kcal100: kcal, grasa100: 0, carbh100: 0, prot100: 0 }, 100);
@@ -1622,8 +1622,8 @@ function guardarRecetaActual(){
   const e = recetaEnEdicion; if(!e) return;
   syncDatosReceta();
   const nombre = (e.nombre||"").trim(), porciones = e.porciones || 1;
-  if(!nombre){ alert("Ponle un nombre a la receta."); return; }
-  if(e.ingredientes.length===0){ alert("Añade al menos un ingrediente."); return; }
+  if(!nombre){ avisar("Ponle un nombre a la receta."); return; }
+  if(e.ingredientes.length===0){ avisar("Añade al menos un ingrediente."); return; }
   const t = totalesReceta();
   const datos = {
     nombre, porciones, tiempoPrep:e.tiempoPrep||0, tiempoCoccion:e.tiempoCoccion||0, tipoComida:e.tipoComida||"",
@@ -1694,7 +1694,7 @@ function editarRecetaTexto(r){
   document.getElementById("rtCancelar").onclick = ()=>{ cont.innerHTML = ""; };
   document.getElementById("rtGuardar").onclick = ()=>{
     const nombre = document.getElementById("rtNombre").value.trim();
-    if(!nombre){ alert("Ponle un nombre a la receta."); return; }
+    if(!nombre){ avisar("Ponle un nombre a la receta."); return; }
     const f = id => parseFloat(String(document.getElementById(id).value).replace(",",".")) || 0;
     const porciones = f("rtPorciones") || 1;
     const idx = recetas.findIndex(x=>x.id===r.id); if(idx<0) return;
@@ -2089,8 +2089,8 @@ function cancelarComidaGuardada(){
 function guardarComidaGuardadaActual(){
   const nombre = document.getElementById("cgNombre").value.trim();
   const tipoComida = document.getElementById("cgTipoComida").value || "";
-  if(!nombre){ alert("Ponele un nombre a la comida."); return; }
-  if(comidaGuardadaEnEdicion.items.length===0){ alert("Agregá al menos un alimento."); return; }
+  if(!nombre){ avisar("Ponele un nombre a la comida."); return; }
+  if(comidaGuardadaEnEdicion.items.length===0){ avisar("Agregá al menos un alimento."); return; }
   comidasGuardadas.push({
     id: "cg" + Date.now(), nombre, tipoComida, autor: perfilActivo,
     items: comidaGuardadaEnEdicion.items
@@ -2294,8 +2294,8 @@ function anadirIngredienteManual(){
   const nombre = val("ingNom").trim();
   const cantidad = num("ingCant");
   const unidad = val("ingUni").trim() || "unidad";
-  if(!nombre){ alert("Escribe el nombre del alimento."); return; }
-  if(!(cantidad > 0)){ alert("Escribe la cantidad (por ejemplo 1, 200 o 0,5)."); return; }
+  if(!nombre){ avisar("Escribe el nombre del alimento."); return; }
+  if(!(cantidad > 0)){ avisar("Escribe la cantidad (por ejemplo 1, 200 o 0,5)."); return; }
   const kcal = num("ingKcal");
   e.ingredientes.push({
     nombre, cantidad, unidad, gramos: gramosDe(cantidad, unidad),
@@ -2432,7 +2432,7 @@ function renderRecetas(){
       </details>`;
     div.querySelector(".rc-editar").onclick = ()=>editarReceta(r.id);
     div.querySelector(".rc-duplicar").onclick = ()=>duplicarReceta(r.id);
-    div.querySelector(".rc-borrar").onclick = ()=>{ if(confirm('¿Borrar la receta "' + r.nombre + '"? No se puede deshacer.')) borrarReceta(r.id); };
+    div.querySelector(".rc-borrar").onclick = async ()=>{ if(await confirmar('¿Borrar la receta "' + r.nombre + '"? No se puede deshacer.', {si:"Borrar", peligro:true})) borrarReceta(r.id); };
     cont.appendChild(div);
   });
 }
@@ -3125,7 +3125,7 @@ function renderMedidas(){
 }
 
 async function borrarMedicion(id){
-  if(!confirm("¿Borrar esta medición?")) return;
+  if(!(await confirmar("¿Borrar esta medición?",{si:"Borrar",peligro:true}))) return;
   const m = medidas.find(x => x.id === id);
   if(m && m.tieneFoto) await fotoBorrar(claveFoto(id));
   medidas = medidas.filter(x => x.id !== id);
@@ -3204,8 +3204,8 @@ document.querySelectorAll(".agua-botones button").forEach(b=>{
 document.getElementById("aguaSumarCustom").onclick = ()=>{
   const inp = document.getElementById("aguaCustom");
   const v = parseFloat(inp.value);
-  if(!(v > 0)){ alert("Escribí cuántos ml tomaste."); return; }
-  if(v > 5000){ alert("Máximo 5000 ml por vez."); return; }
+  if(!(v > 0)){ avisar("Escribí cuántos ml tomaste."); return; }
+  if(v > 5000){ avisar("Máximo 5000 ml por vez."); return; }
   sumarAgua(v);
   inp.value = "";
 };
@@ -3342,12 +3342,12 @@ function pdLimpiarSiVacio(r){
 async function pdGuardar(esPeso){
   const ids = esPeso ? PD_PESO.concat(PD_COMP) : PD_MED;
   const lec = pdLeerValores(ids);
-  if(lec.fuera){ alert("Revisa estos valores, se ven fuera de lo normal: " + lec.fuera); return; }
+  if(lec.fuera){ avisar("Revisa estos valores, se ven fuera de lo normal: " + lec.fuera); return; }
   const vals = lec.vals;
   const archivo = esPeso ? document.getElementById("pdFoto").files[0] : null;
   const guardarFoto = !!archivo && document.getElementById("pdGuardarFoto").checked;
   const enlace = esPeso ? document.getElementById("pdEnlace").value.trim() : "";
-  if(!Object.keys(vals).length && !guardarFoto && !enlace){ alert("Escribe al menos un dato."); return; }
+  if(!Object.keys(vals).length && !guardarFoto && !enlace){ avisar("Escribe al menos un dato."); return; }
   const f = (esPeso && pdFechaFoto) ? pdFechaFoto.f : fechaActual;
   let r = regDia(f);
   if(!r){ r = {id:"m"+Date.now(), fecha:f}; medidas.push(r); }
@@ -3364,7 +3364,7 @@ async function pdGuardar(esPeso){
   }
   if(guardarFoto){
     try{ await fotoGuardar(claveFoto(r.id), archivo); r.tieneFoto = true; }
-    catch(e){ alert("No se pudo guardar la foto en este navegador. Los datos sí se guardaron."); }
+    catch(e){ avisar("No se pudo guardar la foto en este navegador. Los datos sí se guardaron."); }
   }
   if(esPeso){
     document.getElementById("pdFoto").value = "";
@@ -3379,16 +3379,16 @@ document.getElementById("pesoHoyGuardar").onclick = ()=> pdGuardar(true);
 document.getElementById("medHoyGuardar").onclick = ()=> pdGuardar(false);
 document.getElementById("pesoHoyQuitar").onclick = async ()=>{
   const r = regDia(fechaActual); if(!r) return;
-  if(!confirm("¿Quitar el peso, la composición corporal y el informe (enlace y foto) de este día?")) return;
+  if(!(await confirmar("¿Quitar el peso, la composición corporal y el informe (enlace y foto) de este día?",{si:"Quitar",peligro:true}))) return;
   PD_PESO.concat(PD_COMP, PD_DERIVADOS, PD_COMP_VIEJOS).forEach(id => delete r[id]);
   delete r.enlace;
   if(r.tieneFoto){ try{ await fotoBorrar(claveFoto(r.id)); }catch(e){} delete r.tieneFoto; }
   pdLimpiarSiVacio(r);
   escribirJSON(CLAVE_MEDIDAS(), medidas); pesoHoyRefrescar();
 };
-document.getElementById("medHoyQuitar").onclick = ()=>{
+document.getElementById("medHoyQuitar").onclick = async ()=>{
   const r = regDia(fechaActual); if(!r) return;
-  if(!confirm("¿Quitar las medidas de este día?")) return;
+  if(!(await confirmar("¿Quitar las medidas de este día?",{si:"Quitar",peligro:true}))) return;
   PD_MED.forEach(id => delete r[id]);
   pdLimpiarSiVacio(r);
   escribirJSON(CLAVE_MEDIDAS(), medidas); pesoHoyRefrescar();

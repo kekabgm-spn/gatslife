@@ -464,7 +464,7 @@ function leerArchivo(input){
 
 function guardarCondicion(){
   const nombre = document.getElementById("cond-nombre").value.trim();
-  if(!nombre) return alert("Poné un nombre para la condición.");
+  if(!nombre) return avisar("Poné un nombre para la condición.");
   const id = document.getElementById("cond-id").value || nuevoId();
   const item = { id, nombre, desde: document.getElementById("cond-desde").value || "", notas: document.getElementById("cond-notas").value.trim() };
   const i = condiciones.findIndex(x=>x.id===id);
@@ -472,7 +472,7 @@ function guardarCondicion(){
   guardarJSON(claveCond(), condiciones);
   cerrarForm("condiciones"); renderCondiciones();
 }
-function borrarCondicion(id){ if(!confirm("¿Borrar esta condición?")) return; condiciones = condiciones.filter(x=>x.id!==id); guardarJSON(claveCond(), condiciones); renderCondiciones(); }
+async function borrarCondicion(id){ if(!(await confirmar("¿Borrar esta condición?",{si:"Borrar",peligro:true}))) return; condiciones = condiciones.filter(x=>x.id!==id); guardarJSON(claveCond(), condiciones); renderCondiciones(); }
 function renderCondiciones(){
   const cont = document.getElementById("lista-condiciones");
   if(!condiciones.length){ cont.innerHTML = '<p class="empty">Sin condiciones registradas todavía.</p>'; return; }
@@ -492,7 +492,7 @@ function renderCondiciones(){
 
 function guardarCirugia(){
   const desc = document.getElementById("cir-desc").value.trim();
-  if(!desc) return alert("Contá qué se hizo.");
+  if(!desc) return avisar("Contá qué se hizo.");
   const id = document.getElementById("cir-id").value || nuevoId();
   const previo = cirugias.find(x=>x.id===id);
   const item = { id, fecha: document.getElementById("cir-fecha").value || "", desc, notas: document.getElementById("cir-notas").value.trim(), archivo: previo?.archivo || null, archivoNombre: previo?.archivoNombre || null };
@@ -504,7 +504,7 @@ function guardarCirugia(){
     cerrarForm("cirugias"); renderCirugias();
   });
 }
-function borrarCirugia(id){ if(!confirm("¿Borrar esta cirugía?")) return; cirugias = cirugias.filter(x=>x.id!==id); guardarJSON(claveCirugias(), cirugias); renderCirugias(); }
+async function borrarCirugia(id){ if(!(await confirmar("¿Borrar esta cirugía?",{si:"Borrar",peligro:true}))) return; cirugias = cirugias.filter(x=>x.id!==id); guardarJSON(claveCirugias(), cirugias); renderCirugias(); }
 function renderCirugias(){
   const cont = document.getElementById("lista-cirugias");
   const orden = cirugias.slice().sort((a,b)=> (b.fecha||"").localeCompare(a.fecha||""));
@@ -526,7 +526,7 @@ function renderCirugias(){
 
 function guardarMedicacion(){
   const nombre = document.getElementById("med-nombre").value.trim();
-  if(!nombre) return alert("Poné el nombre de la pastilla.");
+  if(!nombre) return avisar("Poné el nombre de la pastilla.");
   const id = document.getElementById("med-id").value || nuevoId();
   const cantidad = document.getElementById("med-cantidad").value;
   const item = { id, nombre, cantidad: cantidad !== "" ? Number(cantidad) : null, unidad: document.getElementById("med-unidad").value, horario: document.getElementById("med-horario").value.trim(), notas: document.getElementById("med-notas").value.trim(), activa: document.getElementById("med-activa").checked };
@@ -536,7 +536,7 @@ function guardarMedicacion(){
   aprenderNombreMed(nombre);
   cerrarForm("medicacion"); renderMedicacion(); renderTomas();
 }
-function borrarMedicacion(id){ if(!confirm("¿Borrar esta pastilla?")) return; medicacion = medicacion.filter(x=>x.id!==id); guardarJSON(claveMed(), medicacion); renderMedicacion(); renderTomas(); }
+async function borrarMedicacion(id){ if(!(await confirmar("¿Borrar esta pastilla?",{si:"Borrar",peligro:true}))) return; medicacion = medicacion.filter(x=>x.id!==id); guardarJSON(claveMed(), medicacion); renderMedicacion(); renderTomas(); }
 function renderMedicacion(){
   renderBancoMed();
   const cont = document.getElementById("lista-medicacion");
@@ -592,7 +592,7 @@ function guardarPrueba(){
     cerrarForm("pruebas"); renderPruebas();
   });
 }
-function borrarPrueba(id){ if(!confirm("¿Borrar este resultado?")) return; pruebas = pruebas.filter(x=>x.id!==id); guardarJSON(clavePruebas(), pruebas); renderPruebas(); }
+async function borrarPrueba(id){ if(!(await confirmar("¿Borrar este resultado?",{si:"Borrar",peligro:true}))) return; pruebas = pruebas.filter(x=>x.id!==id); guardarJSON(clavePruebas(), pruebas); renderPruebas(); }
 const TIPO_ETQ = {analitica:"Analítica", radiografia:"Radiografía / imagen", ecografia:"Ecografía", otro:"Otro"};
 document.getElementById("filtroTipoPrueba").onchange = renderPruebas;
 function renderPruebas(){
@@ -671,7 +671,7 @@ document.getElementById("banco-med-guardar").onclick = () => {
   bancoMed = lista;
   guardarJSON(claveBancoMed(), bancoMed);
   renderBancoMed();
-  alert("Banco guardado: " + lista.length + " nombre(s).");
+  avisar("Banco guardado: " + lista.length + " nombre(s).");
 };
 // Si eliges un nombre que ya usaste, completa dosis y horario si están vacíos
 document.getElementById("med-nombre").addEventListener("change", () => {
@@ -780,11 +780,11 @@ function arSVGFoto(dia, vista){
     s += `<circle cx="${x}" cy="${y}" r="46" data-k="${k}" style="fill:transparent;cursor:pointer"><title>${arNombre(zona,l)}</title></circle>`;
   });
   svg.innerHTML = s;
-  document.querySelectorAll("#ar-svg circle[data-k]").forEach(c=> c.onclick = ()=>{
+  document.querySelectorAll("#ar-svg circle[data-k]").forEach(c=> c.onclick = async ()=>{
     const k = c.dataset.k;
     if(arSel===k){
       const dd = arDatos(), z = (dd.dias[arFecha]||{z:{}}).z;
-      if(arTiene(z[k]) && confirm("¿Quitar esta zona del día?")){ delete z[k]; arGuardar(dd); }
+      if(arTiene(z[k]) && await confirmar("¿Quitar esta zona del día?", {si:"Quitar", peligro:true})){ delete z[k]; arGuardar(dd); }
       arSel = null;
     } else arSel = k;
     renderArtic();
@@ -912,8 +912,8 @@ function siAbrir(it){
 function siCerrar(){ document.getElementById("si-form").style.display = "none"; }
 function siGuardar(){
   const nombre = document.getElementById("si-nombre").value.trim();
-  if(!nombre){ alert("Escribe el nombre del síntoma."); return; }
-  if(siNivel===null){ alert("Elige el nivel de 0 a 10."); return; }
+  if(!nombre){ avisar("Escribe el nombre del síntoma."); return; }
+  if(siNivel===null){ avisar("Elige el nivel de 0 a 10."); return; }
   const l = siLista(), id = document.getElementById("si-id").value;
   const it = {id: id || ("s"+Date.now()), nombre, fecha: document.getElementById("si-fecha").value || new Date().toLocaleDateString("sv-SE"),
     hora: document.getElementById("si-hora").value, nivel: siNivel, nota: document.getElementById("si-nota").value.trim()};
@@ -930,7 +930,7 @@ function renderSintomas(){
   const v = l.filter(x=> !fs.value || x.nombre===fs.value).sort((a,b)=> (b.fecha+(b.hora||"")).localeCompare(a.fecha+(a.hora||"")));
   document.getElementById("si-historial").innerHTML = v.length ? v.map(x=>`<div class="form-add" style="display:block;margin:6px 0"><b>${esc(x.nombre)}</b> — nivel <b style="color:${x.nivel>=7?"#d94a4a":x.nivel>=4?"#e0a02c":"var(--accent)"}">${x.nivel}/10</b><div style="font-size:.85rem;color:var(--muted)">${x.fecha}${x.hora?" · "+x.hora:""}</div>${x.nota?`<div style="margin-top:4px">${esc(x.nota)}</div>`:""}<div class="fila" style="margin-top:8px"><button type="button" class="btn-cancelar" data-e="${x.id}">Editar</button><button type="button" class="btn-cancelar" data-b="${x.id}">Borrar</button></div></div>`).join("") : '<p class="aviso">Aún no hay síntomas registrados.</p>';
   document.querySelectorAll("#si-historial [data-e]").forEach(b=> b.onclick = ()=>{ siAbrir(siLista().find(x=>x.id===b.dataset.e)); window.scrollTo(0,0); });
-  document.querySelectorAll("#si-historial [data-b]").forEach(b=> b.onclick = ()=>{ if(confirm("¿Borrar este registro?")){ guardarJSON(claveSint(), siLista().filter(x=>x.id!==b.dataset.b)); renderSintomas(); } });
+  document.querySelectorAll("#si-historial [data-b]").forEach(b=> b.onclick = async ()=>{ if(await confirmar("¿Borrar este registro?", {si:"Borrar", peligro:true})){ guardarJSON(claveSint(), siLista().filter(x=>x.id!==b.dataset.b)); renderSintomas(); } });
 }
 document.getElementById("si-abrir").onclick = ()=> siAbrir(null);
 document.getElementById("si-cancelar").onclick = siCerrar;

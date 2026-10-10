@@ -208,7 +208,7 @@ function importarCopia(f){
       ["casa","calendario","invitaciones"].forEach(n=>{if(Array.isArray(cs[n]))lin.push("• "+cs[n].length+" "+nom[n]+" COMPARTIDOS: reemplazan lo que hay ahora en la nube, para las dos");});
       if(!c.compartidos)lin.push("• Esta copia no trae lo compartido (Casa, Calendario, Invitaciones): eso se queda como está.");
       if(!nk&&!c.compartidos)throw new Error("La copia no tiene nada que restaurar para tu perfil. No se cambió nada.");
-      if(!confirm("Restaurar la copia del "+String(c.fecha||"").slice(0,10)+":\n"+lin.join("\n")+"\n\nAntes se descargará sola una copia de lo que hay ahora, por si te arrepientes. ¿Continuar?")){msg.textContent="Cancelado. No se cambió nada.";return;}
+      if(!(await confirmar("Restaurar la copia del "+String(c.fecha||"").slice(0,10)+":\n"+lin.join("\n")+"\n\nAntes se descargará sola una copia de lo que hay ahora, por si te arrepientes. ¿Continuar?"))){msg.textContent="Cancelado. No se cambió nada.";return;}
       msg.textContent="Descargando una copia de lo que hay ahora…";
       const pre=await exportarCopia({prefijo:"nuestra-app-antes-de-restaurar-",noMarcar:true});
       if(c.compartidos&&!pre.compartidos)throw new Error("No se pudo guardar antes una copia de lo compartido, así que no se restauró nada.");
@@ -280,7 +280,7 @@ async function shMigrar(){
   const msg=document.getElementById("sh_msg"),bm=document.getElementById("sh_migrar");
   if(!shCopiaHecha){msg.textContent="Primero descarga la copia (botón 1).";return;}
   if(!navigator.onLine){msg.textContent="⚠️ Hace falta conexión a internet. No se cambió nada.";return;}
-  if(!confirm("Se van a pasar Casa, Calendario e Invitaciones al formato nuevo.\n\nAntes de seguir:\n• Ya descargaste la copia.\n• Cierra la app en los demás aparatos (el móvil de la otra persona, el PC…) hasta que termine.\n\nLo anterior no se borra. ¿Migrar ahora?"))return;
+  if(!(await confirmar("Se van a pasar Casa, Calendario e Invitaciones al formato nuevo.\n\nAntes de seguir:\n• Ya descargaste la copia.\n• Cierra la app en los demás aparatos (el móvil de la otra persona, el PC…) hasta que termine.\n\nLo anterior no se borra. ¿Migrar ahora?")))return;
   bm.disabled=true;msg.textContent="Migrando… no cierres esta pantalla.";
   try{
     const r=await window.Familia.migracion.migrar();
