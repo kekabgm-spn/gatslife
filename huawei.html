@@ -42,7 +42,7 @@ Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localS
 <p class="sub">Datos del reloj que Health Sync deja en tu Google Drive. Solo se leen; no se borra ni se cambia nada. Datos de <b id="quien">Mamy</b>.</p>
 
 <div class="card">
-  <button class="go" id="sync">⌚ Sincronizar Huawei</button><a href="#" class="mini" id="s90">traer 90 días</a>
+  <button class="go" id="sync">⌚ Sincronizar Huawei</button><a href="#" class="mini" id="s90">traer 90 días</a><a href="#" class="mini" id="s365">traer 1 año</a>
   <div id="estado" class="nota" style="margin-top:8px"></div>
   <details id="detalles" class="nota" style="margin-top:6px;display:none">
     <summary style="cursor:pointer">Ver detalles</summary>
@@ -70,7 +70,7 @@ Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localS
   </details>
 </div>
 
-<div class="card"><h2>Últimos 14 días</h2><div style="overflow-x:auto" id="tabla"></div></div>
+<div class="card"><h2 style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">Historial <select id="hVer" aria-label="Periodo del historial" style="background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:.85rem"></select></h2><div style="overflow-x:auto" id="tabla"></div></div>
 </div>
 <script>
 // huawei.js — Importa los CSV que Health Sync deja en Google Drive (solo lectura) y los guarda en la app.
@@ -198,7 +198,7 @@ async function sincronizar(perfil, dias, progreso, quiet){
   // Guardar resúmenes por día (solo pisa las medidas que llegaron)
   const guardados = lj(KD(perfil), {}); let nDias = 0;
   Object.keys(r.dias).forEach(f => { if(f < desde && !r.dias[f].sueno) return; guardados[f] = Object.assign(guardados[f] || {}, r.dias[f]); nDias++; });
-  const lim = sumaDias(hoy(), -400); Object.keys(guardados).forEach(f => { if(f < lim) delete guardados[f]; });
+  const lim = sumaDias(hoy(), -800); Object.keys(guardados).forEach(f => { if(f < lim) delete guardados[f]; });
   localStorage.setItem(KD(perfil), JSON.stringify(guardados));
   // Actividades al historial de Fitness (sin repetir)
   const hist = lj(KH(perfil), []); const vistos = {}; hist.forEach(h => { if(h && h.hid) vistos[h.hid] = 1; });
@@ -273,8 +273,15 @@ function render(){
   const act = sum("hw:"), pas = sum("hwp:"), peso = H.pesoDe(perfil), pot = (peso && x.pasos) ? H.kcalPasosDe(x, peso, man).kcal : null;
   $("kcal").innerHTML = f ? "<div>Actividades del reloj: <b>" + act + " kcal</b></div><div>Pasos fuera de actividades: <b>" + (on ? pas + " kcal" : "apagado" + (pot != null ? " (sumaría ≈ " + pot + " kcal)" : "")) + "</b></div><div style='margin-top:4px'>Suma a Nutrición ese día: <b>" + (act + pas) + " kcal</b></div>" : '<div class="nota">Sin datos todavía.</div>';
   $("avisoPasos").textContent = on && !peso ? "⚠️ Falta tu peso: regístralo en Nutrición para poder calcular." : "";
-  const t = ks.slice(-14).reverse().map(g => { const y = d[g]; return "<tr><td>" + g.slice(8) + "/" + g.slice(5, 7) + "</td><td>" + (y.pasos != null ? y.pasos : "–") + "</td><td>" + (y.sueno ? H.fmtH(y.sueno.min) : "–") + "</td><td>" + (y.fc ? y.fc.med : "–") + "</td><td>" + (y.spo2 ? H.NF(y.spo2.med) + "%" : "–") + "</td></tr>"; }).join("");
-  $("tabla").innerHTML = t ? "<table><tr><th>Día</th><th>👣 Pasos</th><th>😴 Sueño</th><th>❤️ Pulso</th><th>🫁 SpO₂</th></tr>" + t + "</table>" : '<div class="nota">Aún no hay días guardados.</div>';
+  const MS = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"], meses = []; ks.forEach(g => { const m = g.slice(0, 7); if(meses[meses.length - 1] !== m) meses.push(m); });
+  const sel = $("hVer"), antes = sel.value || "14", opc = [["14", "Últimos 14 días"]].concat(meses.slice().reverse().map(m => [m, MS[+m.slice(5) - 1] + " " + m.slice(0, 4)]), [["todo", "Todo (" + ks.length + " días)"]]);
+  sel.innerHTML = opc.map(o => '<option value="' + o[0] + '">' + o[1] + "</option>").join(""); sel.value = opc.some(o => o[0] === antes) ? antes : "14"; sel.onchange = () => render();
+  const ver = sel.value, lista = (ver === "14" ? ks.slice(-14) : ver === "todo" ? ks : ks.filter(g => g.slice(0, 7) === ver)).slice().reverse();
+  const av = (fn) => { const v = lista.map(g => fn(d[g])).filter(n => n != null && isFinite(n)); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null; };
+  const t = lista.map(g => { const y = d[g]; return "<tr><td>" + g.slice(8) + "/" + g.slice(5, 7) + (ver === "14" ? "" : "/" + g.slice(2, 4)) + "</td><td>" + (y.pasos != null ? y.pasos : "–") + "</td><td>" + (y.sueno ? H.fmtH(y.sueno.min) : "–") + "</td><td>" + (y.fc ? y.fc.med : "–") + "</td><td>" + (y.spo2 ? H.NF(y.spo2.med) + "%" : "–") + "</td></tr>"; }).join("");
+  const mp = av(y => y.pasos), ms = av(y => y.sueno ? y.sueno.min : null), mf = av(y => y.fc ? y.fc.med : null), mo = av(y => y.spo2 ? y.spo2.med : null);
+  const media = lista.length > 1 ? "<tr style='font-weight:700'><td>Media</td><td>" + (mp != null ? Math.round(mp) : "–") + "</td><td>" + (ms != null ? H.fmtH(ms) : "–") + "</td><td>" + (mf != null ? Math.round(mf) : "–") + "</td><td>" + (mo != null ? H.NF(mo) + "%" : "–") + "</td></tr>" : "";
+  $("tabla").innerHTML = t ? "<table><tr><th>Día</th><th>👣 Pasos</th><th>😴 Sueño</th><th>❤️ Pulso</th><th>🫁 SpO₂</th></tr>" + media + t + "</table>" : '<div class="nota">Aún no hay días guardados.</div>';
 }
 function lanzar(dias, quiet){ const est = $("estado"); ocupado = true; $("sync").disabled = true; est.style.color = "";
   H.sincronizar(perfil, dias, s => est.textContent = s, quiet).then(r => { ocupado = false; $("sync").disabled = false; render();
@@ -282,6 +289,7 @@ function lanzar(dias, quiet){ const est = $("estado"); ocupado = true; $("sync")
   .catch(e => { ocupado = false; $("sync").disabled = false; if(quiet){ render(); return; } est.style.color = "#ff9b6b"; est.textContent = "⚠️ " + H.mensaje(e); }); }
 $("sync").onclick = () => lanzar(0);
 $("s90").onclick = ev => { ev.preventDefault(); lanzar(90); };
+$("s365").onclick = ev => { ev.preventDefault(); lanzar(365); };
 $("chkPasos").onchange = ev => { localStorage.setItem(H.KP(perfil), ev.target.checked ? "1" : "0"); H.aplicarPasos(perfil); render(); };
 window.elegirPerfil = p => { perfil = p; render(); };
 let ultAuto = 0;
