@@ -1896,6 +1896,8 @@ const PD_PESO = ["peso"];
 const PD_COMP = ["grasaPct","musculoEsqKg","grasaVisceral","aguaPct","metabolismo"];
 const PD_MED  = ["pecho","biceps","antebrazo","cintura","abdomenBajo","caderas","muslo","pantorrilla"];
 const PD_TODOS = PD_PESO.concat(PD_COMP, PD_MED);
+// Medidas con cinta visibles: sin antebrazo; pantorrilla solo en Filha. (Los datos ya guardados no se borran.)
+function pdMedVis(){ return PD_MED.filter(id => id !== "antebrazo" && (id !== "pantorrilla" || perfilActivo === "Filha")); }
 const PD_DERIVADOS = ["bmi","grasaKg","pesoSinGrasa"]; // se calculan solos
 const PD_COMP_VIEJOS = ["musculoEsqPct","musculosPct","musculosKg","aguaKg","huesosKg","proteinaPct","obesidadPct","edadMetabolica"]; // ya no se piden; los registros viejos los conservan
 const PD_RANGOS = {peso:[20,400],grasaPct:[3,70],musculoEsqKg:[5,90],grasaVisceral:[1,40],aguaPct:[20,80],metabolismo:[600,4500],pecho:[50,200],biceps:[10,80],antebrazo:[10,60],cintura:[40,200],abdomenBajo:[40,200],caderas:[50,200],muslo:[20,120],pantorrilla:[15,80]};
@@ -1913,7 +1915,7 @@ let granularidadGrafico = "sem";
 
 function poblarSelectorGrafico(){
   const sel = document.getElementById("graficoMetrica");
-  sel.innerHTML = METRICAS_GRAFICO.map(m => `<option value="${m.id}">${esc(m.nombre)}</option>`).join("");
+  sel.innerHTML = METRICAS_GRAFICO.filter(m => PD_MED.indexOf(m.id) < 0).map(m => `<option value="${m.id}">${esc(m.nombre)}</option>`).join("");
 }
 
 function serieDeMetrica(m){
@@ -1945,8 +1947,78 @@ function escalaBonita(mn, mx){
   return {lo, hi: ticks[ticks.length-1], ticks};
 }
 
+// ---------- Medidas con cinta: varias a la vez, las que elijas (cambio en cm + tabla en columnas) ----------
+const MED_COLORES = ["#4cc38a","#e0a030","#5aa9ff","#e86a92","#a78bfa","#f97316","#22d3ee"];
+let medRango = "todo";
+function medClaveSel(){ return "dietaMedSelV1_" + perfilActivo; }
+function medSeleccion(){
+  const vis = pdMedVis(); let g = null;
+  try{ g = JSON.parse(localStorage.getItem(medClaveSel())); }catch(e){}
+  const sel = Array.isArray(g) ? g.filter(id => vis.indexOf(id) >= 0) : [];
+  return sel.length ? sel : vis.slice();               // por defecto: todas
+}
+function medNombre(id){ return pdEtiqueta(id).replace(/\s*\([^)]*\)\s*$/,""); }
+function renderMedidasProgreso(){
+  const chips = document.getElementById("medChips"); if(!chips) return;
+  const vis = pdMedVis(), sel = medSeleccion();
+  const color = id => MED_COLORES[vis.indexOf(id) % MED_COLORES.length];
+  chips.innerHTML = vis.map(id => `<button type="button" data-m="${id}" class="${sel.indexOf(id) >= 0 ? "on" : ""}"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${color(id)};margin-right:5px"></span>${esc(medNombre(id))}</button>`).join("");
+  document.querySelectorAll("#medRango button").forEach(b => b.classList.toggle("on", b.dataset.r === medRango));
+  const hoy = diaUTC(hoyISO()), ini = medRango === "mes" ? hoy-29 : medRango === "3m" ? hoy-89 : medRango === "anio" ? hoy-364 : -Infinity;
+  const cont = document.getElementById("medGrafico"), tab = document.getElementById("medTabla");
+  const todas = {}; vis.forEach(id => todas[id] = medidas.filter(x => x[id] > 0 && x.fecha).map(x => ({f:x.fecha, d:diaUTC(x.fecha), v:x[id]})).sort((a,b) => a.d - b.d));
+  const series = sel.map(id => ({id, color: color(id), pts: todas[id].filter(p => p.d >= ini && p.d <= hoy)})).filter(s => s.pts.length);
+  if(!series.length){ cont.innerHTML = '<div class="rep-nota">Sin medidas con cinta en este periodo.' + (medRango !== "todo" ? " Prueba con <b>Todo</b>." : "") + '</div>'; tab.innerHTML = ""; return; }
+
+  // gráfico: cambio en cm respecto a la primera medida del periodo (así se pueden comparar medidas de distinto tamaño)
+  const dmin = Math.min(...series.map(s => s.pts[0].d)), dmax = Math.max(...series.map(s => s.pts[s.pts.length-1].d));
+  const ini2 = dmax === dmin ? dmin - 3 : dmin, fin2 = dmax === dmin ? dmax + 3 : dmax;
+  const delta = series.map(s => s.pts.map(p => p.v - s.pts[0].v));
+  const todosD = [].concat(...delta), a = Math.min(0, ...todosD), b = Math.max(0, ...todosD), aire = (b - a) * 0.15 || 1;
+  const sc = escalaBonita(a - aire, b + aire), W = 340, H = 210, pl = 40, pr = 14, pt = 16, pb = 26;
+  const X = d => pl + (d - ini2) / ((fin2 - ini2) || 1) * (W - pl - pr), Y = v => pt + (sc.hi - v) / (sc.hi - sc.lo) * (H - pt - pb);
+  let svg = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block" role="img" aria-label="Cambio de las medidas elegidas">`;
+  sc.ticks.forEach(t => { svg += `<line x1="${pl}" x2="${W-pr}" y1="${Y(t).toFixed(1)}" y2="${Y(t).toFixed(1)}" stroke="var(--line)" stroke-width="1"/><text x="${pl-5}" y="${(Y(t)+3).toFixed(1)}" text-anchor="end" font-size="9" fill="var(--muted)">${Number(t.toFixed(2))}</text>`; });
+  if(sc.lo < 0 && sc.hi > 0) svg += `<line x1="${pl}" x2="${W-pr}" y1="${Y(0).toFixed(1)}" y2="${Y(0).toFixed(1)}" stroke="var(--muted)" stroke-width="1.2" stroke-dasharray="4 4"/>`;
+  const largo = (fin2 - ini2) > 200;
+  for(let i = 0; i <= 3; i++){ const d = ini2 + (fin2 - ini2) * i / 3; svg += `<text x="${X(d).toFixed(1)}" y="${H-8}" text-anchor="${i===0?"start":i===3?"end":"middle"}" font-size="9" fill="var(--muted)">${etiquetaDia(d, largo)}</text>`; }
+  series.forEach((s, k) => {
+    const xy = s.pts.map((p, i) => [X(p.d), Y(delta[k][i])]);
+    if(xy.length > 1) svg += `<path d="${xy.map((q, i) => (i ? "L" : "M") + q[0].toFixed(1) + "," + q[1].toFixed(1)).join(" ")}" fill="none" stroke="${s.color}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>`;
+    xy.forEach((q, i) => { svg += `<circle cx="${q[0].toFixed(1)}" cy="${q[1].toFixed(1)}" r="${i === xy.length-1 ? 4.5 : 3}" fill="${s.color}"><title>${esc(medNombre(s.id))} · ${isoDeDia(s.pts[i].d)}: ${fmt(s.pts[i].v)} cm</title></circle>`; });
+  });
+  svg += `</svg>`;
+  const res = series.map((s, k) => { const c = delta[k][delta[k].length-1]; return `<div><b style="color:${s.color}">${c > 0 ? "+" : ""}${fmt(c)} cm</b><span>${esc(medNombre(s.id))}</span></div>`; }).join("");
+  cont.innerHTML = `<div class="gr-res">${res}</div>${svg}<div class="rep-nota" style="margin-top:6px">Cambio en cm respecto a la primera medida del periodo (0 = igual que al principio).</div>`;
+
+  // tabla en columnas: una fila por fecha, una columna por medida; ▲▼ = cambio frente a la medida anterior de esa misma medida
+  const fechas = [...new Set([].concat(...series.map(s => s.pts.map(p => p.f))))].sort().reverse(), MAX = 15;
+  const cab = series.map(s => `<th style="color:${s.color}">${esc(medNombre(s.id))}</th>`).join("");
+  const filas = fechas.slice(0, MAX).map(f => {
+    const celdas = series.map(s => {
+      const p = todas[s.id].find(q => q.f === f); if(!p) return "<td>–</td>";
+      const ant = todas[s.id].filter(q => q.d < p.d).pop(), dd = ant ? p.v - ant.v : 0;
+      return `<td>${fmt(p.v)}${ant && Math.abs(dd) > 0.049 ? ` <small class="${dd > 0 ? "gr-sube" : "gr-baja"}">${dd > 0 ? "▲" : "▼"}${fmt(Math.abs(dd))}</small>` : ""}</td>`;
+    }).join("");
+    return `<tr><td>${f.slice(8)}/${f.slice(5, 7)}/${f.slice(2, 4)}</td>${celdas}</tr>`;
+  }).join("");
+  tab.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:.82rem;text-align:center;margin-top:10px"><tr><th>Fecha</th>${cab}</tr>${filas}</table>` + (fechas.length > MAX ? `<div class="rep-nota">Se muestran las ${MAX} fechas más recientes de ${fechas.length}.</div>` : "");
+}
+(function(){
+  const chips = document.getElementById("medChips"), rango = document.getElementById("medRango");
+  if(chips) chips.onclick = e => {
+    const bt = e.target.closest("button[data-m]"); if(!bt) return;
+    const sel = medSeleccion(), id = bt.dataset.m, i = sel.indexOf(id);
+    if(i >= 0){ if(sel.length === 1) return; sel.splice(i, 1); } else sel.push(id);   // siempre queda al menos una
+    try{ localStorage.setItem(medClaveSel(), JSON.stringify(sel)); }catch(e){}
+    renderMedidasProgreso();
+  };
+  if(rango) rango.onclick = e => { const bt = e.target.closest("button[data-r]"); if(!bt) return; medRango = bt.dataset.r; renderMedidasProgreso(); };
+})();
+
 function renderGraficoProgreso(){
   renderBarrasRef();
+  try{ renderMedidasProgreso(); }catch(e){ console.warn("medidas:", e); }
   const sel = document.getElementById("graficoMetrica");
   const m = METRICAS_GRAFICO.find(x => x.id === sel.value) || METRICAS_GRAFICO[0];
   const cont = document.getElementById("graficoProgreso");
@@ -2599,7 +2671,7 @@ function pdArmar(){
   const caja = ids => ids.map(id => `<div><label for="pd_${id}">${esc(pdEtiqueta(id))}</label><input type="number" id="pd_${id}" step="0.1" min="0" inputmode="decimal"></div>`).join("");
   document.getElementById("pdPrincipales").innerHTML = caja(PD_PESO);
   document.getElementById("pdExtra").innerHTML = caja(PD_COMP);
-  document.getElementById("pdMedidas").innerHTML = caja(PD_MED);
+  document.getElementById("pdMedidas").innerHTML = caja(pdMedVis());
 }
 pdArmar();
 let pdClave = null; // para no borrar lo que estás escribiendo cuando la app se repinta
@@ -2612,7 +2684,7 @@ function renderPesoHoy(){
   pdClave = clave;
   PD_TODOS.forEach(id => { const inp = document.getElementById("pd_"+id); if(inp) inp.value = r && r[id] > 0 ? r[id] : ""; });
   document.getElementById("pdEnlace").value = r && r.enlace ? r.enlace : "";
-  const hayP = !!r && PD_PESO.concat(PD_COMP).some(id => r[id] > 0), hayM = !!r && PD_MED.some(id => r[id] > 0), ult = pesoDelDia(f, pesosOrdenados());
+  const hayP = !!r && PD_PESO.concat(PD_COMP).some(id => r[id] > 0), hayM = !!r && pdMedVis().some(id => r[id] > 0), ult = pesoDelDia(f, pesosOrdenados());
   document.getElementById("pd_peso").placeholder = (!(r && r.peso > 0) && ult) ? String(ult.v) : "kg";
   document.getElementById("pesoHoyEstado").textContent = hayP ? "guardado" : "";
   document.getElementById("pesoHoyNota").textContent = hayP ? "Guardado en este día. Aparece en el gráfico y en el calendario."
@@ -2641,7 +2713,7 @@ function pdLimpiarSiVacio(r){
 }
 // esPeso=true: peso + composición + foto/enlace del informe. esPeso=false: medidas con cinta.
 async function pdGuardar(esPeso){
-  const ids = esPeso ? PD_PESO.concat(PD_COMP) : PD_MED;
+  const ids = esPeso ? PD_PESO.concat(PD_COMP) : pdMedVis();
   const lec = pdLeerValores(ids);
   if(lec.fuera){ avisar("Revisa estos valores, se ven fuera de lo normal: " + lec.fuera); return; }
   const vals = lec.vals;

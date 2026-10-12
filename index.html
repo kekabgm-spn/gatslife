@@ -260,6 +260,27 @@
     return b + '</div>';
   }
 
+  // ---------- Peso: último peso anotado en Nutrición (Medidas); inicial y meta vienen de Ajustes. Solo lectura ----------
+  function pesoTarjeta(p, hoy){
+    var med = lj("dietaMedidasV1_"+p, []).filter(function(x){ return x && x.peso > 0 && x.fecha; }).sort(function(a,b){ return a.fecha < b.fecha ? -1 : (a.fecha > b.fecha ? 1 : 0); });
+    var m = lj("perfilMetasV1_"+p, {}) || {};
+    var ini = m.pesoInicial > 0 ? +m.pesoInicial : (med.length ? med[0].peso : null);
+    var meta = m.metaPeso > 0 ? +m.metaPeso : null;
+    var f1 = function(n){ return (Math.round(n * 10) / 10).toLocaleString("es-ES", {minimumFractionDigits:1, maximumFractionDigits:1}); };
+    if(!med.length && !ini) return '<p class="vacio">Aún no hay peso cargado. Anótalo en Nutrición (Medidas).</p>';
+    var ult = med.length ? med[med.length-1] : null, act = ult ? ult.peso : ini;
+    var b = '<div class="grande">'+f1(act)+' <small>kg</small></div>';
+    if(ult){
+      var dias = Math.max(0, Math.round((new Date(hoy+"T00:00:00") - new Date(ult.fecha+"T00:00:00")) / 86400000));
+      b += '<p class="nota" style="margin:2px 0 6px">'+(dias === 0 ? "Pesado hoy" : "Último peso hace "+dias+" día"+(dias === 1 ? "" : "s"))+(dias >= 14 ? " · conviene pesarte de nuevo" : "")+'</p>';
+    } else {
+      b += '<p class="nota" style="margin:2px 0 6px">Es tu peso inicial: todavía no has anotado ninguna medida.</p>';
+    }
+    if(ini && ult && (m.pesoInicial > 0 || med.length > 1)){ var d = act - ini; b += '<div class="fila"><span>Desde el inicio ('+f1(ini)+' kg)</span><b>'+(d > 0 ? "+" : (d < 0 ? "−" : ""))+f1(Math.abs(d))+' kg</b></div>'; }
+    if(meta){ var fal = act - meta; b += '<div class="fila"><span>Meta ('+f1(meta)+' kg)</span><b>'+(Math.abs(fal) < 0.05 ? "conseguida" : (fal > 0 ? "faltan "+f1(fal)+" kg" : "superada por "+f1(-fal)+" kg"))+'</b></div>'; }
+    return b;
+  }
+
   function render(){
     var cont = document.getElementById("hoy"), p = miPerfil(), f = iso(new Date());
     document.getElementById("fechaHoy").textContent = new Date().toLocaleDateString("es-ES", {weekday:"long", day:"numeric", month:"long"});
@@ -292,6 +313,7 @@
     }
     cc += bloqueDeficit(p, f, c);
     h += tarjeta("🍽️ Calorías", "nutricion.html", "Nutrición", cc);
+    h += tarjeta("⚖️ Peso", "nutricion.html", "Medidas", pesoTarjeta(p, f));
 
     // Pasos
     var ps = pasos(p, f), pc;

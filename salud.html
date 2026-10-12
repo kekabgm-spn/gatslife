@@ -156,6 +156,34 @@
   .tabs-sec{flex-wrap:wrap !important;overflow:visible !important;}
   #si-form > div, #panel-articulaciones .form-add > div{margin-bottom:12px;}
   #si-form label{margin-top:2px;}
+
+  /* Analíticas con IA */
+  .ia-fila{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap;}
+  .ia-btn{background:var(--accent-soft);border:1px solid var(--accent);color:var(--accent);border-radius:8px;padding:8px 12px;font-size:0.85rem;font-weight:700;cursor:pointer;}
+  .ia-btn[disabled]{opacity:.5;cursor:default;}
+  .ia-est{font-size:0.8rem;color:var(--muted);}
+  .ia-bloque{margin-top:10px;border-top:1px dashed var(--line);padding-top:10px;}
+  .ia-res{font-size:0.88rem;margin-bottom:8px;}
+  .ia-tab{overflow-x:auto;margin-bottom:8px;}
+  .ia-tab table{width:100%;border-collapse:collapse;font-size:0.8rem;}
+  .ia-tab th{text-align:left;color:var(--muted);font-weight:600;padding:4px 6px;border-bottom:1px solid var(--line);white-space:nowrap;}
+  .ia-tab td{padding:5px 6px;border-bottom:1px solid var(--line);vertical-align:top;}
+  .ia-tab tr.ia-alto td:nth-child(2){color:var(--warn);}
+  .ia-tab tr.ia-bajo td:nth-child(2){color:#5aa9ff;}
+  .ia-u{color:var(--muted);font-size:0.75rem;}
+  .ia-d{font-size:0.75rem;color:var(--muted);}
+  .ia-bloque details{margin-bottom:8px;}
+  .ia-bloque summary{cursor:pointer;color:var(--muted);font-size:0.84rem;margin-bottom:6px;}
+  .ia-conc{background:var(--panel-alt);border-radius:8px;padding:10px;font-size:0.86rem;margin-bottom:8px;white-space:pre-wrap;}
+  .ia-conc ul{margin:6px 0 0 18px;padding:0;white-space:normal;}
+  .ia-pie{font-size:0.74rem;color:var(--muted);margin-top:6px;}
+  .ia-ban{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:10px;padding:12px;margin-bottom:14px;font-size:0.86rem;}
+  .ia-ban.ok{border-left-color:var(--accent);}
+  .ia-chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0;}
+  .ia-chip{border-radius:999px;padding:3px 10px;font-size:0.78rem;font-weight:600;border:1px solid var(--line);}
+  .ia-chip.ia-alto{color:var(--warn);border-color:var(--warn);}
+  .ia-chip.ia-bajo{color:#5aa9ff;border-color:#5aa9ff;}
+  .ia-ban ul{margin:6px 0 0 18px;padding:0;}
 </style>
 <script>(function(){var o=Storage.prototype.setItem;window.__nubeRaw=function(k,v){o.call(localStorage,k,v)};window.__nubeSucias={};window.__nubeOn=false;Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localStorage&&window.__nubeOn){window.__nubeSucias[k]=1;window.dispatchEvent(new Event("nube-cambio"))}};setTimeout(function(){if(!window.__nubeVivo){var d=document.createElement("div");d.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99998;background:#7a1f1f;color:#fff;padding:10px 14px;font:14px system-ui,sans-serif;text-align:center";d.textContent="⚠️ La entrada con Google no cargó: tus datos NO se están guardando en la nube. Recarga la página; si sigue igual, avísame.";(document.body||document.documentElement).appendChild(d)}},6000);})();</script>
 </head>
@@ -348,6 +376,7 @@
       <button type="button" class="btn-cancelar" onclick="cerrarForm('pruebas')">Cancelar</button>
     </div>
   </form>
+  <div id="ia-alertas"></div>
   <div id="lista-pruebas"></div>
 </section>
 
@@ -360,6 +389,7 @@
 
 </div>
 
+<script src="claves.js"></script>
 <script type="module" src="nube.js" onerror="var d=document.createElement('div');d.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99998;background:#7a1f1f;color:#fff;padding:10px 14px;font:14px system-ui,sans-serif;text-align:center';d.textContent='⚠️ El archivo nube.js no se pudo descargar.';document.body.appendChild(d)"></script>
 <script>
 const PERFILES = ["Mamy","Filha"];
@@ -582,7 +612,7 @@ document.getElementById("medDiaSiguiente").onclick = () => { const d=new Date(me
 function guardarPrueba(){
   const id = document.getElementById("prb-id").value || nuevoId();
   const previo = pruebas.find(x=>x.id===id);
-  const item = { id, fecha: document.getElementById("prb-fecha").value || hoyISO(), tipo: document.getElementById("prb-tipo").value, notas: document.getElementById("prb-notas").value.trim(), archivo: previo?.archivo || null, archivoNombre: previo?.archivoNombre || null };
+  const item = { id, fecha: document.getElementById("prb-fecha").value || hoyISO(), tipo: document.getElementById("prb-tipo").value, notas: document.getElementById("prb-notas").value.trim(), archivo: previo?.archivo || null, archivoNombre: previo?.archivoNombre || null, valores: previo?.valores || null, ia: previo?.ia || null };
   leerArchivo(document.getElementById("prb-archivo")).then(a=>{
     if(a){ item.archivo = a.datos; item.archivoNombre = a.nombre; }
     const i = pruebas.findIndex(x=>x.id===id);
@@ -597,6 +627,7 @@ document.getElementById("filtroTipoPrueba").onchange = renderPruebas;
 function renderPruebas(){
   const cont = document.getElementById("lista-pruebas");
   const filtro = document.getElementById("filtroTipoPrueba").value;
+  renderAlertasIA();
   const orden = pruebas.slice().filter(p=> !filtro || p.tipo===filtro).sort((a,b)=> (b.fecha||"").localeCompare(a.fecha||""));
   if(!orden.length){ cont.innerHTML = '<p class="empty">Sin resultados registrados todavía.</p>'; return; }
   cont.innerHTML = orden.map(p => `
@@ -611,7 +642,178 @@ function renderPruebas(){
       </div>
       ${p.notas ? `<div class="tarjeta-notas">${escapar(p.notas)}</div>` : ""}
       ${p.archivo ? `<a class="archivo-link" href="${p.archivo}" download="${escapar(p.archivoNombre||"archivo")}">📎 ${escapar(p.archivoNombre||"archivo adjunto")}</a>` : ""}
+      ${htmlIA(p)}
     </div>`).join("");
+}
+
+// ---------- Analíticas con IA ----------
+// Gemini lee la foto/PDF (o el texto del resumen) y devuelve los valores con SU rango de referencia.
+// El estado (alto/bajo) lo calcula la app comparando con ese rango; la IA solo redacta la conclusión.
+const IA_AVISO = "saludIAAvisoV1";
+let iaOcupada = false;
+const normK = s => String(s==null?"":s).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim();
+const numOk = v => { if(v==null || v==="") return null; const n = Number(String(v).replace(",",".")); return isFinite(n) ? n : null; };
+const fmtN = n => String(Math.round(n*100)/100).replace(".",",");
+function estadoVal(x){
+  if(x.v!=null){
+    if(x.max!=null && x.v>x.max) return "alto";
+    if(x.min!=null && x.v<x.min) return "bajo";
+    if(x.min!=null || x.max!=null) return "ok";
+  }
+  if(x.e==="alto" || x.e==="bajo") return x.e;
+  if(x.e==="normal") return "ok";
+  return "sin";
+}
+function refTxt(x){
+  if(x.r) return x.r;
+  if(x.min!=null && x.max!=null) return fmtN(x.min)+" – "+fmtN(x.max);
+  if(x.max!=null) return "< "+fmtN(x.max);
+  if(x.min!=null) return "> "+fmtN(x.min);
+  return "";
+}
+function desv(x){
+  if(x.v==null) return 0;
+  if(x.max!=null && x.v>x.max) return (x.v-x.max)/(Math.abs(x.max)||1);
+  if(x.min!=null && x.v<x.min) return (x.min-x.v)/(Math.abs(x.min)||1);
+  return 0;
+}
+function limpiarValores(arr){
+  return (Array.isArray(arr)?arr:[]).slice(0,250).map(o=>{
+    if(!o || !o.nombre) return null;
+    const v = numOk(o.valor);
+    const x = { n:String(o.nombre).slice(0,80), k:normK(o.clave||o.nombre).slice(0,60), v,
+      t: v==null && o.texto ? String(o.texto).slice(0,60) : null, u:String(o.unidad||"").slice(0,20),
+      min:numOk(o.ref_min), max:numOk(o.ref_max), r:String(o.ref_texto||"").slice(0,40),
+      e:["alto","bajo","normal"].includes(o.estado_informe) ? o.estado_informe : "" };
+    return (x.v==null && !x.t) ? null : x;
+  }).filter(Boolean);
+}
+function analiticasConValores(){
+  return pruebas.filter(p=>p.tipo==="analitica" && Array.isArray(p.valores) && p.valores.length).sort((a,b)=>(a.fecha||"").localeCompare(b.fecha||""));
+}
+function anteriorDe(p){
+  const l = analiticasConValores().filter(q=>q.id!==p.id && (q.fecha||"")<=(p.fecha||""));
+  return l.length ? l[l.length-1] : null;
+}
+function comprimirImagen(dataUrl){
+  return new Promise((res,rej)=>{
+    const im = new Image();
+    im.onload = () => { const k = Math.min(1, 2000/Math.max(im.width,im.height)), c = document.createElement("canvas");
+      c.width = Math.round(im.width*k); c.height = Math.round(im.height*k); c.getContext("2d").drawImage(im,0,0,c.width,c.height); res(c.toDataURL("image/jpeg",0.85)); };
+    im.onerror = () => rej(new Error("No pude abrir la imagen."));
+    im.src = dataUrl;
+  });
+}
+async function parteArchivo(p){
+  if(!p.archivo) return null;
+  let m = /^data:([^;]+);base64,(.+)$/.exec(p.archivo);
+  if(!m) return null;
+  if(/^image\//.test(m[1])){ m = /^data:([^;]+);base64,(.+)$/.exec(await comprimirImagen(p.archivo)); }
+  else if(m[1] !== "application/pdf") return null;
+  if(m[2].length > 7e6) throw new Error("El archivo es demasiado grande para enviarlo (máx. ≈5 MB). Prueba con una foto más ligera.");
+  return { inline_data: { mime_type: m[1], data: m[2] } };
+}
+function promptAnalitica(p){
+  const ant = anteriorDe(p);
+  const antTxt = ant ? "\nAnalítica anterior ("+ant.fecha+"): "+ant.valores.filter(x=>x.v!=null).slice(0,80).map(x=>x.n+" "+fmtN(x.v)+" "+x.u).join("; ")+"\nSi hay cambios relevantes respecto a la anterior, menciónalos en la conclusión." : "";
+  return "Eres un asistente que lee informes de analíticas de laboratorio (España). Extrae TODOS los parámetros del documento adjunto (o del texto si no hay documento).\n"+
+  "Responde SOLO con JSON válido, sin texto adicional, con este formato:\n"+
+  '{"laboratorio":"","fecha_informe":"YYYY-MM-DD o null","valores":[{"nombre":"nombre tal como aparece","clave":"nombre estándar corto en minúsculas y sin tildes, p. ej. glucosa, colesterol ldl, tsh","valor":número o null,"texto":"solo si el resultado no es numérico (p. ej. negativo), si no null","unidad":"","ref_min":número o null,"ref_max":número o null,"ref_texto":"rango de referencia tal como se imprime","estado_informe":"alto|bajo|normal|desconocido según el propio informe (negrita, asterisco, flecha o columna de fuera de rango)"}],"conclusion":"resumen en español sencillo de 4 a 6 frases, centrado en lo que está fuera de rango y por qué suele importar","preguntas_medico":["hasta 5 preguntas concretas para llevar al médico"]}\n'+
+  "Reglas: copia los números exactamente como aparecen, con punto decimal; si el rango es del tipo «<5» pon ref_max 5; no inventes valores que no estén en el documento; no incluyas datos personales del paciente; no diagnostiques ni indiques medicación."+antTxt;
+}
+async function leerAnaliticaIA(id){
+  const p = pruebas.find(x=>x.id===id);
+  if(!p || iaOcupada) return;
+  if(!window.IAClaves || !IAClaves.tieneGemini()) return avisar("Falta la clave de Gemini. Ponla una vez en ⚙️ Ajustes.");
+  if(!p.archivo && !(p.notas||"").trim()) return avisar("Adjunta la foto o el PDF de la analítica (o escribe los valores en el resumen) para poder leerla.");
+  if(p.valores && !(await confirmar("Ya hay una lectura de esta analítica. ¿Volver a leerla? Sustituirá la anterior.",{si:"Volver a leer"}))) return;
+  if(localStorage.getItem(IA_AVISO)!=="1"){
+    if(!(await confirmar("Para leerla se envía la imagen o el PDF a Gemini (Google). Si el informe trae tu nombre o DNI, también viajan. El resultado es una orientación, no un diagnóstico. ¿Continuar?",{si:"Continuar"}))) return;
+    localStorage.setItem(IA_AVISO,"1");
+  }
+  const est = document.getElementById("ia-est-"+id), btn = est && est.previousElementSibling;
+  const di = t => { if(est) est.textContent = t; };
+  iaOcupada = true; if(btn) btn.disabled = true;
+  try{
+    di("Preparando el archivo…");
+    const parte = await parteArchivo(p), partes = [];
+    if(parte) partes.push(parte);
+    if((p.notas||"").trim()) partes.push({ text: "Texto del resumen escrito por el usuario:\n"+p.notas.trim().slice(0,4000) });
+    partes.push({ text: promptAnalitica(p) });
+    di("Leyendo con la IA… puede tardar medio minuto.");
+    const data = await IAClaves.gemini({ contents:[{ parts: partes }], generationConfig:{ responseMimeType:"application/json", temperature:0.1 } });
+    const ps = (((data.candidates||[])[0]||{}).content||{}).parts || [];
+    const t = ps.map(x=>x.text||"").join("").replace(/```json|```/g,"").trim(), a = t.indexOf("{"), b = t.lastIndexOf("}");
+    let j = null; try{ j = JSON.parse(t.slice(a, b+1)); }catch(e){}
+    if(!j) throw new Error("La IA no devolvió un resultado legible. Prueba otra vez o con una foto más nítida.");
+    const vals = limpiarValores(j.valores);
+    if(!vals.length) throw new Error("No encontré valores en el documento. Comprueba que se vea bien la tabla de resultados.");
+    p.valores = vals;
+    p.ia = { fecha: hoyISO(), lab: String(j.laboratorio||"").slice(0,60), conclusion: String(j.conclusion||"").slice(0,1500),
+      preguntas: (Array.isArray(j.preguntas_medico)?j.preguntas_medico:[]).slice(0,6).map(x=>String(x).slice(0,200)) };
+    guardarJSON(clavePruebas(), pruebas);
+    iaOcupada = false; renderPruebas();
+  }catch(e){
+    iaOcupada = false; if(btn) btn.disabled = false;
+    di("⚠️ "+(e && e.message ? e.message : "No se pudo leer."));
+  }
+}
+function tablaIA(filas, mapAnt){
+  const r = filas.map(o=>{
+    const x = o.x, a = mapAnt[x.k]; let ant = "–";
+    if(a){
+      if(a.v!=null && x.v!=null){ const d = a.v ? (x.v-a.v)/Math.abs(a.v)*100 : 0;
+        ant = fmtN(a.v) + (Math.abs(d)>=1 ? ' <span class="ia-d">'+(d>0?"▲":"▼")+" "+Math.abs(Math.round(d))+"%</span>" : ' <span class="ia-d">=</span>'); }
+      else ant = escapar(a.t || "–");
+    }
+    const val = x.v!=null ? fmtN(x.v) : escapar(x.t);
+    const fl = o.e==="alto" ? " ↑" : o.e==="bajo" ? " ↓" : "";
+    return '<tr class="ia-'+o.e+'"><td>'+escapar(x.n)+'</td><td><b>'+val+'</b>'+fl+' <span class="ia-u">'+escapar(x.u)+'</span></td><td>'+escapar(refTxt(x)||"–")+'</td><td>'+ant+'</td></tr>';
+  }).join("");
+  return '<div class="ia-tab"><table><tr><th>Parámetro</th><th>Resultado</th><th>Referencia</th><th>Anterior</th></tr>'+r+'</table></div>';
+}
+function htmlIA(p){
+  if(p.tipo !== "analitica") return "";
+  const puede = p.archivo || (p.notas||"").trim();
+  const bt = puede ? '<div class="ia-fila"><button type="button" class="ia-btn" onclick="leerAnaliticaIA(\''+p.id+'\')">'+(p.valores?"🔄 Releer con IA":"🤖 Leer con IA")+'</button><span class="ia-est" id="ia-est-'+p.id+'"></span></div>' : "";
+  if(!(p.valores && p.valores.length)) return bt;
+  const ant = anteriorDe(p), mapAnt = {};
+  if(ant) ant.valores.forEach(x=>{ mapAnt[x.k] = x; });
+  const est = p.valores.map(x=>({ x, e: estadoVal(x) }));
+  const fuera = est.filter(o=>o.e==="alto"||o.e==="bajo").sort((a,b)=>desv(b.x)-desv(a.x)), resto = est.filter(o=>o.e!=="alto"&&o.e!=="bajo");
+  const preg = p.ia && p.ia.preguntas && p.ia.preguntas.length ? '<div style="margin-top:8px"><b>Para preguntar al médico</b><ul>'+p.ia.preguntas.map(q=>"<li>"+escapar(q)+"</li>").join("")+"</ul></div>" : "";
+  return '<div class="ia-bloque">'+
+    '<div class="ia-res">'+(fuera.length ? "⚠️ <b>"+fuera.length+"</b> fuera de rango" : "✅ Todo dentro de rango")+" · "+resto.length+" dentro de rango o sin referencia"+(ant ? " · comparado con la del "+fechaLegible(ant.fecha) : "")+'</div>'+
+    (fuera.length ? tablaIA(fuera, mapAnt) : "")+
+    (resto.length ? '<details><summary>Ver los '+resto.length+' valores restantes</summary>'+tablaIA(resto, mapAnt)+'</details>' : "")+
+    (p.ia && p.ia.conclusion ? '<div class="ia-conc"><b>🤖 Conclusión</b><div style="margin-top:4px">'+escapar(p.ia.conclusion)+'</div>'+preg+'</div>' : "")+
+    '<div class="ia-pie">Lectura automática: puede equivocarse. Comprueba las cifras con el original. Es una orientación, no un diagnóstico: coméntalo con tu médico.</div>'+
+    bt+'</div>';
+}
+function renderAlertasIA(){
+  const el = document.getElementById("ia-alertas"); if(!el) return;
+  const l = analiticasConValores();
+  if(!l.length){ el.innerHTML = ""; return; }
+  const u = l[l.length-1], pv = l.length>1 ? l[l.length-2] : null;
+  const fuera = u.valores.filter(x=>{ const e = estadoVal(x); return e==="alto"||e==="bajo"; }).sort((a,b)=>desv(b)-desv(a));
+  const antFuera = {}; if(pv) pv.valores.forEach(x=>{ const e = estadoVal(x); if(e==="alto"||e==="bajo") antFuera[x.k] = e; });
+  const chips = fuera.map(x=>{ const e = estadoVal(x);
+    return '<span class="ia-chip ia-'+e+'">'+escapar(x.n)+" "+(e==="alto"?"↑":"↓")+" "+(x.v!=null?fmtN(x.v):escapar(x.t))+(antFuera[x.k]===e?" · otra vez":"")+'</span>'; }).join("");
+  const por = {};
+  l.forEach(p=>p.valores.forEach(x=>{ if(x.v!=null && x.k) (por[x.k] = por[x.k] || []).push(x); }));
+  const tend = [];
+  Object.keys(por).forEach(k=>{
+    const s = por[k].slice(-3); if(s.length<3) return;
+    const [a,b,c] = s.map(x=>x.v), sube = a<b && b<c, baja = a>b && b>c; if(!sube && !baja) return;
+    const x = s[2], e = estadoVal(x), span = (x.max!=null && x.min!=null) ? x.max-x.min : null;
+    const ya = (sube && e==="alto") || (baja && e==="bajo");
+    const cerca = !ya && span && ((sube ? x.max-x.v : x.v-x.min) <= span*0.15);
+    if(ya || cerca) tend.push("<li><b>"+escapar(x.n)+"</b> "+(sube?"sube":"baja")+" en las últimas 3 analíticas ("+fmtN(a)+" → "+fmtN(b)+" → "+fmtN(c)+") y "+(ya?"ya está fuera de rango":"se acerca al límite")+".</li>");
+  });
+  el.innerHTML = '<div class="ia-ban'+(fuera.length||tend.length ? "" : " ok")+'"><div><b>🩸 Última analítica leída ('+fechaLegible(u.fecha)+')</b>: '+(fuera.length ? fuera.length+" valor"+(fuera.length===1?"":"es")+" fuera de rango" : "todo dentro de rango")+'</div>'+
+    (chips ? '<div class="ia-chips">'+chips+'</div>' : "")+
+    (tend.length ? '<div><b>Tendencias a vigilar</b><ul>'+tend.join("")+'</ul></div>' : "")+
+    '<div class="ia-pie">Orientación automática, no un diagnóstico. Abre la analítica para ver todos los valores.</div></div>';
 }
 
 // Lectura de citas médicas desde el Calendario (calEventosV1, categoría "medico")
