@@ -375,7 +375,7 @@
 
   .grupo-tit{font-size:0.72rem;letter-spacing:.12em;font-weight:800;color:var(--muted);margin:26px 2px 2px;text-transform:uppercase;}
   .tabs-sec{display:flex;gap:4px;margin:0 0 14px;position:sticky;top:0;z-index:20;background:var(--bg);padding:6px 0;}
-  .tabs-sec button{flex:1;padding:10px 2px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--muted);font-weight:800;font-size:0.78rem;cursor:pointer;}
+  .tabs-sec button{flex:1;padding:10px 2px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--muted);font-weight:800;font-size:0.7rem;cursor:pointer;}
   .tabs-sec button.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);}
   .panel[hidden]{display:none;}
 
