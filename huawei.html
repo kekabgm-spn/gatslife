@@ -80,7 +80,7 @@ Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localS
 const CLIENT_ID = "235893987189-hkdej19871r8qkbkgke2dm6n971tb1q1.apps.googleusercontent.com";
 const SCOPE = "https://www.googleapis.com/auth/drive.readonly";
 const norm = s => String(s == null ? "" : s).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-const KL = p => "huaweiUltimoDatoV1_" + p, KP = p => "huaweiPasosKcalV1_" + p, KD = p => "huaweiDiaV1_" + p, KU = p => "huaweiUltimaV1_" + p, KH = p => "ejercicioHistorial_" + p, KT = p => "huaweiTsV1_" + p, KC = p => "huaweiCarpetasV1_" + p;
+const KL = p => "huaweiUltimoDatoV1_" + p, KP = p => "huaweiPasosKcalV1_" + p, KD = p => "huaweiDiaV1_" + p, KU = p => "huaweiUltimaV1_" + p, KH = p => "ejercicioHistorial_" + p, KT = p => "huaweiTsV1_" + p, KC = p => "huaweiCarpetasV1_" + p, KS = p => "huaweiSerieV1_" + p;
 const lj = (k, d) => { try{ const v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; }catch(e){ return d; } };
 
 // ---------- CSV ----------
@@ -110,8 +110,14 @@ function procesar(txt){
     const p = dt(get(o, "fecha")), v = parseFloat(get(o, needle)); if(p && isFinite(v)) m[p.k] = [p.f, v]; })); return m; };
   const porDia = m => { const g = {}; Object.keys(m).forEach(k => { const [f, v] = m[k]; (g[f] || (g[f] = [])).push(v); }); return g; };
   const sP = serie(txt.pasos, "pasos"); Object.keys(sP).forEach(k => { const q = dt(k); if(q && sP[k][1] > 0 && q.min > ultPaso) ultPaso = q.min; }); const g1 = porDia(sP); Object.keys(g1).forEach(f => D(f).pasos = g1[f].reduce((a, b) => a + b, 0));
-  const g2 = porDia(serie(txt.fc, "frecuencia")); Object.keys(g2).forEach(f => { const v = g2[f]; D(f).fc = { med: Math.round(v.reduce((a, b) => a + b, 0) / v.length), min: Math.min(...v), max: Math.max(...v), n: v.length }; });
-  const g3 = porDia(serie(txt.spo2, "saturacion")); Object.keys(g3).forEach(f => { const v = g3[f]; D(f).spo2 = { med: Math.round(v.reduce((a, b) => a + b, 0) / v.length * 10) / 10, min: Math.min(...v), n: v.length }; });
+  const sF = serie(txt.fc, "frecuencia"), g2 = porDia(sF); Object.keys(g2).forEach(f => { const v = g2[f]; D(f).fc = { med: Math.round(v.reduce((a, b) => a + b, 0) / v.length), min: Math.min(...v), max: Math.max(...v), n: v.length }; });
+  const sO = serie(txt.spo2, "saturacion"), g3 = porDia(sO); Object.keys(g3).forEach(f => { const v = g3[f]; D(f).spo2 = { med: Math.round(v.reduce((a, b) => a + b, 0) / v.length * 10) / 10, min: Math.min(...v), max: Math.max(...v), n: v.length }; });
+  // Series con hora (solo para el Informe): pulso cada 5 min, oxígeno cada 10 min, pasos por hora, tramos de sueño
+  const dia0 = f => Date.UTC(+f.slice(0, 4), +f.slice(5, 7) - 1, +f.slice(8, 10)) / 60000, SE = {}, S = f => SE[f] || (SE[f] = {}), SC = { deep: 0, light: 1, rem: 2, awake: 3 };
+  const cubos = (m, ancho, n, sumar) => { const o = {}; Object.keys(m).forEach(k => { const q = dt(k); if(!q) return; const i = Math.min(n - 1, Math.max(0, Math.floor((q.min - dia0(q.f)) / ancho))), d = o[q.f] || (o[q.f] = { s: new Array(n).fill(0), c: new Array(n).fill(0) }); d.s[i] += m[k][1]; d.c[i]++; });
+    Object.keys(o).forEach(f => { const d = o[f]; o[f] = d.s.map((x, i) => d.c[i] ? (sumar ? Math.round(x) : Math.round(x / d.c[i])) : 0); }); return o; };
+  const hF = cubos(sF, 5, 288), hO = cubos(sO, 10, 144), hP = cubos(sP, 60, 24, true);
+  Object.keys(hF).forEach(f => { S(f).fc = hF[f]; }); Object.keys(hO).forEach(f => { S(f).sp = hO[f]; }); Object.keys(hP).forEach(f => { S(f).ph = hP[f]; });
   // Sueño: se juntan todas las filas, se agrupan en sesiones (hueco > 60 min = otra sesión) y cuentan en el día en que te despiertas.
   const filas = {}; (txt.sueno || []).forEach(t => objs(parseCSV(t)).forEach(o => { const p = dt(get(o, "fecha")), dur = parseFloat(get(o, "duracion")), et = norm(get(o, "etapa")).trim();
     if(p && dur > 0 && et) filas[p.min] = { ini: p.min, fin: p.min + dur / 60, et }; }));
@@ -119,6 +125,7 @@ function procesar(txt){
   const ses = []; ord.forEach(r => { const s = ses[ses.length - 1]; if(s && r.ini - s.fin <= 60){ s.filas.push(r); s.fin = Math.max(s.fin, r.fin); } else ses.push({ ini: r.ini, fin: r.fin, filas: [r] }); });
   ses.forEach(s => { const f = dia(s.fin), d = D(f), t = { deep: 0, light: 0, rem: 0, awake: 0 };
     s.filas.forEach(r => { if(t[r.et] != null) t[r.et] += r.fin - r.ini; });
+    S(f).sg = (S(f).sg || []).concat(s.filas.filter(r => t[r.et] != null).map(r => [Math.round(r.ini - dia0(f)), Math.round(r.fin - dia0(f)), SC[r.et]]));
     const prev = d.sueno || { min: 0, deep: 0, light: 0, rem: 0, awake: 0 };
     d.sueno = { min: Math.round(prev.min + t.deep + t.light + t.rem), deep: Math.round(prev.deep + t.deep), light: Math.round(prev.light + t.light), rem: Math.round(prev.rem + t.rem), awake: Math.round(prev.awake + t.awake), ini: prev.ini || hhmm(s.ini), fin: hhmm(s.fin) }; });
   // Actividades
@@ -132,7 +139,7 @@ function procesar(txt){
     if(kcal > 0) e.kcal = Math.round(kcal);
     let ps = parseInt(get(o, "pasos"), 10); if(!(ps > 0) && km > 0 && (m[0] === "caminata" || m[0] === "corrida")) ps = Math.round(km * 1000 / (m[0] === "corrida" ? 1 : 0.75)); if(ps > 0) D(p.f).actPasos = (D(p.f).actPasos || 0) + ps;
     acts.push(e); }));
-  return { dias, acts, ultPaso };
+  return { dias, acts, ultPaso, series: SE };
 }
 
 // ---------- Google Drive ----------
@@ -200,6 +207,13 @@ async function sincronizar(perfil, dias, progreso, quiet){
   Object.keys(r.dias).forEach(f => { if(f < desde && !r.dias[f].sueno) return; guardados[f] = Object.assign(guardados[f] || {}, r.dias[f]); nDias++; });
   const lim = sumaDias(hoy(), -800); Object.keys(guardados).forEach(f => { if(f < lim) delete guardados[f]; });
   localStorage.setItem(KD(perfil), JSON.stringify(guardados));
+  // Series con hora de los últimos 60 días: solo en este aparato (no se sincronizan, pesan mucho)
+  const ser = lj(KS(perfil), {}), limS = sumaDias(hoy(), -60);
+  Object.keys(r.series || {}).forEach(f => { if(f < limS || (f < desde && !(r.series[f].sg && r.series[f].sg.length))) return; const x = r.series[f], o = {};
+    ["fc", "sp", "ph"].forEach(k => { if(x[k] && x[k].some(v => v > 0)) o[k] = x[k]; }); if(x.sg && x.sg.length) o.sg = x.sg;
+    if(Object.keys(o).length) ser[f] = Object.assign(ser[f] || {}, o); });
+  Object.keys(ser).forEach(f => { if(f < limS) delete ser[f]; });
+  try{ localStorage.setItem(KS(perfil), JSON.stringify(ser)); }catch(e){}
   // Actividades al historial de Fitness (sin repetir)
   const hist = lj(KH(perfil), []); const vistos = {}; hist.forEach(h => { if(h && h.hid) vistos[h.hid] = 1; });
   let nuevas = 0; r.acts.forEach(a => { if(!vistos[a.hid]){ hist.push(a); vistos[a.hid] = 1; nuevas++; } });
@@ -225,7 +239,7 @@ function mensaje(e){
   if(/access_denied/i.test(m)) return "Google no dio el permiso. Si la app está en «Testing», agrega tu correo en Google Auth Platform → Público → Usuarios de prueba. Detalle: " + m;
   return m;
 }
-window.Huawei = { KL, cargarGIS, sincronizar, procesar, aplicarPasos, pesoDe, kcalPasosDe, fmtH, NF, mensaje, KD, KU, KH, KP, KT, KC, lj, hoy };
+window.Huawei = { KS, KL, cargarGIS, sincronizar, procesar, aplicarPasos, pesoDe, kcalPasosDe, fmtH, NF, mensaje, KD, KU, KH, KP, KT, KC, lj, hoy };
 if(typeof module !== "undefined") module.exports = { procesar, parseCSV };
 })();
 

@@ -135,7 +135,7 @@ function etiquetaPeriodo(m, a){
 // ---------- Datos ----------
 function cargar(p){
   return { hw: lj("huaweiDiaV1_" + p, {}) || {}, est: lj("dietaDiarioV3_" + p, { meta: null, dias: {} }) || { dias: {} }, med: lj("dietaMedidasV1_" + p, []) || [],
-    ej: lj("ejercicioHistorial_" + p, []) || [], pru: lj("saludPruebasV1_" + p, []) || [], metas: lj("perfilMetasV1_" + p, {}) || {} };
+    ej: lj("ejercicioHistorial_" + p, []) || [], serie: lj("huaweiSerieV1_" + p, {}) || {}, pru: lj("saludPruebasV1_" + p, []) || [], metas: lj("perfilMetasV1_" + p, {}) || {} };
 }
 function infoDia(f){
   const h = D.hw[f] || {}, e = (D.est.dias || {})[f];
@@ -177,7 +177,7 @@ function barras(vals, etqs, o){
   s += '<line x1="0" y1="' + (H - pb) + '" x2="' + W + '" y2="' + (H - pb) + '" stroke="var(--line)"/>';
   vals.forEach((v, i) => {
     const x = pl + i * bw + bw * 0.15, w = bw * 0.7; let y0 = H - pb;
-    if(Array.isArray(v)){ v.forEach((p, j) => { if(!p) return; const h = p / mx * hh; y0 -= h; s += '<rect x="' + x.toFixed(1) + '" y="' + y0.toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + h.toFixed(1) + '" fill="' + COL_SUENO[j] + '"/>'; }); }
+    if(Array.isArray(v)){ v.forEach((p, j) => { if(!p) return; const h = p / mx * hh; y0 -= h; s += '<rect x="' + x.toFixed(1) + '" y="' + y0.toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + h.toFixed(1) + '" fill="' + (o.cols || COL_SUENO)[j] + '"/>'; }); }
     else if(v){ const h = v / mx * hh; s += '<rect x="' + x.toFixed(1) + '" y="' + (y0 - h).toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + h.toFixed(1) + '" rx="2" fill="' + (o.color || "var(--accent)") + '"/>'; }
     if(n <= 12 || i % 5 === 0) s += '<text x="' + (pl + i * bw + bw / 2).toFixed(1) + '" y="' + (H - 4) + '" text-anchor="middle">' + esc(etqs[i]) + '</text>';
   });
@@ -199,41 +199,154 @@ function delta(cur, prev, op){
   const bueno = op.masEsBueno == null ? null : (d > 0) === op.masEsBueno, cls = bueno == null ? "" : (bueno ? "d-ok" : "d-up");
   return '<span class="' + cls + '">' + (d > 0 ? "▲" : "▼") + " " + Math.abs(Math.round(d)) + '%</span> <span class="sub">vs periodo anterior</span>';
 }
+function hace1(m, a){ const d = fd(a); return iso(new Date(d.getFullYear() - 1, d.getMonth(), Math.min(d.getDate(), 28))); }
 const nombrePeriodoAnt = { dia: "día anterior", semana: "semana anterior", mes: "mes anterior", anio: "año anterior" };
+
+// ---------- Series con hora (solo últimos 60 días, guardadas en este aparato) ----------
+const pad2 = n => String(n).padStart(2, "0");
+const hm = m => { m = ((Math.round(m) % 1440) + 1440) % 1440; return Math.floor(m / 60) + ":" + pad2(m % 60); };
+const SER = f => (D.serie && D.serie[f]) || null;
+const COL_FASE = ["#5b6bd6", "#8fb4ff", "#c08bf0", "#e0703f"], NOM_FASE = ["Profundo", "Ligero", "REM", "Despierto"];
+const AVISO_SERIE = '<div class="sub" style="margin-top:6px">Las curvas del día se guardan 60 días. Si falta este día, sincroniza en Huawei con «traer 90 días».</div>';
+
+// Curva del día: vals cada `paso` minutos desde las 0:00 (0 = sin dato)
+function curva(vals, o){
+  const W = 320, H = 130, pl = 2, pr = 28, pt = 8, pb = 16, n = vals.length, lo = o.lo, hi = o.hi;
+  const X = i => pl + i / (n - 1) * (W - pl - pr), Y = v => pt + (1 - (v - lo) / ((hi - lo) || 1)) * (H - pt - pb);
+  let s = '<svg class="gr" viewBox="0 0 ' + W + ' ' + H + '" role="img">', d = "", prev = -99;
+  [lo, Math.round((lo + hi) / 2), hi].forEach(t => { s += '<line x1="' + pl + '" y1="' + Y(t).toFixed(1) + '" x2="' + (W - pr) + '" y2="' + Y(t).toFixed(1) + '" stroke="var(--line)" stroke-dasharray="2 3"/><text x="' + (W - pr + 3) + '" y="' + (Y(t) + 3).toFixed(1) + '">' + Math.round(t) + '</text>'; });
+  vals.forEach((v, i) => { if(!(v > 0)) return; d += (i - prev > (o.gap || 6) ? "M" : "L") + X(i).toFixed(1) + "," + Y(v).toFixed(1) + " "; prev = i; });
+  s += '<path d="' + d + '" fill="none" stroke="' + (o.color || "#e0567a") + '" stroke-width="1.4" stroke-linejoin="round"/>';
+  [0, 6, 12, 18, 24].forEach(h => { s += '<text x="' + (pl + h / 24 * (W - pl - pr)).toFixed(1) + '" y="' + (H - 3) + '" text-anchor="' + (h === 0 ? "start" : h === 24 ? "end" : "middle") + '">' + h + ':00</text>'; });
+  return s + "</svg>";
+}
+function barrasSpo2(vals){
+  const W = 320, H = 118, pl = 2, pr = 28, pt = 8, pb = 16, n = vals.length, xs = vals.filter(v => v > 0);
+  if(!xs.length) return "";
+  const lo = Math.min(92, Math.floor(Math.min(...xs)) - 1), hi = 100, bw = Math.max(2, (W - pl - pr) / n * 0.8), Y = v => pt + (1 - (v - lo) / (hi - lo)) * (H - pt - pb);
+  let s = '<svg class="gr" viewBox="0 0 ' + W + ' ' + H + '" role="img">';
+  [lo, Math.round((lo + hi) / 2), hi].forEach(t => { s += '<line x1="' + pl + '" y1="' + Y(t).toFixed(1) + '" x2="' + (W - pr) + '" y2="' + Y(t).toFixed(1) + '" stroke="var(--line)" stroke-dasharray="2 3"/><text x="' + (W - pr + 3) + '" y="' + (Y(t) + 3).toFixed(1) + '">' + t + '%</text>'; });
+  vals.forEach((v, i) => { if(!(v > 0)) return; const x = pl + i / n * (W - pl - pr), col = v < 70 ? "#e5484d" : v < 90 ? "#f0a43a" : "#3fa34d"; s += '<rect x="' + x.toFixed(1) + '" y="' + Y(v).toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + (H - pb - Y(v)).toFixed(1) + '" fill="' + col + '"/>'; });
+  [0, 6, 12, 18, 24].forEach(h => { s += '<text x="' + (pl + h / 24 * (W - pl - pr)).toFixed(1) + '" y="' + (H - 3) + '" text-anchor="' + (h === 0 ? "start" : h === 24 ? "end" : "middle") + '">' + h + ':00</text>'; });
+  return s + "</svg>";
+}
+// Barras flotantes mín–máx con punto en la media (semana, mes, año)
+function rangos(items, etqs, o){
+  o = o || {}; const W = 320, H = 118, pl = 2, pb = 16, pt = 10, n = items.length, bw = (W - pl * 2) / n, ok = items.filter(Boolean);
+  if(!ok.length) return "";
+  const lo = Math.floor(Math.min(...ok.map(x => x.min)) - 2), hi = Math.ceil(Math.max(...ok.map(x => x.max)) + 2), Y = v => pt + (1 - (v - lo) / ((hi - lo) || 1)) * (H - pb - pt);
+  let s = '<svg class="gr" viewBox="0 0 ' + W + ' ' + H + '" role="img"><line x1="0" y1="' + (H - pb) + '" x2="' + W + '" y2="' + (H - pb) + '" stroke="var(--line)"/>';
+  items.forEach((x, i) => {
+    if(x){ const cx = pl + i * bw + bw / 2, w = Math.max(3, bw * 0.45); s += '<rect x="' + (cx - w / 2).toFixed(1) + '" y="' + Y(x.max).toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + Math.max(2, Y(x.min) - Y(x.max)).toFixed(1) + '" rx="2" fill="' + (o.color || "var(--accent)") + '" opacity="0.55"/>';
+      if(x.avg != null) s += '<circle cx="' + cx.toFixed(1) + '" cy="' + Y(x.avg).toFixed(1) + '" r="2.4" fill="' + (o.color || "var(--accent)") + '"/>'; }
+    if(n <= 12 || i % 5 === 0) s += '<text x="' + (pl + i * bw + bw / 2).toFixed(1) + '" y="' + (H - 4) + '" text-anchor="middle">' + esc(etqs[i]) + '</text>';
+  });
+  return s + '<text x="2" y="8">' + (o.fmt ? o.fmt(hi) : hi) + '</text><text x="2" y="' + (H - pb - 2) + '">' + (o.fmt ? o.fmt(lo) : lo) + '</text></svg>';
+}
+function lineaSueno(sg){
+  if(!sg || !sg.length) return "";
+  const W = 320, H = 100, pl = 2, pr = 2, a = Math.min(...sg.map(x => x[0])), b = Math.max(...sg.map(x => x[1])), X = m => pl + (m - a) / ((b - a) || 1) * (W - pl - pr), nivel = [66, 44, 22, 0];
+  let s = '<svg class="gr" viewBox="0 0 ' + W + ' ' + H + '" role="img">';
+  sg.forEach(x => { const w = Math.max(1, X(x[1]) - X(x[0])); s += '<rect x="' + X(x[0]).toFixed(1) + '" y="' + (4 + nivel[x[2]]) + '" width="' + w.toFixed(1) + '" height="18" rx="2" fill="' + COL_FASE[x[2]] + '"/>'; });
+  s += '<text x="' + pl + '" y="' + (H - 4) + '">' + hm(a) + '</text><text x="' + (W - pr) + '" y="' + (H - 4) + '" text-anchor="end">' + hm(b) + '</text>';
+  const mid = Math.round((a + b) / 2); s += '<text x="' + X(mid).toFixed(1) + '" y="' + (H - 4) + '" text-anchor="middle">' + hm(mid) + '</text>';
+  return s + "</svg>";
+}
+function vecesDespierto(sg){
+  if(!sg || !sg.length) return null;
+  const o = sg.slice().sort((x, y) => x[0] - y[0]), dorm = o.filter(x => x[2] !== 3); if(!dorm.length) return 0;
+  const ini = dorm[0][0], fin = dorm[dorm.length - 1][1];
+  return o.filter(x => x[2] === 3 && x[0] >= ini && x[1] <= fin).length;
+}
+// Referencias de Huawei Salud (las que aparecen en tus capturas): profundo 20–60 %, ligero < 55 %, REM 10–30 %, despierto 0–1 veces, horas 6–10 h
+function tablaFases(deep, light, rem, sg, totalMin){
+  const tot = deep + light + rem; if(!(tot > 0)) return "";
+  const f = (nom, v, mn, mx, ref) => { const p = v / tot * 100, est = mn != null && p < mn ? "Bajo" : mx != null && p > mx ? "Alto" : "Normal"; return "<tr><td>" + nom + "</td><td><b>" + Math.round(p) + " %</b></td><td>" + ref + '</td><td class="' + (est === "Normal" ? "d-ok" : "d-up") + '">' + est + "</td></tr>"; };
+  let r = f("Profundo", deep, 20, 60, "20–60 %") + f("Ligero", light, null, 55, "< 55 %") + f("REM", rem, 10, 30, "10–30 %");
+  const v = vecesDespierto(sg); if(v != null) r += "<tr><td>Veces despierto</td><td><b>" + v + "</b></td><td>0–1 veces</td><td class=\"" + (v <= 1 ? "d-ok" : "d-up") + '">' + (v <= 1 ? "Normal" : "Alto") + "</td></tr>";
+  const h = totalMin / 60; r += "<tr><td>Horas de sueño</td><td><b>" + nf(h) + " h</b></td><td>6–10 h</td><td class=\"" + (h >= 6 && h <= 10 ? "d-ok" : "d-up") + '">' + (h < 6 ? "Por debajo" : h > 10 ? "Por encima" : "Normal") + "</td></tr>";
+  return '<table class="t2"><tr><th>Fase</th><th>Tu dato</th><th>Referencia</th><th></th></tr>' + r + '</table><div class="pie">Referencias de Huawei Salud. «Veces despierto» se cuenta con los tramos de sueño y puede no coincidir con la cuenta de Huawei.</div>';
+}
+function reposoEst(vals){
+  const a = vals.filter(v => v > 0).sort((x, y) => x - y); if(a.length < 24) return null;
+  const k = Math.max(3, Math.floor(a.length * 0.1)); return a.slice(0, k).reduce((s, v) => s + v, 0) / k;
+}
+function listaActs(hist, max){
+  const l = hist.slice().sort((a, b) => (b.fecha || "").localeCompare(a.fecha || "")).slice(0, max);
+  return '<table class="t2"><tr><th>Día</th><th>Actividad</th><th>Min</th><th>kcal</th></tr>' + l.map(x => "<tr><td>" + esc(String(x.fecha).slice(8) + "/" + String(x.fecha).slice(5, 7)) + "</td><td>" + esc(x.nombre || x.tipo || "") + "</td><td>" + Math.round(x.minutos || 0) + "</td><td>" + (typeof x.kcal === "number" ? Math.round(x.kcal) : "–") + "</td></tr>").join("") + "</table>";
+}
 
 // ---------- Tarjetas ----------
 function tarjetaPasos(c, p, cub){
-  if(modo === "dia"){ const x = c.dias[0]; return '<div class="card"><h2>👣 Pasos</h2>' + (x.pasos ? '<div class="grande">' + ni(x.pasos) + '</div>' : '<div class="vacio">Sin datos de pasos este día.</div>') + '</div>'; }
+  if(modo === "dia"){
+    const x = c.dias[0], se = SER(x.f);
+    if(!x.pasos) return '<div class="card"><h2>👣 Pasos</h2><div class="vacio">Sin datos de pasos este día.</div></div>';
+    let g = ""; if(se && se.ph) g = barras(se.ph.map(v => v || null), se.ph.map((v, i) => String(i)), { fmt: ni });
+    return '<div class="card"><h2>👣 Pasos</h2><div class="grande">' + ni(x.pasos) + '</div>' + (g ? '<div class="sub">Pasos por hora</div>' + g : "") + '</div>';
+  }
   if(!c.nPasos) return '<div class="card"><h2>👣 Pasos</h2><div class="vacio">Sin datos de pasos en este periodo. Sincroniza en Huawei.</div></div>';
-  return '<div class="card"><h2>👣 Pasos</h2><div class="cab"><div><span class="grande">' + ni(c.pasos) + '</span> <span class="sub">de media al día · ' + pl(c.nPasos, 'día', 'días') + ' con dato</span></div><div>' + delta(c.pasos, p.pasos, { masEsBueno: true }) + '</div></div>' +
+  return '<div class="card"><h2>👣 Pasos</h2><div class="cab"><div><span class="grande">' + ni(c.pasos) + '</span> <span class="sub">de media al día · ' + pl(c.nPasos, "día", "días") + ' con dato</span></div><div>' + delta(c.pasos, p.pasos, { masEsBueno: true }) + '</div></div>' +
     barras(cub.map(b => prom(dd(b, "pasos"))), cub.map(b => b.etq), { fmt: ni }) + '</div>';
 }
 function tarjetaSueno(c, p, cub){
-  const leg = '<div class="leyenda"><span><i style="background:' + COL_SUENO[0] + '"></i>Profundo</span><span><i style="background:' + COL_SUENO[1] + '"></i>Ligero</span><span><i style="background:' + COL_SUENO[2] + '"></i>REM</span><span><i style="background:' + COL_SUENO[3] + '"></i>Despierto</span></div>';
-  if(modo === "dia"){ const x = c.dias[0].sueno; if(!x) return '<div class="card"><h2>😴 Sueño</h2><div class="vacio">Sin datos de sueño esta noche.</div></div>';
-    return '<div class="card"><h2>😴 Sueño</h2><div class="grande">' + fh(x.min) + '</div><div class="tiles"><div class="tile"><div class="t">Profundo</div><div class="v">' + fh(x.deep) + '</div></div><div class="tile"><div class="t">Ligero</div><div class="v">' + fh(x.light) + '</div></div><div class="tile"><div class="t">REM</div><div class="v">' + fh(x.rem) + '</div></div><div class="tile"><div class="t">Despierto</div><div class="v">' + fh(x.awake) + '</div></div></div></div>'; }
+  const leg = '<div class="leyenda">' + NOM_FASE.map((n, i) => '<span><i style="background:' + COL_FASE[i] + '"></i>' + n + '</span>').join("") + '</div>';
+  if(modo === "dia"){
+    const x = c.dias[0].sueno, se = SER(c.dias[0].f);
+    if(!x) return '<div class="card"><h2>😴 Sueño</h2><div class="vacio">Sin datos de sueño esta noche.</div></div>';
+    let s = '<div class="card"><h2>😴 Sueño</h2><div class="cab"><div><span class="grande">' + fh(x.min) + '</span></div><div class="sub">' + esc(x.ini || "") + " – " + esc(x.fin || "") + '</div></div>';
+    if(se && se.sg) s += lineaSueno(se.sg) + leg; else s += '<div class="tiles"><div class="tile"><div class="t">Profundo</div><div class="v">' + fh(x.deep) + '</div></div><div class="tile"><div class="t">Ligero</div><div class="v">' + fh(x.light) + '</div></div><div class="tile"><div class="t">REM</div><div class="v">' + fh(x.rem) + '</div></div><div class="tile"><div class="t">Despierto</div><div class="v">' + fh(x.awake) + '</div></div></div>' + AVISO_SERIE;
+    return s + tablaFases(x.deep, x.light, x.rem, se && se.sg, x.min) + '</div>';
+  }
   if(!c.nSueno) return '<div class="card"><h2>😴 Sueño</h2><div class="vacio">Sin datos de sueño en este periodo.</div></div>';
-  return '<div class="card"><h2>😴 Sueño</h2><div class="cab"><div><span class="grande">' + fh(c.sMin) + '</span> <span class="sub">de media · ' + pl(c.nSueno, 'noche', 'noches') + '</span></div><div>' + delta(c.sMin, p.sMin, { masEsBueno: true }) + '</div></div>' +
-    '<div class="sub">Profundo ' + fh(c.sDeep) + ' · Ligero ' + fh(c.sLight) + ' · REM ' + fh(c.sRem) + '</div>' +
-    barras(cub.map(b => { const s = b.dias.filter(x => x.sueno); return s.length ? [prom(s.map(x => x.sueno.deep)), prom(s.map(x => x.sueno.light)), prom(s.map(x => x.sueno.rem)), prom(s.map(x => x.sueno.awake))] : null; }), cub.map(b => b.etq), { fmt: v => Math.round(v / 60) + " h" }) + leg + '</div>';
+  return '<div class="card"><h2>😴 Sueño</h2><div class="cab"><div><span class="grande">' + fh(c.sMin) + '</span> <span class="sub">de media · ' + pl(c.nSueno, "noche", "noches") + '</span></div><div>' + delta(c.sMin, p.sMin, { masEsBueno: true }) + '</div></div>' +
+    barras(cub.map(b => { const s = b.dias.filter(x => x.sueno); return s.length ? [prom(s.map(x => x.sueno.deep)), prom(s.map(x => x.sueno.light)), prom(s.map(x => x.sueno.rem)), prom(s.map(x => x.sueno.awake))] : null; }), cub.map(b => b.etq), { fmt: v => Math.round(v / 60) + " h", cols: COL_FASE }) + leg +
+    tablaFases(c.sDeep, c.sLight, c.sRem, null, c.sMin) + '</div>';
 }
 function tarjetaPulso(c, p, cub){
-  if(modo === "dia"){ const x = c.dias[0].fc, o = c.dias[0].spo2; return '<div class="card"><h2>❤️ Pulso y 🫁 oxígeno</h2><div class="tiles"><div class="tile"><div class="t">Pulso medio</div><div class="v">' + (x ? Math.round(x.med) + " ppm" : "–") + '</div><div class="sub">' + (x ? x.min + " – " + x.max : "") + '</div></div><div class="tile"><div class="t">Oxígeno medio</div><div class="v">' + (o ? nf(o.med) + " %" : "–") + '</div><div class="sub">' + (o ? "mínimo " + nf(o.min) + " %" : "") + '</div></div></div></div>'; }
+  if(modo === "dia"){
+    const x = c.dias[0], se = SER(x.f), h = x.fc, o = x.spo2;
+    let s = '<div class="card"><h2>❤️ Pulso</h2>';
+    if(se && se.fc){
+      const v = se.fc, nz = v.filter(q => q > 0), ult = v.length - 1 - v.slice().reverse().findIndex(q => q > 0), rep = reposoEst(v), lo = Math.max(20, Math.min(...nz) - 10), hi = Math.max(...nz) + 10;
+      s += '<div class="cab"><div><span class="grande">' + Math.min(...nz) + "–" + Math.max(...nz) + '</span> <span class="sub">ppm · rango del día</span></div><div><b>' + Math.round(prom(nz)) + ' ppm</b> <span class="sub">media · última a las ' + hm(ult * 5) + '</span></div></div>' +
+        (rep ? '<div class="sub">Reposo (estimado): ' + Math.round(rep) + ' ppm. Huawei calcula el suyo de otra forma, puede diferir.</div>' : "") + curva(v, { lo, hi });
+    } else s += h ? '<div class="tiles"><div class="tile"><div class="t">Media</div><div class="v">' + Math.round(h.med) + ' ppm</div></div><div class="tile"><div class="t">Rango</div><div class="v">' + h.min + "–" + h.max + '</div></div></div>' + AVISO_SERIE : '<div class="vacio">Sin datos de pulso.</div>';
+    s += '</div><div class="card"><h2>🫁 Oxígeno (SpO₂)</h2>';
+    if(se && se.sp){
+      const v = se.sp, nz = v.filter(q => q > 0), ult = v.length - 1 - v.slice().reverse().findIndex(q => q > 0);
+      s += '<div class="cab"><div><span class="grande">' + nf(prom(nz)) + ' %</span> <span class="sub">media</span></div><div class="sub">Rango ' + Math.min(...nz) + " – " + Math.max(...nz) + ' % · última a las ' + hm(ult * 10) + ' (' + v[ult] + ' %)</div></div>' + barrasSpo2(v) +
+        '<div class="leyenda"><span><i style="background:#e5484d"></i>&lt; 70 %</span><span><i style="background:#f0a43a"></i>70–89 %</span><span><i style="background:#3fa34d"></i>≥ 90 %</span></div>';
+    } else s += o ? '<div class="tiles"><div class="tile"><div class="t">Media</div><div class="v">' + nf(o.med) + ' %</div></div><div class="tile"><div class="t">Mínimo</div><div class="v">' + nf(o.min) + ' %</div></div></div>' + AVISO_SERIE : '<div class="vacio">Sin datos de oxígeno.</div>';
+    return s + '</div>';
+  }
   let s = '<div class="card"><h2>❤️ Pulso</h2>';
-  s += c.nFc ? '<div class="cab"><div><span class="grande">' + Math.round(c.fc) + '</span> <span class="sub">ppm de media · rango ' + c.fcMin + " – " + c.fcMax + '</span></div><div>' + delta(c.fc, p.fc) + '</div></div>' + barras(cub.map(b => prom(b.dias.filter(x => x.fc).map(x => x.fc.med))), cub.map(b => b.etq), { color: "#e0567a", fmt: v => Math.round(v) }) : '<div class="vacio">Sin datos de pulso.</div>';
+  s += c.nFc ? '<div class="cab"><div><span class="grande">' + Math.round(c.fc) + '</span> <span class="sub">ppm de media · rango ' + c.fcMin + " – " + c.fcMax + '</span></div><div>' + delta(c.fc, p.fc) + '</div></div>' +
+    rangos(cub.map(b => { const f = b.dias.filter(x => x.fc); return f.length ? { min: Math.min(...f.map(x => x.fc.min)), max: Math.max(...f.map(x => x.fc.max)), avg: prom(f.map(x => x.fc.med)) } : null; }), cub.map(b => b.etq), { color: "#e0567a" }) + '<div class="sub">Cada barra va del mínimo al máximo; el punto es la media.</div>' : '<div class="vacio">Sin datos de pulso.</div>';
   s += '</div><div class="card"><h2>🫁 Oxígeno (SpO₂)</h2>';
-  s += c.nSpo2 ? '<div class="cab"><div><span class="grande">' + nf(c.spo2) + ' %</span> <span class="sub">de media · mínimo ' + nf(c.spo2Min) + ' %</span></div></div>' + barras(cub.map(b => { const v = prom(b.dias.filter(x => x.spo2).map(x => x.spo2.med)); return v ? v - 80 : null; }), cub.map(b => b.etq), { color: "var(--azul)", fmt: v => Math.round(v + 80) + "%" }) : '<div class="vacio">Sin datos de oxígeno.</div>';
+  s += c.nSpo2 ? '<div class="cab"><div><span class="grande">' + nf(c.spo2) + ' %</span> <span class="sub">de media · mínimo ' + nf(c.spo2Min) + ' %</span></div></div>' +
+    rangos(cub.map(b => { const f = b.dias.filter(x => x.spo2); return f.length ? { min: Math.min(...f.map(x => x.spo2.min)), max: Math.max(...f.map(x => x.spo2.max != null ? x.spo2.max : x.spo2.med)), avg: prom(f.map(x => x.spo2.med)) } : null; }), cub.map(b => b.etq), { color: "var(--azul)", fmt: v => v + "%" }) : '<div class="vacio">Sin datos de oxígeno.</div>';
   return s + '</div>';
 }
 function metaKcal(){ return D.est && D.est.meta > 0 ? D.est.meta : null; }
+const NOM_COMIDA = { desayuno: "Desayuno", almuerzo: "Almuerzo", cena: "Cena", snacks: "Snacks" };
 function tarjetaNutri(c, p, cub){
   const meta = metaKcal();
-  if(modo === "dia"){ const x = c.dias[0]; if(!x.nal) return '<div class="card"><h2>🍽️ Nutrición</h2><div class="vacio">Sin comidas registradas este día.</div></div>';
-    return '<div class="card"><h2>🍽️ Nutrición</h2><div class="grande">' + ni(x.kcal) + ' kcal</div><div class="sub">' + (meta ? "Meta " + ni(meta) + " kcal · " : "") + 'ejercicio +' + ni(x.ejKcal + x.quem) + ' kcal</div><div class="tiles"><div class="tile"><div class="t">Proteínas</div><div class="v">' + Math.round(x.pr) + ' g</div></div><div class="tile"><div class="t">Hidratos</div><div class="v">' + Math.round(x.ch) + ' g</div></div><div class="tile"><div class="t">Grasa</div><div class="v">' + Math.round(x.gr) + ' g</div></div></div></div>'; }
+  if(modo === "dia"){
+    const x = c.dias[0]; if(!x.nal) return '<div class="card"><h2>🍽️ Nutrición</h2><div class="vacio">Sin comidas registradas este día.</div></div>';
+    const e = (D.est.dias || {})[x.f] || {}, filas = COMIDAS.map(id => { const l = (e.comidas && e.comidas[id]) || []; if(!l.length) return ""; const t = l.reduce((a, it) => ({ k: a.k + (+it.kcal || 0), p: a.p + (+it.prot || 0), c: a.c + (+it.carbh || 0), g: a.g + (+it.grasa || 0) }), { k: 0, p: 0, c: 0, g: 0 });
+      return "<tr><td>" + NOM_COMIDA[id] + "</td><td><b>" + ni(t.k) + "</b></td><td>" + Math.round(t.p) + "</td><td>" + Math.round(t.c) + "</td><td>" + Math.round(t.g) + "</td></tr>"; }).join("");
+    const pct = meta ? Math.min(100, x.kcal / meta * 100) : null;
+    return '<div class="card"><h2>🍽️ Nutrición</h2><div class="grande">' + ni(x.kcal) + ' kcal</div><div class="sub">' + (meta ? "Meta " + ni(meta) + " kcal · " : "") + 'ejercicio +' + ni(x.ejKcal + x.quem) + ' kcal</div>' +
+      (pct != null ? '<div style="height:8px;background:var(--panel-alt);border-radius:6px;overflow:hidden;margin:8px 0"><div style="height:100%;width:' + pct + '%;background:' + (x.kcal > meta ? "var(--warn)" : "var(--accent)") + '"></div></div>' : "") +
+      '<table class="t2"><tr><th>Comida</th><th>kcal</th><th>Prot (g)</th><th>Hidr (g)</th><th>Grasa (g)</th></tr>' + filas + '<tr style="font-weight:700"><td>Total</td><td>' + ni(x.kcal) + "</td><td>" + Math.round(x.pr) + "</td><td>" + Math.round(x.ch) + "</td><td>" + Math.round(x.gr) + '</td></tr></table></div>';
+  }
   if(!c.nKcal) return '<div class="card"><h2>🍽️ Nutrición</h2><div class="vacio">Sin comidas registradas en este periodo.</div></div>';
-  return '<div class="card"><h2>🍽️ Nutrición</h2><div class="cab"><div><span class="grande">' + ni(c.kcal) + '</span> <span class="sub">kcal de media · ' + c.nKcal + " de " + c.nDias + (c.nDias === 1 ? ' día registrado' : ' días registrados') + (meta ? " · meta " + ni(meta) : "") + '</span></div><div>' + delta(c.kcal, p.kcal) + '</div></div>' +
+  const leg = '<div class="leyenda"><span><i style="background:#35c26a"></i>Proteínas</span><span><i style="background:#f0a43a"></i>Hidratos</span><span><i style="background:#e0567a"></i>Grasa</span></div>';
+  return '<div class="card"><h2>🍽️ Nutrición</h2><div class="cab"><div><span class="grande">' + ni(c.kcal) + '</span> <span class="sub">kcal de media · ' + c.nKcal + " de " + c.nDias + ' días registrados' + (meta ? " · meta " + ni(meta) : "") + '</span></div><div>' + delta(c.kcal, p.kcal) + '</div></div>' +
     '<div class="sub">Media diaria: proteínas ' + Math.round(c.pr) + ' g · hidratos ' + Math.round(c.ch) + ' g · grasa ' + Math.round(c.gr) + ' g</div>' +
-    barras(cub.map(b => prom(dd(b, "kcal"))), cub.map(b => b.etq), { meta: meta, fmt: ni }) + '</div>';
+    barras(cub.map(b => prom(dd(b, "kcal"))), cub.map(b => b.etq), { meta: meta, fmt: ni }) +
+    '<div class="sub" style="margin-top:8px">De dónde vienen las calorías (proteína y carbohidratos 4 kcal/g, grasa 9 kcal/g)</div>' +
+    barras(cub.map(b => { const pr = prom(dd(b, "pr")), ch = prom(dd(b, "ch")), gr = prom(dd(b, "gr")); return pr == null ? null : [pr * 4, ch * 4, gr * 9]; }), cub.map(b => b.etq), { fmt: ni, cols: ["#35c26a", "#f0a43a", "#e0567a"] }) + leg + '</div>';
 }
 function tarjetaPeso(c){
   const med = (D.med || []).filter(x => x && x.fecha).sort((a, b) => a.fecha < b.fecha ? -1 : 1), pes = med.filter(x => x.peso > 0);
@@ -250,13 +363,15 @@ function tarjetaPeso(c){
   if(filas.length) s += '<table class="t2"><tr><th>Medida</th><th>Primera</th><th>Última</th><th>Cambio</th></tr>' + filas.join("") + '</table>';
   return s + '</div>';
 }
+
 function tarjetaFitness(c, p, cub){
   const hist = (D.ej || []).filter(x => x && x.fecha >= c.r.desde && x.fecha <= c.r.hasta), tipos = {};
   hist.forEach(x => { const t = x.nombre || x.tipo || "otro"; tipos[t] = (tipos[t] || 0) + 1; });
-  const top = Object.keys(tipos).sort((a, b) => tipos[b] - tipos[a]).slice(0, 5).map(t => esc(t) + " ×" + tipos[t]).join(" · ");
   if(!c.ejN) return '<div class="card"><h2>🏃 Fitness</h2><div class="vacio">Sin ejercicios registrados en este periodo.</div></div>';
-  return '<div class="card"><h2>🏃 Fitness</h2><div class="cab"><div><span class="grande">' + c.ejN + '</span> <span class="sub">' + (c.ejN === 1 ? 'ejercicio' : 'ejercicios') + ' en ' + pl(c.ejDias, 'día', 'días') + ' · ' + fh(c.ejMin) + (c.ejKcal ? " · " + ni(c.ejKcal) + " kcal" : "") + '</span></div><div>' + delta(c.ejMin, p.ejMin, { masEsBueno: true }) + '</div></div>' +
-    (top ? '<div class="sub">' + top + '</div>' : "") + (modo === "dia" ? "" : barras(cub.map(b => { const s = b.dias.reduce((t, x) => t + x.ejMin, 0); return s || null; }), cub.map(b => b.etq), { color: "#f0a43a", fmt: v => Math.round(v) + " min" })) + '</div>';
+  const top = modo === "dia" ? "" : Object.keys(tipos).sort((a, b) => tipos[b] - tipos[a]).slice(0, 5).map(t => esc(t) + " ×" + tipos[t]).join(" · ");
+  return '<div class="card"><h2>🏃 Fitness</h2><div class="cab"><div><span class="grande">' + c.ejN + '</span> <span class="sub">' + (c.ejN === 1 ? "ejercicio" : "ejercicios") + " en " + pl(c.ejDias, "día", "días") + " · " + fh(c.ejMin) + (c.ejKcal ? " · " + ni(c.ejKcal) + " kcal" : "") + '</span></div><div>' + delta(c.ejMin, p.ejMin, { masEsBueno: true }) + '</div></div>' +
+    (top ? '<div class="sub">' + top + '</div>' : "") + (modo === "dia" ? "" : barras(cub.map(b => { const s = b.dias.reduce((t, x) => t + x.ejMin, 0); return s || null; }), cub.map(b => b.etq), { color: "#f0a43a", fmt: v => Math.round(v) + " min" })) +
+    (modo === "anio" ? "" : listaActs(hist, modo === "dia" ? 10 : 12)) + '</div>';
 }
 function ultimaAnalitica(){
   const l = (D.pru || []).filter(x => x && x.tipo === "analitica" && Array.isArray(x.valores) && x.valores.length).sort((a, b) => (a.fecha || "").localeCompare(b.fecha || ""));
@@ -287,6 +402,10 @@ function avisos(c, p){
   const meta = metaKcal();
   if(meta && modo !== "dia"){ const por = c.dias.filter(x => x.kcal != null && x.kcal > meta * 1.1).length; if(por >= 3) r.push(["ℹ️", por + " días comiendo más de un 10 % por encima de tu meta (" + ni(meta) + " kcal)."]); }
   if(modo !== "dia"){ const hasta = c.r.hasta < hoyISO() ? c.r.hasta : hoyISO(), trans = listaDias(c.r.desde, hasta).length; if(trans >= 5 && c.nKcal < trans / 2) r.push(["ℹ️", "Solo hay comidas registradas en " + c.nKcal + " de " + trans + " días: las medias de nutrición pueden no ser fiables."]); }
+  const a1 = resumen(modo, hace1(modo, ancla));
+  if(c.nSueno >= 3 && a1.nSueno >= 3 && Math.abs(c.sMin - a1.sMin) >= 10) r.push(["ℹ️", "Duermes de media " + Math.round(Math.abs(c.sMin - a1.sMin)) + " min " + (c.sMin < a1.sMin ? "menos" : "más") + " que en el mismo periodo del año pasado."]);
+  if(c.nFc >= 3 && a1.nFc >= 3 && Math.abs(c.fc - a1.fc) >= 3) r.push(["ℹ️", "Tu pulso medio es " + Math.round(Math.abs(c.fc - a1.fc)) + " ppm " + (c.fc < a1.fc ? "más bajo" : "más alto") + " que en el mismo periodo del año pasado."]);
+  if(c.nPasos >= 3 && a1.nPasos >= 3 && a1.pasos && Math.abs(c.pasos / a1.pasos - 1) >= 0.15) r.push(["ℹ️", "Caminas un " + Math.round(Math.abs(c.pasos / a1.pasos - 1) * 100) + " % " + (c.pasos < a1.pasos ? "menos" : "más") + " que en el mismo periodo del año pasado."]);
   const f = fueraDe(ultimaAnalitica()); if(f.length) r.push(["🩸", f.length + " valor" + (f.length === 1 ? "" : "es") + " fuera de rango en la última analítica (" + f.slice(0, 3).map(x => esc(x.n)).join(", ") + (f.length > 3 ? "…" : "") + ")."]);
   return r;
 }
