@@ -199,7 +199,7 @@
   <a href="huawei.html">HUAWEI</a>
 </nav>
 
-<h1>Salud<button type="button" class="ayu" data-t="Las condiciones, cirugías, medicación y pruebas se guardan por perfil y se sincronizan entre dispositivos, igual que Dieta y Fitness. Los archivos adjuntos muy grandes puede que no se sincronicen a la nube." title="Las condiciones, cirugías, medicación y pruebas se guardan por perfil y se sincronizan entre dispositivos, igual que Dieta y Fitness. Los archivos adjuntos muy grandes puede que no se sincronicen a la nube." aria-label="Más información" aria-expanded="false">i</button></h1>
+<h1>Salud<button type="button" class="ayu" data-t="Las condiciones, cirugías, medicación y pruebas se guardan por perfil y se sincronizan entre dispositivos, igual que Dieta y Fitness. En las analíticas, el archivo se lee con la IA y no se guarda. Los adjuntos de otras pruebas y cirugías se comprimen y tienen un límite de espacio." title="Las condiciones, cirugías, medicación y pruebas se guardan por perfil y se sincronizan entre dispositivos, igual que Dieta y Fitness. En las analíticas, el archivo se lee con la IA y no se guarda. Los adjuntos de otras pruebas y cirugías se comprimen y tienen un límite de espacio." aria-label="Más información" aria-expanded="false">i</button></h1>
 
 <div class="tabs-perfil" id="tabsPerfil">
   <button type="button" data-perfil="Mamy">Mamy</button>
@@ -370,7 +370,7 @@
       </div>
     </div>
     <div><label>Resumen / valores</label><textarea id="prb-notas" placeholder="Lo relevante del resultado"></textarea></div>
-    <div><label>Adjuntar resultado (opcional)</label><input type="file" id="prb-archivo" accept="image/*,application/pdf"></div>
+    <div><label>Adjuntar resultado (opcional)</label><input type="file" id="prb-archivo" accept="image/*,application/pdf"><div style="font-size:12px;opacity:.7;margin-top:4px">Analíticas: la IA lee el archivo y no se guarda. Otras pruebas: se guarda comprimido si cabe.</div></div>
     <div class="fila">
       <button type="button" class="btn-guardar" onclick="guardarPrueba()">Guardar</button>
       <button type="button" class="btn-cancelar" onclick="cerrarForm('pruebas')">Cancelar</button>
@@ -406,7 +406,23 @@ function claveBancoMed(){ return "saludBancoMedV1_"+perfilActivo; }
 function clavePruebas(){ return "saludPruebasV1_"+perfilActivo; }
 
 function leerJSON(clave, defecto){ try{ const v = JSON.parse(localStorage.getItem(clave)); return v==null ? defecto : v; }catch(e){ return defecto; } }
-function guardarJSON(clave, valor){ localStorage.setItem(clave, JSON.stringify(valor)); }
+function guardarJSON(clave, valor){
+  try{ localStorage.setItem(clave, JSON.stringify(valor)); return true; }
+  catch(e){ avisar("⚠️ No se pudo guardar: el almacenamiento del móvil está lleno. Borra algún adjunto antiguo e inténtalo de nuevo."); return false; }
+}
+// Límites para que un adjunto no llene el móvil ni impida la sincronización con la nube
+const LIM_CLAVE = 900000, LIM_LOCAL = 4500000;
+const archivosTemp = {}; // analíticas: el archivo vive solo en memoria hasta que la IA lo lee
+function archivoCabe(clave, lista){
+  try{
+    const n = JSON.stringify(lista).length;
+    if(n > LIM_CLAVE) return false;
+    let tot = 0;
+    for(let i=0;i<localStorage.length;i++){ const k = localStorage.key(i); if(k===clave) continue; tot += k.length + (localStorage.getItem(k)||"").length; }
+    return tot + clave.length + n <= LIM_LOCAL;
+  }catch(e){ return false; }
+}
+const MSG_NO_CABE = "El archivo no cabe en la app (se guardó el registro sin él). Guarda el original en tu Drive o en la galería.";
 function nuevoId(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
 function hoyISO(d){ d = d || new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
 function fechaLegible(iso){ if(!iso) return "sin fecha"; const [y,m,d]=iso.split("-"); return d+"/"+m+"/"+y; }
@@ -480,12 +496,16 @@ function abrirForm(sec, item){
 function cerrarForm(sec){ document.getElementById("form-"+sec).style.display = "none"; }
 function cerrarTodosLosForms(){ ["condiciones","cirugias","medicacion","pruebas"].forEach(cerrarForm); }
 
-function leerArchivo(input){
+function leerArchivo(input, comprimir){
   return new Promise((resolve)=>{
     const f = input.files && input.files[0];
     if(!f){ resolve(null); return; }
     const r = new FileReader();
-    r.onload = () => resolve({nombre:f.name, datos:r.result});
+    r.onload = async () => {
+      let datos = r.result;
+      if(comprimir && /^data:image\//.test(datos)){ try{ datos = await comprimirImagen(datos, 1600, 0.7); }catch(e){} }
+      resolve({nombre:f.name, datos});
+    };
     r.onerror = () => resolve(null);
     r.readAsDataURL(f);
   });
@@ -525,12 +545,18 @@ function guardarCirugia(){
   const id = document.getElementById("cir-id").value || nuevoId();
   const previo = cirugias.find(x=>x.id===id);
   const item = { id, fecha: document.getElementById("cir-fecha").value || "", desc, notas: document.getElementById("cir-notas").value.trim(), archivo: previo?.archivo || null, archivoNombre: previo?.archivoNombre || null };
-  leerArchivo(document.getElementById("cir-archivo")).then(a=>{
-    if(a){ item.archivo = a.datos; item.archivoNombre = a.nombre; }
+  leerArchivo(document.getElementById("cir-archivo"), true).then(a=>{
     const i = cirugias.findIndex(x=>x.id===id);
-    if(i>-1) cirugias[i] = item; else cirugias.push(item);
+    const con = it => { const l = cirugias.slice(); if(i>-1) l[i] = it; else l.push(it); return l; };
+    let aviso = "";
+    if(a){
+      item.archivo = a.datos; item.archivoNombre = a.nombre;
+      if(!archivoCabe(claveCirugias(), con(item))){ item.archivo = previo?.archivo || null; item.archivoNombre = previo?.archivoNombre || null; aviso = MSG_NO_CABE; }
+    }
+    cirugias = con(item);
     guardarJSON(claveCirugias(), cirugias);
     cerrarForm("cirugias"); renderCirugias();
+    if(aviso) avisar(aviso);
   });
 }
 async function borrarCirugia(id){ if(!(await confirmar("¿Borrar esta cirugía?",{si:"Borrar",peligro:true}))) return; cirugias = cirugias.filter(x=>x.id!==id); guardarJSON(claveCirugias(), cirugias); renderCirugias(); }
@@ -613,12 +639,26 @@ function guardarPrueba(){
   const id = document.getElementById("prb-id").value || nuevoId();
   const previo = pruebas.find(x=>x.id===id);
   const item = { id, fecha: document.getElementById("prb-fecha").value || hoyISO(), tipo: document.getElementById("prb-tipo").value, notas: document.getElementById("prb-notas").value.trim(), archivo: previo?.archivo || null, archivoNombre: previo?.archivoNombre || null, valores: previo?.valores || null, ia: previo?.ia || null };
-  leerArchivo(document.getElementById("prb-archivo")).then(a=>{
-    if(a){ item.archivo = a.datos; item.archivoNombre = a.nombre; }
+  const esAnalitica = item.tipo === "analitica";
+  // Analíticas: el archivo NO se guarda, solo se lee con la IA. Resto de pruebas: se guarda comprimido (si cabe).
+  leerArchivo(document.getElementById("prb-archivo"), !esAnalitica).then(a=>{
     const i = pruebas.findIndex(x=>x.id===id);
-    if(i>-1) pruebas[i] = item; else pruebas.push(item);
+    const con = it => { const l = pruebas.slice(); if(i>-1) l[i] = it; else l.push(it); return l; };
+    let aviso = "", leerYa = false;
+    if(a){
+      if(esAnalitica){
+        archivosTemp[id] = { nombre: a.nombre, datos: a.datos };
+        item.archivo = null; item.archivoNombre = a.nombre; leerYa = true;
+      } else {
+        item.archivo = a.datos; item.archivoNombre = a.nombre;
+        if(!archivoCabe(clavePruebas(), con(item))){ item.archivo = previo?.archivo || null; item.archivoNombre = previo?.archivoNombre || null; aviso = MSG_NO_CABE; }
+      }
+    }
+    pruebas = con(item);
     guardarJSON(clavePruebas(), pruebas);
     cerrarForm("pruebas"); renderPruebas();
+    if(aviso) avisar(aviso);
+    if(leerYa) leerAnaliticaIA(id);
   });
 }
 async function borrarPrueba(id){ if(!(await confirmar("¿Borrar este resultado?",{si:"Borrar",peligro:true}))) return; pruebas = pruebas.filter(x=>x.id!==id); guardarJSON(clavePruebas(), pruebas); renderPruebas(); }
@@ -641,7 +681,7 @@ function renderPruebas(){
         </div>
       </div>
       ${p.notas ? `<div class="tarjeta-notas">${escapar(p.notas)}</div>` : ""}
-      ${p.archivo ? `<a class="archivo-link" href="${p.archivo}" download="${escapar(p.archivoNombre||"archivo")}">📎 ${escapar(p.archivoNombre||"archivo adjunto")}</a>` : ""}
+      ${p.archivo ? `<a class="archivo-link" href="${p.archivo}" download="${escapar(p.archivoNombre||"archivo")}">📎 ${escapar(p.archivoNombre||"archivo adjunto")}</a>` : (p.archivoNombre && p.valores ? `<div class="tarjeta-notas">📄 ${escapar(p.archivoNombre)} · leído con IA (el original no se guarda)</div>` : "")}
       ${htmlIA(p)}
     </div>`).join("");
 }
@@ -695,20 +735,22 @@ function anteriorDe(p){
   const l = analiticasConValores().filter(q=>q.id!==p.id && (q.fecha||"")<=(p.fecha||""));
   return l.length ? l[l.length-1] : null;
 }
-function comprimirImagen(dataUrl){
+function comprimirImagen(dataUrl, max, calidad){
+  max = max || 2000; calidad = calidad || 0.85;
   return new Promise((res,rej)=>{
     const im = new Image();
-    im.onload = () => { const k = Math.min(1, 2000/Math.max(im.width,im.height)), c = document.createElement("canvas");
-      c.width = Math.round(im.width*k); c.height = Math.round(im.height*k); c.getContext("2d").drawImage(im,0,0,c.width,c.height); res(c.toDataURL("image/jpeg",0.85)); };
+    im.onload = () => { const k = Math.min(1, max/Math.max(im.width,im.height)), c = document.createElement("canvas");
+      c.width = Math.round(im.width*k); c.height = Math.round(im.height*k); c.getContext("2d").drawImage(im,0,0,c.width,c.height); res(c.toDataURL("image/jpeg",calidad)); };
     im.onerror = () => rej(new Error("No pude abrir la imagen."));
     im.src = dataUrl;
   });
 }
 async function parteArchivo(p){
-  if(!p.archivo) return null;
-  let m = /^data:([^;]+);base64,(.+)$/.exec(p.archivo);
+  const datos = p.archivo || (archivosTemp[p.id] && archivosTemp[p.id].datos);
+  if(!datos) return null;
+  let m = /^data:([^;]+);base64,(.+)$/.exec(datos);
   if(!m) return null;
-  if(/^image\//.test(m[1])){ m = /^data:([^;]+);base64,(.+)$/.exec(await comprimirImagen(p.archivo)); }
+  if(/^image\//.test(m[1])){ m = /^data:([^;]+);base64,(.+)$/.exec(await comprimirImagen(datos)); }
   else if(m[1] !== "application/pdf") return null;
   if(m[2].length > 7e6) throw new Error("El archivo es demasiado grande para enviarlo (máx. ≈5 MB). Prueba con una foto más ligera.");
   return { inline_data: { mime_type: m[1], data: m[2] } };
@@ -725,7 +767,7 @@ async function leerAnaliticaIA(id){
   const p = pruebas.find(x=>x.id===id);
   if(!p || iaOcupada) return;
   if(!window.IAClaves || !IAClaves.tieneGemini()) return avisar("Falta la clave de Gemini. Ponla una vez en ⚙️ Ajustes.");
-  if(!p.archivo && !(p.notas||"").trim()) return avisar("Adjunta la foto o el PDF de la analítica (o escribe los valores en el resumen) para poder leerla.");
+  if(!p.archivo && !archivosTemp[id] && !(p.notas||"").trim()) return avisar("Adjunta la foto o el PDF de la analítica (o escribe los valores en el resumen) para poder leerla.");
   if(p.valores && !(await confirmar("Ya hay una lectura de esta analítica. ¿Volver a leerla? Sustituirá la anterior.",{si:"Volver a leer"}))) return;
   if(localStorage.getItem(IA_AVISO)!=="1"){
     if(!(await confirmar("Para leerla se envía la imagen o el PDF a Gemini (Google). Si el informe trae tu nombre o DNI, también viajan. El resultado es una orientación, no un diagnóstico. ¿Continuar?",{si:"Continuar"}))) return;
@@ -752,6 +794,7 @@ async function leerAnaliticaIA(id){
     p.ia = { fecha: hoyISO(), lab: String(j.laboratorio||"").slice(0,60), conclusion: String(j.conclusion||"").slice(0,1500),
       preguntas: (Array.isArray(j.preguntas_medico)?j.preguntas_medico:[]).slice(0,6).map(x=>String(x).slice(0,200)) };
     guardarJSON(clavePruebas(), pruebas);
+    delete archivosTemp[id]; // leído: el original se descarta
     iaOcupada = false; renderPruebas();
   }catch(e){
     iaOcupada = false; if(btn) btn.disabled = false;
@@ -774,7 +817,7 @@ function tablaIA(filas, mapAnt){
 }
 function htmlIA(p){
   if(p.tipo !== "analitica") return "";
-  const puede = p.archivo || (p.notas||"").trim();
+  const puede = p.archivo || archivosTemp[p.id] || (p.notas||"").trim();
   const bt = puede ? '<div class="ia-fila"><button type="button" class="ia-btn" onclick="leerAnaliticaIA(\''+p.id+'\')">'+(p.valores?"🔄 Releer con IA":"🤖 Leer con IA")+'</button><span class="ia-est" id="ia-est-'+p.id+'"></span></div>' : "";
   if(!(p.valores && p.valores.length)) return bt;
   const ant = anteriorDe(p), mapAnt = {};
