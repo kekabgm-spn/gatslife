@@ -156,6 +156,13 @@
   .ht-dia.parcial{opacity:1;border-color:#d4a017;color:var(--ink);}
   .ht-dia.falta{opacity:1;border-color:var(--warn);color:var(--warn);}
   .med-guia{background:var(--panel-alt);border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-size:0.82rem;line-height:1.4;margin-bottom:12px;}
+  .tomado-h-btn{background:none;border:none;border-bottom:1px dashed var(--accent);color:var(--accent);font:inherit;font-weight:700;cursor:pointer;padding:0 0 1px;min-width:46px;text-align:left;font-variant-numeric:tabular-nums;}
+  .hora-picker{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+  .hora-picker input[type=time]{padding:6px 8px;border:1px solid var(--accent);border-radius:8px;background:var(--bg);color:var(--ink);font-size:0.95rem;font-family:inherit;}
+  .hora-picker button{border-radius:8px;padding:7px 12px;font-size:0.82rem;font-weight:700;cursor:pointer;border:1px solid var(--line);background:var(--bg);color:var(--ink);}
+  .hora-picker button.ok{background:var(--accent);color:#0a1f14;border-color:var(--accent);}
+  .toma-acc{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+  .toma-acc .btn-hora{background:var(--bg);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:7px 9px;font-size:0.85rem;cursor:pointer;}
   .tomado-card{background:var(--panel);border:1px solid var(--accent);border-radius:12px;padding:10px 14px;margin-bottom:14px;}
   .tomado-tit{font-weight:700;font-size:0.9rem;color:var(--accent);margin-bottom:6px;}
   .tomado-fila{display:flex;align-items:center;gap:10px;padding:6px 0;border-top:1px solid var(--line);font-size:0.9rem;}
@@ -776,6 +783,33 @@ function horasDe(iso){ return tomas["h:"+iso] || {}; }
 function medPorId(id){ return medicacion.find(x=>x.id===id) || null; }
 function horaAhora(){ const d = new Date(); return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); }
 
+// Selector de hora: {k:"fija"|"dem", id, hora, modo:"nueva"|"editar"} — para apuntar con otra hora o corregirla
+let selHora = null;
+function abrirHora(k, id, hora, modo){ selHora = {k, id, hora: hora||"", modo}; renderTomas(); const i = document.getElementById("inp-hora"); if(i && i.focus) i.focus(); }
+function cancelarHora(){ selHora = null; renderTomas(); }
+function esSel(k, id, modo, hora){ return !!selHora && selHora.k===k && selHora.id===id && selHora.modo===modo && (modo==="nueva" || selHora.hora===(hora||"")); }
+function pickerHtml(){
+  const v = (selHora && selHora.hora) || horaAhora();
+  return '<div class="hora-picker"><input type="time" id="inp-hora" value="'+escapar(v)+'"><button type="button" class="ok" onclick="confirmarHora()">OK</button><button type="button" onclick="cancelarHora()">Cancelar</button></div>';
+}
+function confirmarHora(){
+  const v = document.getElementById("inp-hora").value;
+  if(!v) return avisar("Elige una hora.");
+  const sh = selHora; selHora = null;
+  if(sh.k === "fija"){ if(sh.modo === "nueva") marcarToma(sh.id, v); else { editarHoraFija(sh.id, v); } }
+  else { if(sh.modo === "nueva") tomarDemanda(sh.id, v); else editarHoraDemanda(sh.id, sh.hora, v); }
+}
+function editarHoraFija(id, v){
+  const horas = Object.assign({}, horasDe(medFechaActual)); horas[id] = v;
+  tomas["h:"+medFechaActual] = horas; guardarJSON(claveTomas(), tomas); renderTomas();
+}
+function editarHoraDemanda(id, vieja, v){
+  const lista = demanda[medFechaActual] || [];
+  const e = lista.find(x=>x.id===id && (x.hora||"")===vieja);
+  if(e){ e.hora = v; demanda[medFechaActual] = lista; guardarJSON(claveDemanda(), demanda); }
+  renderTomas();
+}
+
 function renderTomas(){
   renderHistorialTomas();
   const esHoy = medFechaActual === hoyISO();
@@ -783,7 +817,7 @@ function renderTomas(){
   document.getElementById("tomado-tit").textContent = esHoy ? "✅ Tomado hoy" : "✅ Tomado ese día";
   const hechas = tomas[medFechaActual] || [], horas = horasDe(medFechaActual);
 
-  // 1) Lo que realmente tomaste, con su hora (fijas + «si lo necesito»)
+  // 1) Lo que realmente tomaste, con su hora (toca la hora para corregirla)
   const reg = [];
   hechas.forEach(id => reg.push({k:"fija", id, hora:horas[id]||"", m:medPorId(id)}));
   (demanda[medFechaActual]||[]).forEach(x => reg.push({k:"dem", id:x.id, hora:x.hora||"", m:medPorId(x.id)}));
@@ -791,7 +825,9 @@ function renderTomas(){
   document.getElementById("lista-tomado").innerHTML = reg.length ? reg.map(r => {
     const nombre = r.m ? r.m.nombre : "(borrada)", dosis = r.m ? dosisTexto(r.m) : "";
     const quitar = r.k==="fija" ? "marcarToma('"+r.id+"')" : "quitarDemanda('"+r.id+"','"+r.hora+"')";
-    return '<div class="tomado-fila"><span class="tomado-h">'+escapar(r.hora||"—")+'</span><span class="tomado-n">'+escapar([nombre,dosis].filter(Boolean).join(" · "))+(r.k==="dem" ? ' <em>(si lo necesito)</em>' : '')+'</span><button type="button" title="Quitar esta toma" onclick="'+quitar+'">✕</button></div>';
+    const editando = esSel(r.k, r.id, "editar", r.hora);
+    const cab = editando ? pickerHtml() : '<button type="button" class="tomado-h-btn" title="Cambiar la hora" onclick="abrirHora(\''+r.k+'\',\''+r.id+'\',\''+r.hora+'\',\'editar\')">'+escapar(r.hora||"—")+' ✎</button>';
+    return '<div class="tomado-fila">'+(editando ? '' : cab)+'<span class="tomado-n">'+escapar([nombre,dosis].filter(Boolean).join(" · "))+(r.k==="dem" ? ' <em>(si lo necesito)</em>' : '')+(editando ? '<div style="margin-top:6px">'+cab+'</div>' : '')+'</span>'+(editando ? '' : '<button type="button" title="Quitar esta toma" onclick="'+quitar+'">✕</button>')+'</div>';
   }).join("") : '<p class="empty" style="margin:0;padding:2px 0">'+(esHoy ? "Todavía no tomaste nada hoy." : "No hay tomas registradas ese día.")+'</p>';
 
   // 2) Lo que falta por tomar (solo fijas que tocan ese día)
@@ -803,23 +839,26 @@ function renderTomas(){
   } else if(!pend.length){
     pc.innerHTML = '<p class="empty">Todo lo fijo de este día ya está tomado ✓</p>';
   } else {
-    pc.innerHTML = pend.map(m => '<div class="toma"><div class="toma-info"><div class="toma-nombre">'+escapar(m.nombre)+'</div><div class="toma-meta">'+[dosisTexto(m), m.horario, frecDe(m)==="semanal" ? "semanal" : ""].filter(Boolean).map(escapar).join(" · ")+'</div></div><button type="button" class="btn-demanda" onclick="marcarToma(\''+m.id+'\')">Tomé</button></div>').join("");
+    pc.innerHTML = pend.map(m => {
+      const sel = esSel("fija", m.id, "nueva");
+      return '<div class="toma"><div class="toma-info"><div class="toma-nombre">'+escapar(m.nombre)+'</div><div class="toma-meta">'+[dosisTexto(m), m.horario, frecDe(m)==="semanal" ? "semanal" : ""].filter(Boolean).map(escapar).join(" · ")+'</div>'+(sel ? '<div style="margin-top:6px;font-size:0.78rem;color:var(--muted)">¿A qué hora la tomaste?</div>'+pickerHtml() : '')+'</div>'+(sel ? '' : '<div class="toma-acc"><button type="button" class="btn-hora" title="Tomada a otra hora" onclick="abrirHora(\'fija\',\''+m.id+'\',\'\',\'nueva\')">🕐</button><button type="button" class="btn-demanda" onclick="marcarToma(\''+m.id+'\')">Tomé</button></div>')+'</div>';
+    }).join("");
   }
   renderDemanda();
   renderProximas();
 }
-// Marca / desmarca una toma fija; al marcarla guarda la hora (si es hoy)
-function marcarToma(id){
+// Marca / desmarca una toma fija. Hora automática (ahora) salvo que elijas otra.
+function marcarToma(id, horaElegida){
   const arr = tomas[medFechaActual] || [];
   const horas = Object.assign({}, horasDe(medFechaActual));
   if(arr.includes(id)){ tomas[medFechaActual] = arr.filter(x=>x!==id); delete horas[id]; }
-  else { tomas[medFechaActual] = [...arr, id]; if(medFechaActual === hoyISO()) horas[id] = horaAhora(); }
+  else { tomas[medFechaActual] = [...arr, id]; const h = horaElegida || (medFechaActual === hoyISO() ? horaAhora() : ""); if(h) horas[id] = h; }
   if(Object.keys(horas).length) tomas["h:"+medFechaActual] = horas; else delete tomas["h:"+medFechaActual];
   guardarJSON(claveTomas(), tomas);
   renderTomas();
 }
 
-// «Si lo necesito»: botón «Tomé una» (cada toma queda con su hora en «Tomado hoy»)
+// «Si lo necesito»: «Tomé una» (hora automática) o 🕐 para otra hora
 function renderDemanda(){
   const cont = document.getElementById("lista-demanda");
   const lista = medicacion.filter(m=>m.activa && frecDe(m)==="demanda");
@@ -830,23 +869,25 @@ function renderDemanda(){
     const ult = mias.map(x=>x.hora).filter(Boolean).sort().pop();
     const lim = [m.maxDia ? "máx. "+m.maxDia+" al día" : "", m.horasMin ? "esperar "+m.horasMin+" h entre tomas" : ""].filter(Boolean).join(" · ");
     const uso = mias.length ? rotulo+": "+mias.length+(mias.length===1?" toma":" tomas")+(ult ? " · última "+ult : "") : "ninguna "+rotulo;
-    return '<div class="toma"><div class="toma-info"><div class="toma-nombre">'+escapar(m.nombre)+'</div><div class="toma-meta">'+[dosisTexto(m), lim, uso].filter(Boolean).map(escapar).join(" · ")+'</div></div><button type="button" class="btn-demanda" onclick="tomarDemanda(\''+m.id+'\')">Tomé una</button></div>';
+    const sel = esSel("dem", m.id, "nueva");
+    return '<div class="toma"><div class="toma-info"><div class="toma-nombre">'+escapar(m.nombre)+'</div><div class="toma-meta">'+[dosisTexto(m), lim, uso].filter(Boolean).map(escapar).join(" · ")+'</div>'+(sel ? '<div style="margin-top:6px;font-size:0.78rem;color:var(--muted)">¿A qué hora la tomaste?</div>'+pickerHtml() : '')+'</div>'+(sel ? '' : '<div class="toma-acc"><button type="button" class="btn-hora" title="Tomada a otra hora" onclick="abrirHora(\'dem\',\''+m.id+'\',\'\',\'nueva\')">🕐</button><button type="button" class="btn-demanda" onclick="tomarDemanda(\''+m.id+'\')">Tomé una</button></div>')+'</div>';
   }).join("");
 }
-async function tomarDemanda(id){
+async function tomarDemanda(id, horaElegida){
   const m = medPorId(id); if(!m) return;
   const lista = (demanda[medFechaActual] || []).slice();
   const mias = lista.filter(x=>x.id===id);
   const esHoy = medFechaActual === hoyISO();
+  const ref = horaElegida || (esHoy ? horaAhora() : "");
   const avisos = [];
   if(m.maxDia && mias.length >= m.maxDia) avisos.push("Ya llevas "+mias.length+" y el máximo que pusiste es "+m.maxDia+" al día.");
-  if(esHoy && m.horasMin && mias.length){
-    const ult = mias.map(x=>x.hora).filter(Boolean).sort().pop();
-    if(ult){ const [h,mi] = ult.split(":").map(Number); const a = new Date(); const dif = (a.getHours()*60+a.getMinutes() - (h*60+mi))/60;
-      if(dif >= 0 && dif < m.horasMin) avisos.push("La última fue hace "+(Math.round(dif*10)/10)+" h y quieres esperar al menos "+m.horasMin+" h."); }
+  if(ref && m.horasMin){
+    const mins = h => { const [a,b] = h.split(":").map(Number); return a*60+b; };
+    const cerca = mias.map(x=>x.hora).filter(Boolean).map(h=>Math.abs(mins(ref)-mins(h))/60).sort((a,b)=>a-b)[0];
+    if(cerca != null && cerca < m.horasMin) avisos.push("Hay otra toma a menos de "+(Math.round(cerca*10)/10)+" h y quieres esperar al menos "+m.horasMin+" h.");
   }
   if(avisos.length && !(await confirmar(avisos.join(" ")+" ¿Registrar de todos modos?",{si:"Registrar"}))) return;
-  lista.push({id, hora: esHoy ? horaAhora() : ""});
+  lista.push({id, hora: ref});
   demanda[medFechaActual] = lista;
   guardarJSON(claveDemanda(), demanda);
   renderTomas();
@@ -859,8 +900,8 @@ function quitarDemanda(id, hora){
   guardarJSON(claveDemanda(), demanda);
   renderTomas();
 }
-document.getElementById("medDiaAnterior").onclick = () => { const d=new Date(medFechaActual+"T00:00:00"); d.setDate(d.getDate()-1); medFechaActual = hoyISO(d); renderTomas(); };
-document.getElementById("medDiaSiguiente").onclick = () => { const d=new Date(medFechaActual+"T00:00:00"); d.setDate(d.getDate()+1); medFechaActual = hoyISO(d); renderTomas(); };
+document.getElementById("medDiaAnterior").onclick = () => { selHora = null; const d=new Date(medFechaActual+"T00:00:00"); d.setDate(d.getDate()-1); medFechaActual = hoyISO(d); renderTomas(); };
+document.getElementById("medDiaSiguiente").onclick = () => { selHora = null; const d=new Date(medFechaActual+"T00:00:00"); d.setDate(d.getDate()+1); medFechaActual = hoyISO(d); renderTomas(); };
 
 function guardarPrueba(){
   const id = document.getElementById("prb-id").value || nuevoId();
