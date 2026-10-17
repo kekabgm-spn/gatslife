@@ -155,6 +155,23 @@
   .ht-dia.completo{opacity:1;background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:700;}
   .ht-dia.parcial{opacity:1;border-color:#d4a017;color:var(--ink);}
   .ht-dia.falta{opacity:1;border-color:var(--warn);color:var(--warn);}
+  .med-guia{background:var(--panel-alt);border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-size:0.82rem;line-height:1.4;margin-bottom:12px;}
+  .tomado-card{background:var(--panel);border:1px solid var(--accent);border-radius:12px;padding:10px 14px;margin-bottom:14px;}
+  .tomado-tit{font-weight:700;font-size:0.9rem;color:var(--accent);margin-bottom:6px;}
+  .tomado-fila{display:flex;align-items:center;gap:10px;padding:6px 0;border-top:1px solid var(--line);font-size:0.9rem;}
+  .tomado-fila:first-of-type{border-top:none;}
+  .tomado-h{font-weight:700;min-width:46px;color:var(--accent);font-variant-numeric:tabular-nums;}
+  .tomado-n{flex:1;min-width:0;}
+  .tomado-n em{color:var(--muted);font-size:0.75rem;font-style:normal;}
+  .tomado-fila button{background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.95rem;padding:2px 8px;}
+  .frec-opc{display:flex;flex-direction:column;gap:6px;}
+  .frec-opc button{text-align:left;background:var(--bg);color:var(--ink);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;gap:2px;}
+  .frec-opc button small{color:var(--muted);font-size:0.75rem;}
+  .frec-opc button.on{border-color:var(--accent);background:var(--accent-soft);}
+  .dias-sem{display:flex;gap:6px;}
+  .dias-sem button{flex:1;padding:10px 0;border:1.5px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font-weight:700;cursor:pointer;font-family:inherit;}
+  .dias-sem button.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);}
+  .med-resumen{background:var(--bg);border:1px dashed var(--accent);border-radius:8px;padding:8px 10px;font-size:0.85rem;}
   .ht-dia{position:relative;}
   .ht-dia.toca{opacity:1;}
   .ht-dia i, .ht-leyenda i{display:inline-block;width:6px;height:6px;border-radius:50%;}
@@ -307,63 +324,72 @@
 <!-- MEDICACIÓN -->
 <section class="panel" id="panel-medicacion">
   <h2>Toma de hoy</h2>
+  <div class="med-guia">👉 <b>Cada vez que tomes algo, apúntalo aquí:</b> «Tomé» para lo fijo y «Tomé una» para lo de «si lo necesito». Crear una pastilla nueva se hace <u>una sola vez</u>, en «Mis pastillas» (más abajo).</div>
   <div class="navfecha">
     <button id="medDiaAnterior">◀</button>
     <div class="fecha" id="medFechaLabel"></div>
     <button id="medDiaSiguiente">▶</button>
   </div>
-  <div class="cita-grupo-titulo" style="margin-top:4px">Hoy toca</div>
-  <div id="lista-tomas"></div>
 
-  <div class="cita-grupo-titulo">Próximas</div>
-  <div id="lista-proximas"></div>
+  <div class="tomado-card">
+    <div class="tomado-tit" id="tomado-tit">✅ Tomado hoy</div>
+    <div id="lista-tomado"></div>
+  </div>
+
+  <div class="cita-grupo-titulo">Por tomar</div>
+  <div id="lista-tomas"></div>
 
   <div class="cita-grupo-titulo">Si lo necesito</div>
   <div id="lista-demanda"></div>
+
+  <div class="cita-grupo-titulo">Próximas</div>
+  <div id="lista-proximas"></div>
 
   <h2 style="margin-top:22px">Mis pastillas</h2>
   <div id="lista-medicacion"></div>
   <button class="btn-nueva" data-abrir="medicacion">+ Añadir pastilla</button>
   <form class="form-add" id="form-medicacion" style="display:none">
-    <input type="hidden" id="med-id">
-    <div><label>Nombre</label><input type="text" id="med-nombre" list="med-banco" autocomplete="off" placeholder="Ej. Paracetamol"><datalist id="med-banco"></datalist></div>
+    <input type="hidden" id="med-id"><input type="hidden" id="med-frec" value=""><input type="hidden" id="med-diasem" value="1">
+    <h3 id="med-form-titulo" style="margin:0;font-size:1rem">Añadir medicación</h3>
+    <div><label><b>1. ¿Cómo se llama?</b></label><input type="text" id="med-nombre" list="med-banco" autocomplete="off" placeholder="Ej. Omeprazol 20 mg"><datalist id="med-banco"></datalist></div>
     <div>
-      <label>¿Cada cuánto?</label>
-      <select id="med-frec">
-        <option value="diaria">Todos los días</option>
-        <option value="semanal">Una vez por semana</option>
-        <option value="demanda">Solo si lo necesito (dolor, etc.)</option>
-      </select>
-    </div>
-    <div id="med-sem-cont" style="display:none">
-      <label>¿Qué día de la semana?</label>
-      <select id="med-diasem">
-        <option value="1">Lunes</option><option value="2">Martes</option><option value="3">Miércoles</option>
-        <option value="4">Jueves</option><option value="5">Viernes</option><option value="6">Sábado</option><option value="0">Domingo</option>
-      </select>
-    </div>
-    <div class="fila">
-      <div><label>Cantidad (por toma)</label><input type="number" id="med-cantidad" step="any" min="0" placeholder="Ej. 500"></div>
-      <div><label>Unidad</label>
-        <select id="med-unidad">
-          <option value="mg">mg</option>
-          <option value="comprimidos">comprimido(s)</option>
-          <option value="ml">ml</option>
-          <option value="gotas">gotas</option>
-          <option value="otro">otra</option>
-        </select>
+      <label><b>2. ¿Cada cuánto la tomas?</b></label>
+      <div class="frec-opc" id="med-frec-opc">
+        <button type="button" data-v="diaria"><b>📅 Todos los días</b><small>Ej.: omeprazol cada mañana</small></button>
+        <button type="button" data-v="semanal"><b>🗓️ Un día fijo a la semana</b><small>Ej.: metotrexato los martes</small></button>
+        <button type="button" data-v="demanda"><b>🆘 Solo cuando lo necesito</b><small>Ej.: ibuprofeno si hay dolor. No sale como obligatoria: la apuntas cuando la tomas.</small></button>
       </div>
     </div>
-    <div id="med-horario-cont"><label>Horario</label><input type="text" id="med-horario" placeholder="Ej. 8:00, 20:00"></div>
-    <div id="med-dem-cont" class="fila" style="display:none">
-      <div><label>Máximo de tomas al día (opcional)</label><input type="number" id="med-maxdia" min="1" step="1" placeholder="Ej. 3"></div>
-      <div><label>Horas mínimas entre tomas (opcional)</label><input type="number" id="med-horasmin" min="0" step="any" placeholder="Ej. 8"></div>
-    </div>
-    <div><label>Notas</label><textarea id="med-notas" placeholder="Para qué es, indicaciones..."></textarea></div>
-    <label class="check"><input type="checkbox" id="med-activa" checked> Activa (aparece en «Toma de hoy»)</label>
-    <div class="fila">
-      <button type="button" class="btn-guardar" onclick="guardarMedicacion()">Guardar</button>
-      <button type="button" class="btn-cancelar" onclick="cerrarForm('medicacion')">Cancelar</button>
+    <div id="med-resto" style="display:none;flex-direction:column;gap:10px">
+      <div id="med-sem-cont"><label><b>¿Qué día de la semana?</b></label>
+        <div class="dias-sem" id="med-dias">
+          <button type="button" data-d="1">L</button><button type="button" data-d="2">M</button><button type="button" data-d="3">X</button><button type="button" data-d="4">J</button><button type="button" data-d="5">V</button><button type="button" data-d="6">S</button><button type="button" data-d="0">D</button>
+        </div>
+      </div>
+      <div id="med-horario-cont"><label><b>¿A qué hora?</b> (opcional)</label><input type="text" id="med-horario" placeholder="Ej. 8:00 o 8:00, 20:00"></div>
+      <div class="fila">
+        <div><label><b>¿Cuánto por toma?</b></label><input type="number" id="med-cantidad" step="any" min="0" placeholder="Ej. 1"></div>
+        <div><label>Unidad</label>
+          <select id="med-unidad">
+            <option value="mg">mg</option>
+            <option value="comprimidos">comprimido(s)</option>
+            <option value="ml">ml</option>
+            <option value="gotas">gotas</option>
+            <option value="otro">otra</option>
+          </select>
+        </div>
+      </div>
+      <div id="med-dem-cont" class="fila" style="display:none">
+        <div><label>Máximo de tomas al día (opcional)</label><input type="number" id="med-maxdia" min="1" step="1" placeholder="Ej. 3"></div>
+        <div><label>Esperar al menos (horas, opcional)</label><input type="number" id="med-horasmin" min="0" step="any" placeholder="Ej. 8"></div>
+      </div>
+      <div><label>Notas (opcional)</label><textarea id="med-notas" placeholder="Para qué es, indicaciones..."></textarea></div>
+      <label class="check"><input type="checkbox" id="med-activa" checked> Activa (si la desmarcas, deja de aparecer en «Toma de hoy»)</label>
+      <div class="med-resumen" id="med-resumen"></div>
+      <div class="fila">
+        <button type="button" class="btn-guardar" onclick="guardarMedicacion()">Guardar</button>
+        <button type="button" class="btn-cancelar" onclick="cerrarForm('medicacion')">Cancelar</button>
+      </div>
     </div>
   </form>
 
@@ -529,6 +555,7 @@ function abrirForm(sec, item){
     document.getElementById("cir-desc").value = item ? item.desc : "";
     document.getElementById("cir-notas").value = item ? (item.notas||"") : "";
   } else if(sec === "medicacion"){
+    document.getElementById("med-form-titulo").textContent = item ? "Editar medicación" : "Añadir medicación";
     document.getElementById("med-id").value = item ? item.id : "";
     document.getElementById("med-nombre").value = item ? item.nombre : "";
     document.getElementById("med-cantidad").value = item ? (item.cantidad!=null ? item.cantidad : "") : "";
@@ -536,12 +563,11 @@ function abrirForm(sec, item){
     document.getElementById("med-horario").value = item ? (item.horario||"") : "";
     document.getElementById("med-notas").value = item ? (item.notas||"") : "";
     document.getElementById("med-activa").checked = item ? !!item.activa : true;
-    document.getElementById("med-frec").value = item ? (item.frec||"diaria") : "diaria";
-    document.getElementById("med-diasem").value = item && item.diaSem!=null ? String(item.diaSem) : "1";
     document.getElementById("med-maxdia").value = item && item.maxDia!=null ? item.maxDia : "";
     document.getElementById("med-horasmin").value = item && item.horasMin!=null ? item.horasMin : "";
-    actualizarCamposFrec();
-    document.getElementById("form-medicacion").scrollIntoView({behavior:"smooth", block:"center"});
+    elegirDia(item && item.diaSem!=null ? item.diaSem : 1);
+    elegirFrec(item ? frecDe(item) : "");
+    { const _f = document.getElementById("form-medicacion"); if(_f.scrollIntoView) _f.scrollIntoView({behavior:"smooth", block:"center"}); }
   } else if(sec === "pruebas"){
     document.getElementById("prb-id").value = item ? item.id : "";
     document.getElementById("prb-fecha").value = item ? (item.fecha||"") : hoyISO();
@@ -651,15 +677,43 @@ function frecTexto(m){
   if(fr === "demanda") return "Solo si lo necesito";
   return "Todos los días";
 }
+function elegirFrec(v){
+  document.getElementById("med-frec").value = v;
+  document.querySelectorAll("#med-frec-opc button").forEach(b=>b.classList.toggle("on", b.dataset.v===v));
+  actualizarCamposFrec();
+}
+function elegirDia(d){
+  document.getElementById("med-diasem").value = String(d);
+  document.querySelectorAll("#med-dias button").forEach(b=>b.classList.toggle("on", b.dataset.d===String(d)));
+  actualizarResumenMed();
+}
 function actualizarCamposFrec(){
   const fr = document.getElementById("med-frec").value;
+  document.getElementById("med-resto").style.display = fr ? "flex" : "none";
   document.getElementById("med-sem-cont").style.display = fr==="semanal" ? "" : "none";
   document.getElementById("med-horario-cont").style.display = fr==="demanda" ? "none" : "";
   document.getElementById("med-dem-cont").style.display = fr==="demanda" ? "flex" : "none";
+  actualizarResumenMed();
 }
-document.getElementById("med-frec").onchange = actualizarCamposFrec;
+function actualizarResumenMed(){
+  const g = id => document.getElementById(id).value;
+  const fr = g("med-frec"), el = document.getElementById("med-resumen"); if(!el) return;
+  if(!fr){ el.textContent = ""; return; }
+  const hor = g("med-horario").trim(), cant = g("med-cantidad");
+  const dosis = cant !== "" ? (cant+" "+(UNIDAD_ETQ[g("med-unidad")]||"")).trim() : "";
+  let cuando = "";
+  if(fr==="diaria") cuando = "todos los días" + (hor ? " a las "+hor : "");
+  else if(fr==="semanal") cuando = "cada "+DIAS_SEM[Number(g("med-diasem"))] + (hor ? " a las "+hor : "");
+  else { cuando = "solo si lo necesito"; if(g("med-maxdia")) cuando += ", máximo "+g("med-maxdia")+" al día"; if(g("med-horasmin")) cuando += ", esperando "+g("med-horasmin")+" h entre tomas"; }
+  el.innerHTML = "📋 <b>Quedará así:</b> "+escapar([g("med-nombre").trim() || "(falta el nombre)", dosis, cuando].filter(Boolean).join(" · "));
+}
+document.querySelectorAll("#med-frec-opc button").forEach(b=> b.onclick = ()=> elegirFrec(b.dataset.v));
+document.querySelectorAll("#med-dias button").forEach(b=> b.onclick = ()=> elegirDia(b.dataset.d));
+document.getElementById("form-medicacion").addEventListener("input", actualizarResumenMed);
+document.getElementById("form-medicacion").addEventListener("change", actualizarResumenMed);
 
 function guardarMedicacion(){
+  if(!document.getElementById("med-frec").value) return avisar("Elige cada cuánto la tomas (paso 2).");
   const nombre = document.getElementById("med-nombre").value.trim();
   if(!nombre) return avisar("Poné el nombre de la pastilla.");
   const id = document.getElementById("med-id").value || nuevoId();
@@ -718,62 +772,78 @@ function renderProximas(){
     </div></div>`).join("");
 }
 
+function horasDe(iso){ return tomas["h:"+iso] || {}; }
+function medPorId(id){ return medicacion.find(x=>x.id===id) || null; }
+function horaAhora(){ const d = new Date(); return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); }
+
 function renderTomas(){
   renderHistorialTomas();
-  document.getElementById("medFechaLabel").textContent = fechaLegible(medFechaActual) + (medFechaActual===hoyISO() ? " · hoy" : "");
-  const cont = document.getElementById("lista-tomas");
-  const hoyToca = medicacion.filter(m=>tocaEl(m, medFechaActual));
-  if(!hoyToca.length){
-    cont.innerHTML = '<p class="empty">'+(medicacion.some(m=>m.activa && frecDe(m)!=="demanda") ? "Este día no toca nada fijo ✓" : "No hay pastillas fijas activas configuradas.")+'</p>';
+  const esHoy = medFechaActual === hoyISO();
+  document.getElementById("medFechaLabel").textContent = fechaLegible(medFechaActual) + (esHoy ? " · hoy" : "");
+  document.getElementById("tomado-tit").textContent = esHoy ? "✅ Tomado hoy" : "✅ Tomado ese día";
+  const hechas = tomas[medFechaActual] || [], horas = horasDe(medFechaActual);
+
+  // 1) Lo que realmente tomaste, con su hora (fijas + «si lo necesito»)
+  const reg = [];
+  hechas.forEach(id => reg.push({k:"fija", id, hora:horas[id]||"", m:medPorId(id)}));
+  (demanda[medFechaActual]||[]).forEach(x => reg.push({k:"dem", id:x.id, hora:x.hora||"", m:medPorId(x.id)}));
+  reg.sort((a,b)=> (a.hora||"99:99").localeCompare(b.hora||"99:99"));
+  document.getElementById("lista-tomado").innerHTML = reg.length ? reg.map(r => {
+    const nombre = r.m ? r.m.nombre : "(borrada)", dosis = r.m ? dosisTexto(r.m) : "";
+    const quitar = r.k==="fija" ? "marcarToma('"+r.id+"')" : "quitarDemanda('"+r.id+"','"+r.hora+"')";
+    return '<div class="tomado-fila"><span class="tomado-h">'+escapar(r.hora||"—")+'</span><span class="tomado-n">'+escapar([nombre,dosis].filter(Boolean).join(" · "))+(r.k==="dem" ? ' <em>(si lo necesito)</em>' : '')+'</span><button type="button" title="Quitar esta toma" onclick="'+quitar+'">✕</button></div>';
+  }).join("") : '<p class="empty" style="margin:0;padding:2px 0">'+(esHoy ? "Todavía no tomaste nada hoy." : "No hay tomas registradas ese día.")+'</p>';
+
+  // 2) Lo que falta por tomar (solo fijas que tocan ese día)
+  const deben = medicacion.filter(m=>tocaEl(m, medFechaActual));
+  const pend = deben.filter(m=>!hechas.includes(m.id));
+  const pc = document.getElementById("lista-tomas");
+  if(!deben.length){
+    pc.innerHTML = medicacion.length ? '<p class="empty">'+(medicacion.some(m=>m.activa && frecDe(m)!=="demanda") ? "Este día no toca nada fijo ✓" : "No hay pastillas fijas activas.")+'</p>' : '<p class="empty">Todavía no hay ninguna pastilla creada.</p><button type="button" class="btn-nueva" onclick="abrirForm(\'medicacion\')">+ Añadir mi primera pastilla</button>';
+  } else if(!pend.length){
+    pc.innerHTML = '<p class="empty">Todo lo fijo de este día ya está tomado ✓</p>';
   } else {
-    const hechas = tomas[medFechaActual] || [];
-    cont.innerHTML = hoyToca.map(m => `
-    <div class="toma ${hechas.includes(m.id)?"hecha":""}">
-      <button class="toma-check ${hechas.includes(m.id)?"on":""}" onclick="marcarToma('${m.id}')">${hechas.includes(m.id)?"✓":""}</button>
-      <div class="toma-info">
-        <div class="toma-nombre">${escapar(m.nombre)}</div>
-        <div class="toma-meta">${[dosisTexto(m), m.horario, frecDe(m)==="semanal" ? "semanal" : ""].filter(Boolean).map(escapar).join(" · ")}</div>
-      </div>
-    </div>`).join("");
+    pc.innerHTML = pend.map(m => '<div class="toma"><div class="toma-info"><div class="toma-nombre">'+escapar(m.nombre)+'</div><div class="toma-meta">'+[dosisTexto(m), m.horario, frecDe(m)==="semanal" ? "semanal" : ""].filter(Boolean).map(escapar).join(" · ")+'</div></div><button type="button" class="btn-demanda" onclick="marcarToma(\''+m.id+'\')">Tomé</button></div>').join("");
   }
-  renderProximas();
   renderDemanda();
+  renderProximas();
 }
+// Marca / desmarca una toma fija; al marcarla guarda la hora (si es hoy)
 function marcarToma(id){
   const arr = tomas[medFechaActual] || [];
-  tomas[medFechaActual] = arr.includes(id) ? arr.filter(x=>x!==id) : [...arr, id];
+  const horas = Object.assign({}, horasDe(medFechaActual));
+  if(arr.includes(id)){ tomas[medFechaActual] = arr.filter(x=>x!==id); delete horas[id]; }
+  else { tomas[medFechaActual] = [...arr, id]; if(medFechaActual === hoyISO()) horas[id] = horaAhora(); }
+  if(Object.keys(horas).length) tomas["h:"+medFechaActual] = horas; else delete tomas["h:"+medFechaActual];
   guardarJSON(claveTomas(), tomas);
   renderTomas();
 }
 
-// ---- «Si lo necesito»: cada toma se registra con su hora ----
-function horaAhora(){ const d = new Date(); return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); }
+// «Si lo necesito»: botón «Tomé una» (cada toma queda con su hora en «Tomado hoy»)
 function renderDemanda(){
   const cont = document.getElementById("lista-demanda");
   const lista = medicacion.filter(m=>m.activa && frecDe(m)==="demanda");
-  if(!lista.length){ cont.innerHTML = '<p class="empty">Aquí aparecen las pastillas que marques como «Solo si lo necesito».</p>'; return; }
-  const hoy = demanda[medFechaActual] || [];
+  if(!lista.length){ cont.innerHTML = '<p class="empty">Aquí aparecen las pastillas «solo si lo necesito». Añádelas en «Mis pastillas».</p>'; return; }
+  const dia = demanda[medFechaActual] || [], rotulo = medFechaActual===hoyISO() ? "hoy" : "ese día";
   cont.innerHTML = lista.map(m => {
-    const mias = hoy.filter(x=>x.id===m.id);
-    const lim = [m.maxDia ? "máx. "+m.maxDia+" al día" : "", m.horasMin ? "cada "+m.horasMin+" h como mínimo" : ""].filter(Boolean).join(" · ");
-    return `<div class="toma"><div class="toma-info">
-        <div class="toma-nombre">${escapar(m.nombre)}</div>
-        <div class="toma-meta">${[dosisTexto(m), lim, "hoy: "+mias.length+(mias.length===1?" toma":" tomas")].filter(Boolean).map(escapar).join(" · ")}</div>
-        ${mias.length ? '<div class="dem-chips">'+mias.map(x=>'<span class="dem-chip">'+escapar(x.hora||"sin hora")+'<button type="button" title="Quitar esta toma" onclick="quitarDemanda(\''+m.id+'\',\''+escapar(x.hora||"")+'\')">✕</button></span>').join("")+'</div>' : ""}
-      </div><button type="button" class="btn-demanda" onclick="tomarDemanda('${m.id}')">Tomé una</button></div>`;
+    const mias = dia.filter(x=>x.id===m.id);
+    const ult = mias.map(x=>x.hora).filter(Boolean).sort().pop();
+    const lim = [m.maxDia ? "máx. "+m.maxDia+" al día" : "", m.horasMin ? "esperar "+m.horasMin+" h entre tomas" : ""].filter(Boolean).join(" · ");
+    const uso = mias.length ? rotulo+": "+mias.length+(mias.length===1?" toma":" tomas")+(ult ? " · última "+ult : "") : "ninguna "+rotulo;
+    return '<div class="toma"><div class="toma-info"><div class="toma-nombre">'+escapar(m.nombre)+'</div><div class="toma-meta">'+[dosisTexto(m), lim, uso].filter(Boolean).map(escapar).join(" · ")+'</div></div><button type="button" class="btn-demanda" onclick="tomarDemanda(\''+m.id+'\')">Tomé una</button></div>';
   }).join("");
 }
 async function tomarDemanda(id){
-  const m = medicacion.find(x=>x.id===id); if(!m) return;
+  const m = medPorId(id); if(!m) return;
   const lista = (demanda[medFechaActual] || []).slice();
   const mias = lista.filter(x=>x.id===id);
   const esHoy = medFechaActual === hoyISO();
   const avisos = [];
-  if(m.maxDia && mias.length >= m.maxDia) avisos.push("Ya llevas "+mias.length+" hoy y el máximo que pusiste es "+m.maxDia+".");
+  if(m.maxDia && mias.length >= m.maxDia) avisos.push("Ya llevas "+mias.length+" y el máximo que pusiste es "+m.maxDia+" al día.");
   if(esHoy && m.horasMin && mias.length){
     const ult = mias.map(x=>x.hora).filter(Boolean).sort().pop();
-    if(ult){ const [h,mi] = ult.split(":").map(Number); const ahora = new Date(); const dif = (ahora.getHours()*60+ahora.getMinutes() - (h*60+mi))/60;
-      if(dif >= 0 && dif < m.horasMin) avisos.push("La última fue hace "+(Math.round(dif*10)/10)+" h y el mínimo que pusiste es "+m.horasMin+" h."); }
+    if(ult){ const [h,mi] = ult.split(":").map(Number); const a = new Date(); const dif = (a.getHours()*60+a.getMinutes() - (h*60+mi))/60;
+      if(dif >= 0 && dif < m.horasMin) avisos.push("La última fue hace "+(Math.round(dif*10)/10)+" h y quieres esperar al menos "+m.horasMin+" h."); }
   }
   if(avisos.length && !(await confirmar(avisos.join(" ")+" ¿Registrar de todos modos?",{si:"Registrar"}))) return;
   lista.push({id, hora: esHoy ? horaAhora() : ""});
@@ -1094,7 +1164,7 @@ function renderHistorialTomas(){
   const fijas = medicacion.filter(m=>m.activa && frecDe(m)!=="demanda");
   const debenEn = iso => medicacion.filter(m=>tocaEl(m, iso));
   const tomadasEn = iso => { const ids = new Set(debenEn(iso).map(m=>m.id)); return (tomas[iso]||[]).filter(id=>ids.has(id)).length; };
-  const fechas = Object.keys(tomas).filter(f=>(tomas[f]||[]).length).sort();
+  const fechas = Object.keys(tomas).filter(f=>/^\d{4}-\d{2}-\d{2}$/.test(f) && (tomas[f]||[]).length).sort();
   const primera = fechas.length ? fechas[0] : null;
   const hoy = hoyISO();
   if(!htMes){ const d=new Date(); htMes = {y:d.getFullYear(), m:d.getMonth()}; }
@@ -1132,7 +1202,7 @@ function renderHistorialTomas(){
     const dem = (demanda[htDiaSel]||[]);
     const nombreDe = id => { const m = medicacion.find(x=>x.id===id); return m ? m.nombre : "(borrada)"; };
     det.innerHTML = "<b>"+fechaLegible(htDiaSel)+"</b>" +
-      (deben.length ? "<ul>"+deben.map(m=>"<li>"+(tomadas.has(m.id)?"✓ ":"✗ ")+escapar(m.nombre)+"</li>").join("")+"</ul>" : '<div style="color:var(--muted)">Ese día no tocaba ninguna pastilla fija.</div>') +
+      (deben.length ? "<ul>"+deben.map(m=>"<li>"+(tomadas.has(m.id)?"✓ ":"✗ ")+escapar(m.nombre)+((horasDe(htDiaSel)[m.id]) ? " ("+escapar(horasDe(htDiaSel)[m.id])+")" : "")+"</li>").join("")+"</ul>" : '<div style="color:var(--muted)">Ese día no tocaba ninguna pastilla fija.</div>') +
       (dem.length ? '<div style="margin-top:6px">Si lo necesito: '+dem.map(x=>escapar(nombreDe(x.id))+(x.hora?" ("+escapar(x.hora)+")":"")).join(", ")+"</div>" : "");
   } else det.innerHTML = "";
   // «Si lo necesito»: cuántas veces en el mes (útil para comentarlo con el médico)
