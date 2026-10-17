@@ -372,6 +372,7 @@
   .navapp{display:flex;gap:4px;margin:0 0 14px;background:#1b2330;border:1px solid #2a3242;border-radius:10px;padding:4px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;}
   .navapp a{flex:1;text-align:center;padding:9px 2px;border-radius:7px;color:#8a94a3;text-decoration:none;font-size:0.62rem;font-weight:800;letter-spacing:0;}
   .navapp a[aria-current="page"]{background:rgba(53,194,106,0.15);color:#35c26a;}
+  .navapp{overflow-x:auto;scrollbar-width:none;}.navapp::-webkit-scrollbar{display:none;}.navapp a{white-space:nowrap;padding-left:7px;padding-right:7px;}
 
   .grupo-tit{font-size:0.72rem;letter-spacing:.12em;font-weight:800;color:var(--muted);margin:26px 2px 2px;text-transform:uppercase;}
   .tabs-sec{display:flex;gap:4px;margin:0 0 14px;position:sticky;top:0;z-index:20;background:var(--bg);padding:6px 0;}

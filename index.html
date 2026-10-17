@@ -214,7 +214,13 @@
 
   // ---------- Medicación de hoy ----------
   function medicacion(p, f){
-    var meds = lj("saludMedicacionV1_"+p, []).filter(function(m){ return m && m.activa; });
+    var meds = lj("saludMedicacionV1_"+p, []).filter(function(m){
+      if(!m || !m.activa) return false;
+      var fr = m.frec || "diaria";
+      if(fr === "demanda") return false;
+      if(fr === "semanal") return new Date(f+"T00:00:00").getDay() === Number(m.diaSem);
+      return true;
+    });
     var hechas = (lj("saludMedTomasV1_"+p, {})[f]) || [];
     return { total: meds.length, pend: meds.filter(function(m){ return hechas.indexOf(m.id) < 0; }) };
   }
