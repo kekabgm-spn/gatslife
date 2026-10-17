@@ -155,6 +155,15 @@
   .ht-dia.completo{opacity:1;background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:700;}
   .ht-dia.parcial{opacity:1;border-color:#d4a017;color:var(--ink);}
   .ht-dia.falta{opacity:1;border-color:var(--warn);color:var(--warn);}
+  .ht-dia{position:relative;}
+  .ht-dia.toca{opacity:1;}
+  .ht-dia i, .ht-leyenda i{display:inline-block;width:6px;height:6px;border-radius:50%;}
+  .ht-dia i{position:absolute;bottom:3px;}
+  .ht-p1{background:var(--accent);} .ht-p2{background:#5aa2ff;}
+  .ht-dia i.ht-p1{left:calc(50% - 7px);} .ht-dia i.ht-p2{left:calc(50% + 1px);}
+  .ht-leyenda{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:0.72rem;color:var(--muted);margin-top:8px;}
+  .ht-leyenda span{display:inline-flex;align-items:center;gap:4px;}
+  .grupo-med{font-size:0.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin:12px 0 6px 2px;}
   .ht-dia.hoy{outline:2px solid var(--accent);}
   .ht-dia.sel{box-shadow:0 0 0 2px var(--ink);}
   .ht-dia.tenue{opacity:0.15;}
@@ -306,10 +315,14 @@
   <div class="cita-grupo-titulo" style="margin-top:4px">Hoy toca</div>
   <div id="lista-tomas"></div>
 
+  <div class="cita-grupo-titulo">Próximas</div>
+  <div id="lista-proximas"></div>
+
   <div class="cita-grupo-titulo">Si lo necesito</div>
   <div id="lista-demanda"></div>
 
-  <h2 style="margin-top:22px">Pastillas y dosis</h2>
+  <h2 style="margin-top:22px">Mis pastillas</h2>
+  <div id="lista-medicacion"></div>
   <button class="btn-nueva" data-abrir="medicacion">+ Añadir pastilla</button>
   <form class="form-add" id="form-medicacion" style="display:none">
     <input type="hidden" id="med-id">
@@ -353,7 +366,6 @@
       <button type="button" class="btn-cancelar" onclick="cerrarForm('medicacion')">Cancelar</button>
     </div>
   </form>
-  <div id="lista-medicacion"></div>
 
   <details style="margin-top:14px">
     <summary style="cursor:pointer;color:var(--muted);font-size:0.85rem">📚 Mi banco de nombres (para autocompletar)<button type="button" class="ayu" data-t="Escribí un nombre por línea. Al añadir una pastilla, empezás a escribir y te sugiere el nombre. Los nombres que uses también se suman solos. Se guarda en tu cuenta." title="Escribí un nombre por línea. Al añadir una pastilla, empezás a escribir y te sugiere el nombre. Los nombres que uses también se suman solos. Se guarda en tu cuenta." aria-label="Más información" aria-expanded="false">i</button></summary>
@@ -373,6 +385,7 @@
     <button type="button" data-f="faltas">Con faltas</button>
   </div>
   <div class="ht-grid" id="ht-grid"></div>
+  <div class="ht-leyenda"><span><i class="ht-p1"></i> toca algo</span><span class="lv">verde = todo tomado</span><span class="la">ámbar/rojo = faltó algo</span><span><i class="ht-p2"></i> usaste «si lo necesito»</span></div>
   <div class="ht-resumen" id="ht-resumen"></div>
   <div class="ht-detalle" id="ht-detalle"></div>
   <div class="ht-resumen" id="ht-demanda" style="margin-top:10px"></div>
@@ -528,6 +541,7 @@ function abrirForm(sec, item){
     document.getElementById("med-maxdia").value = item && item.maxDia!=null ? item.maxDia : "";
     document.getElementById("med-horasmin").value = item && item.horasMin!=null ? item.horasMin : "";
     actualizarCamposFrec();
+    document.getElementById("form-medicacion").scrollIntoView({behavior:"smooth", block:"center"});
   } else if(sec === "pruebas"){
     document.getElementById("prb-id").value = item ? item.id : "";
     document.getElementById("prb-fecha").value = item ? (item.fecha||"") : hoyISO();
@@ -668,9 +682,7 @@ function renderMedicacion(){
   renderBancoMed();
   const cont = document.getElementById("lista-medicacion");
   if(!medicacion.length){ cont.innerHTML = '<p class="empty">Sin pastillas registradas todavía.</p>'; return; }
-  const orden = {diaria:0, semanal:1, demanda:2};
-  const lista = medicacion.slice().sort((a,b)=> (orden[frecDe(a)]-orden[frecDe(b)]));
-  cont.innerHTML = lista.map(m => `
+  const tarjeta = m => `
     <div class="tarjeta">
       <div class="tarjeta-top">
         <div><div class="tarjeta-nombre">${escapar(m.nombre)}${m.activa ? "" : " (inactiva)"}</div>
@@ -682,7 +694,28 @@ function renderMedicacion(){
         </div>
       </div>
       ${m.notas ? `<div class="tarjeta-notas">${escapar(m.notas)}</div>` : ""}
-    </div>`).join("");
+    </div>`;
+  const grupo = (titulo, lista) => lista.length ? '<div class="grupo-med">'+titulo+'</div>'+lista.map(tarjeta).join("") : "";
+  const diarias = medicacion.filter(m=>frecDe(m)==="diaria");
+  const semanales = medicacion.filter(m=>frecDe(m)==="semanal").sort((a,b)=> ((Number(a.diaSem)+6)%7) - ((Number(b.diaSem)+6)%7));
+  const aDemanda = medicacion.filter(m=>frecDe(m)==="demanda");
+  cont.innerHTML = grupo("Todos los días", diarias) + grupo("Una vez por semana", semanales) + grupo("Solo si lo necesito", aDemanda);
+}
+
+// «Próximas»: las semanales que vienen después del día que estás mirando
+function renderProximas(){
+  const cont = document.getElementById("lista-proximas");
+  const base = new Date(medFechaActual+"T00:00:00");
+  const sem = medicacion.filter(m=>m.activa && frecDe(m)==="semanal").map(m=>{
+    let dias = (Number(m.diaSem) - base.getDay() + 7) % 7; if(dias === 0) dias = 7;
+    return {m, dias};
+  }).sort((a,b)=>a.dias-b.dias);
+  if(!sem.length){ cont.innerHTML = '<p class="empty">No hay pastillas semanales activas.</p>'; return; }
+  cont.innerHTML = sem.map(({m,dias}) => `
+    <div class="toma"><div class="toma-info">
+      <div class="toma-nombre">${escapar(m.nombre)}</div>
+      <div class="toma-meta">${[DIAS_SEM[Number(m.diaSem)], dias===1 ? "mañana" : "en "+dias+" días", dosisTexto(m), m.horario].filter(Boolean).map(escapar).join(" · ")}</div>
+    </div></div>`).join("");
 }
 
 function renderTomas(){
@@ -691,7 +724,7 @@ function renderTomas(){
   const cont = document.getElementById("lista-tomas");
   const hoyToca = medicacion.filter(m=>tocaEl(m, medFechaActual));
   if(!hoyToca.length){
-    cont.innerHTML = '<p class="empty">'+(medicacion.some(m=>m.activa && frecDe(m)!=="demanda") ? "Este día no toca ninguna pastilla fija." : "No hay pastillas fijas activas configuradas.")+'</p>';
+    cont.innerHTML = '<p class="empty">'+(medicacion.some(m=>m.activa && frecDe(m)!=="demanda") ? "Este día no toca nada fijo ✓" : "No hay pastillas fijas activas configuradas.")+'</p>';
   } else {
     const hechas = tomas[medFechaActual] || [];
     cont.innerHTML = hoyToca.map(m => `
@@ -703,6 +736,7 @@ function renderTomas(){
       </div>
     </div>`).join("");
   }
+  renderProximas();
   renderDemanda();
 }
 function marcarToma(id){
@@ -1080,10 +1114,11 @@ function renderHistorialTomas(){
     else if(n > 0) estado = "parcial";
     if(estado === "completo") { completos++; contables++; }
     else if(estado === "parcial" || estado === "falta") contables++;
-    let cls = "ht-dia" + (estado ? " "+estado : "") + (iso===hoy ? " hoy" : "") + (iso===htDiaSel ? " sel" : "");
+    const usoDem = (demanda[iso]||[]).length > 0;
+    let cls = "ht-dia" + (total ? " toca" : "") + (estado ? " "+estado : "") + (iso===hoy ? " hoy" : "") + (iso===htDiaSel ? " sel" : "");
     const esFalta = estado === "parcial" || estado === "falta";
     if((htFiltro==="completos" && estado!=="completo") || (htFiltro==="faltas" && !esFalta)) cls += " tenue";
-    h += '<button type="button" class="'+cls+'" data-f="'+iso+'">'+d+'</button>';
+    h += '<button type="button" class="'+cls+'" data-f="'+iso+'">'+d+(total ? '<i class="ht-p1"></i>' : '')+(usoDem ? '<i class="ht-p2"></i>' : '')+'</button>';
   }
   grid.innerHTML = h;
   grid.querySelectorAll(".ht-dia").forEach(b=>{ b.onclick = ()=>{ htDiaSel = (htDiaSel===b.dataset.f) ? null : b.dataset.f; renderHistorialTomas(); }; });
