@@ -24,6 +24,10 @@
     ".bus-nota{font-size:.8rem;color:var(--muted);margin:4px 0 10px}" +
     ".bus-tit{font-weight:800;margin:16px 0 6px;font-size:.95rem}" +
     ".bus-mas{margin:8px 0}.bus-mas button{width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--muted);font-weight:800;cursor:pointer}" +
+    ".bus-sub{font-weight:800;margin:10px 0 4px;color:var(--accent)}" +
+    ".bus-fila input{flex:1;min-width:120px;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--panel-alt,#111827);color:inherit}" +
+    ".bus-sin{margin:14px 0 0;font-size:.85rem}.bus-sin summary{cursor:pointer;color:var(--muted)}" +
+    ".bus-sin-item{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid var(--line)}.bus-sin-item button{border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:1rem}" +
     ".bus-fuente{font-size:.72rem;color:var(--muted);margin:22px 0 8px;line-height:1.4}";
   document.head.appendChild(st);
 
@@ -39,13 +43,13 @@
       if(rs[0].status === "fulfilled"){
         bedca = rs[0].value.datos.map(function(r){
           return { code:"bedca-"+r[0], nombre:r[1], marca:"BEDCA (genérico)", kcal100:r[2], grasa100:r[3]||0, prot100:r[4]||0, carbh100:r[5]||0,
-                   nova:null, porcionG:null, cantidadG:null, scans:0, _h:" "+slug(r[1]).replace(/-/g," ") };
+                   nova:null, porcionG:null, cantidadG:null, scans:0, _h:" "+slug(r[1]).replace(/-/g," ")+" " };
         });
       } else errores.push("la base de alimentos genéricos (BEDCA): " + ((rs[0].reason && rs[0].reason.message) || "error"));
       if(rs[1].status === "fulfilled"){
         aesan = rs[1].value.datos.map(function(r){
           var o = { code:r[0], nombre:r[1], marca:r[2]||"", super:r[3]||"", kcal100:r[4], grasa100:r[5]||0, carbh100:r[6]||0, prot100:r[7]||0,
-                    nova:null, porcionG:null, cantidadG:null, scans:0, _h:" "+slug(r[1]+" "+(r[2]||"")+" "+(r[3]||"")).replace(/-/g," "), _s:slug(r[3]||"") };
+                    nova:null, porcionG:null, cantidadG:null, scans:0, _h:" "+slug(r[1]+" "+(r[2]||"")+" "+(r[3]||"")).replace(/-/g," ")+" ", _s:slug(r[3]||"") };
           porEAN.set(sinCeros(r[0]), o);
           return o;
         });
@@ -55,25 +59,20 @@
     return cargado;
   }
 
-  // ---------- búsqueda local ----------
-  function tokens(q){
-    return slug(q).split("-").filter(Boolean).map(function(t){ return (t.length > 3 && t.charAt(t.length-1) === "s") ? t.slice(0,-1) : t; });
+  // ---------- búsqueda local (el motor está en motor-busqueda.js) ----------
+  // Tus frecuentes: clave → veces. Suben al principio de los resultados.
+  function mapaFrecuentes(){
+    var m = {};
+    try{ if(typeof frecuentes === "object" && frecuentes) Object.keys(frecuentes).forEach(function(k){ m[k] = frecuentes[k].veces || 1; }); }catch(e){}
+    return m;
   }
-  function buscarLocal(lista, toks, filtro){
-    var out = [];
-    for(var i=0;i<lista.length;i++){
-      var p = lista[i];
-      if(filtro && !filtro(p)) continue;
-      var ok = true, empieza = false;
-      for(var j=0;j<toks.length;j++){
-        var k = p._h.indexOf(" " + toks[j]);
-        if(k < 0){ ok = false; break; }
-        if(j === 0 && k === 0) empieza = true;
-      }
-      if(ok) out.push({p:p, sc:(empieza ? 0 : 100) + p.nombre.length});
-    }
-    out.sort(function(a,b){ return a.sc - b.sc; });
-    return out.map(function(x){ return x.p; });
+  // Sinónimos que añades tú (se guardan en este aparato).
+  var CLAVE_SIN = "dietaSinonimosV1";
+  function leerSin(){ try{ var v = JSON.parse(localStorage.getItem(CLAVE_SIN)); return Array.isArray(v) ? v : []; }catch(e){ return []; } }
+  function guardarSin(l){ try{ localStorage.setItem(CLAVE_SIN, JSON.stringify(l)); }catch(e){} MotorBusqueda.setUsuario(l); }
+  MotorBusqueda.setUsuario(leerSin());
+  function buscarMotor(texto, tienda){
+    return MotorBusqueda.buscar({ gen:bedca, sup:aesan, texto:texto, tienda:tienda, filtroSuper:filtroSuper(tienda), fr:mapaFrecuentes() });
   }
   function filtroSuper(t){
     if(!t) return null;
@@ -117,6 +116,10 @@
       '<button id="busIr" type="button" class="pri">Buscar</button><button id="busEsc" type="button">📷 Escanear código</button></div>' +
     '<div id="busFecha" class="bus-nota"></div>' +
     '<div id="busRes"></div>' +
+    '<details class="bus-sin" id="busSin"><summary>➕ Mis sinónimos (palabras que significan lo mismo)</summary>' +
+      '<div class="bus-nota">Ya vienen los más comunes (papa = patata, judía = alubia = frijol, banana = plátano…). Si escribes una palabra y la base usa otra, añádela aquí.</div>' +
+      '<div class="bus-fila"><input id="busSinA" type="text" placeholder="Yo escribo… (ej. pochas)"><input id="busSinB" type="text" placeholder="La base dice… (ej. alubia)"><button id="busSinOk" type="button">Añadir</button></div>' +
+      '<div id="busSinLista"></div></details>' +
     '<div class="bus-fuente">Alimentos genéricos: AESAN/BEDCA Base de Datos Española de Composición de Alimentos v1.0 (2010), valores por 100 g de porción comestible; la energía se convirtió de kJ a kcal (1 kcal = 4,184 kJ) en los casos en que venía en kJ. ' +
     'Productos de supermercado: AESAN, base de datos de alimentos y bebidas comercializados en España (2022); pueden haber cambiado de composición. ' +
     'Otros productos y códigos de barras: Open Food Facts. Los valores son orientativos.</div>';
@@ -140,26 +143,38 @@
     var texto = q.value.trim(), tienda = selSuper.value;
     res.innerHTML = "";
     if(errores.length) estado("No se pudo cargar " + errores.join(" · ") + ". Comprueba que tengas la sesión de Google iniciada y que el Worker esté configurado con los datos (repositorio privado). Se volverá a intentar al buscar de nuevo.");
-    var toks = tokens(texto);
-    if(!toks.length){
+    if(!MotorBusqueda.norm(texto)){
       var fr = (typeof topFrecuentes === "function") ? topFrecuentes(8) : [];
       if(fr.length){ seccion("⭐ Tus frecuentes"); fr.forEach(function(p){ res.appendChild(tarjeta(p)); }); }
       else estado("Escribe lo que buscas. Por ejemplo: «huevo», «arroz», «yogur natural» o «leche hacendado».");
       return;
     }
     var vistosOFF = new Set();
-    if(!tienda){
-      var gen = buscarLocal(bedca, toks, null);
-      seccion("🥚 Alimentos genéricos (" + gen.length + ")");
-      if(!gen.length) estado("Sin coincidencias entre los alimentos genéricos.");
-      gen.slice(0, lim.gen).forEach(function(p){ res.appendChild(tarjeta(p)); });
-      if(gen.length > lim.gen) masBtn("Ver más genéricos", function(){ lim.gen += PASO; pintar(); });
+    var r = buscarMotor(texto, tienda);
+    if(r.nota){ var nt = document.createElement("div"); nt.className = "bus-nota"; nt.textContent = "ℹ️ " + r.nota; res.appendChild(nt); }
+    var soloPartes = !!(r.partes && !r.partesAdemas), sup = r.sup;
+    if(!soloPartes){
+      if(!tienda){
+        var gen = r.gen;
+        seccion("🥚 Alimentos genéricos (" + gen.length + ")");
+        if(!gen.length) estado("Sin coincidencias entre los alimentos genéricos.");
+        gen.slice(0, lim.gen).forEach(function(p){ res.appendChild(tarjeta(p)); });
+        if(gen.length > lim.gen) masBtn("Ver más genéricos", function(){ lim.gen += PASO; pintar(); });
+      }
+      seccion("🛒 Productos de supermercado" + (tienda ? " · " + selSuper.options[selSuper.selectedIndex].text : "") + " (" + sup.length + ")");
+      if(!sup.length) estado("Sin coincidencias en la base de productos de supermercado.");
+      sup.slice(0, lim.sup).forEach(function(p){ vistosOFF.add(p.code); res.appendChild(tarjeta(p)); });
+      if(sup.length > lim.sup) masBtn("Ver más productos", function(){ lim.sup += PASO; pintar(); });
     }
-    var sup = buscarLocal(aesan, toks, filtroSuper(tienda));
-    seccion("🛒 Productos de supermercado" + (tienda ? " · " + selSuper.options[selSuper.selectedIndex].text : "") + " (" + sup.length + ")");
-    if(!sup.length) estado("Sin coincidencias en la base de productos de supermercado.");
-    sup.slice(0, lim.sup).forEach(function(p){ vistosOFF.add(p.code); res.appendChild(tarjeta(p)); });
-    if(sup.length > lim.sup) masBtn("Ver más productos", function(){ lim.sup += PASO; pintar(); });
+    if(r.partes){
+      seccion(r.partesAdemas ? "🧩 O cada alimento por separado" : "🧩 Cada alimento por separado");
+      r.partes.forEach(function(x){
+        var sub = document.createElement("div"); sub.className = "bus-sub"; sub.textContent = "«" + x.t + "»"; res.appendChild(sub);
+        x.gen.forEach(function(p){ res.appendChild(tarjeta(p)); });
+        x.sup.forEach(function(p){ res.appendChild(tarjeta(p)); });
+        if(x.totGen > x.gen.length) estado("Hay " + (x.totGen - x.gen.length) + " más de «" + x.t + "»: búscalo solo para verlos todos.");
+      });
+    }
     sup.forEach(function(p){ vistosOFF.add(p.code); });
     // Open Food Facts: solo si lo pides (así no se pasa del límite de búsquedas por minuto)
     ultima = {texto:texto, tienda:tienda, vistos:vistosOFF};
@@ -208,6 +223,25 @@
     }).catch(function(){ boton.disabled = false; boton.textContent = "Reintentar"; });
   }
 
+  // ---------- mis sinónimos ----------
+  function pintarSin(){
+    var l = leerSin(), cont = $("busSinLista"); cont.innerHTML = "";
+    l.forEach(function(par, i){
+      var d = document.createElement("div"); d.className = "bus-sin-item";
+      d.innerHTML = "<span>" + esc(par[0]) + " = " + esc(par[1]) + "</span>";
+      var b = document.createElement("button"); b.type = "button"; b.textContent = "✕"; b.setAttribute("aria-label", "Quitar este sinónimo");
+      b.onclick = function(){ var x = leerSin(); x.splice(i, 1); guardarSin(x); pintarSin(); if(q.value.trim()) pintar(); };
+      d.appendChild(b); cont.appendChild(d);
+    });
+  }
+  $("busSinOk").onclick = function(){
+    var a = $("busSinA").value.trim(), b = $("busSinB").value.trim();
+    if(!a || !b){ aviso("Escribe las dos palabras."); return; }
+    var x = leerSin(); x.push([a, b]); guardarSin(x);
+    $("busSinA").value = ""; $("busSinB").value = ""; pintarSin(); if(q.value.trim()) pintar();
+  };
+  pintarSin();
+
   // ---------- eventos ----------
   function lanzar(){
     var x = (typeof extraerSuper === "function") ? extraerSuper(q.value.trim()) : {tienda:"", termino:q.value};
@@ -241,8 +275,9 @@
   // Motor compartido: la pestaña Día usa exactamente la misma búsqueda local (BEDCA + AESAN) que esta pestaña.
   window.BuscadorBase = {
     cargar: function(){ return cargar().then(function(){ return {errores: errores.slice()}; }); },
-    buscar: function(texto, tienda){ var toks = tokens(texto); return { gen: tienda ? [] : buscarLocal(bedca, toks, null), sup: buscarLocal(aesan, toks, filtroSuper(tienda)) }; },
-    porCodigo: function(codigo){ return porEAN.get(sinCeros(codigo)) || null; }
+    buscar: function(texto, tienda){ return buscarMotor(texto, tienda); },
+    porCodigo: function(codigo){ return porEAN.get(sinCeros(codigo)) || null; },
+    genericos: function(){ return bedca; }
   };
 
   // al abrir la pestaña: precarga las bases y enseña los frecuentes

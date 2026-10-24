@@ -16,6 +16,20 @@ const NUT = [
   { id:"fib", n:"Fibra",        u:"g",  meta:25 },
   { id:"na",  n:"Sodio",        u:"mg", meta:2000, limite:true }
 ];
+// Nutrientes del explorador «Alimentos con…» (datos reales de BEDCA). meta = referencia habitual de un adulto, editable. lim:true → es un tope.
+const EXP = [
+  { id:"o3",  n:"Omega 3 (EPA+DHA)", c:"Omega 3", u:"g",  meta:0.25 }, { id:"ala", n:"Omega 3 vegetal (ALA)", c:"ALA", u:"g", meta:1.1 },
+  { id:"c", n:"Calcio", c:"Calcio", u:"mg", meta:1000 }, { id:"fe", n:"Hierro", c:"Hierro", u:"mg", meta:11 }, { id:"d", n:"Vitamina D", c:"Vit. D", u:"µg", meta:15 },
+  { id:"b12", n:"Vitamina B12", c:"B12", u:"µg", meta:4 }, { id:"vc", n:"Vitamina C", c:"Vit. C", u:"mg", meta:100 }, { id:"mg", n:"Magnesio", c:"Magnesio", u:"mg", meta:320 },
+  { id:"k", n:"Potasio", c:"Potasio", u:"mg", meta:3500 }, { id:"fib", n:"Fibra", c:"Fibra", u:"g", meta:25 }, { id:"zn", n:"Zinc", c:"Zinc", u:"mg", meta:10 },
+  { id:"se", n:"Selenio", c:"Selenio", u:"µg", meta:55 }, { id:"i", n:"Yodo", c:"Yodo", u:"µg", meta:150 }, { id:"p", n:"Fósforo", c:"Fósforo", u:"mg", meta:700 },
+  { id:"va", n:"Vitamina A", c:"Vit. A", u:"µg", meta:800 }, { id:"ve", n:"Vitamina E", c:"Vit. E", u:"mg", meta:12 }, { id:"b6", n:"Vitamina B6", c:"B6", u:"mg", meta:1.5 },
+  { id:"fol", n:"Folato", c:"Folato", u:"µg", meta:330 }, { id:"tia", n:"Tiamina (B1)", c:"B1", u:"mg", meta:1 }, { id:"rib", n:"Riboflavina (B2)", c:"B2", u:"mg", meta:1.6 },
+  { id:"nia", n:"Niacina", c:"Niacina", u:"mg", meta:15 }, { id:"cu", n:"Cobre", c:"Cobre", u:"mg", meta:1.3 }, { id:"prot", n:"Proteína", c:"Proteína", u:"g", meta:60 },
+  { id:"na", n:"Sodio", c:"Sodio", u:"mg", meta:2000, lim:true }, { id:"sat", n:"Grasa saturada", c:"Grasa sat.", u:"g", meta:22, lim:true }
+];
+const EXTRA = EXP.filter(x => !["c","d","fe","vc","b12","mg","k","fib","na"].includes(x.id));
+const clave = x => x.k || (x.id === "prot" ? "prot" : x.id);
 const COMIDAS = ["desayuno","almuerzo","cena","snacks"];
 const MESES = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
 const DIAS = ["L","M","X","J","V","S","D"];
@@ -49,16 +63,28 @@ const hoy = () => iso(new Date());
 const suma = (f, n) => { const d = new Date(f + "T00:00:00"); d.setDate(d.getDate() + n); return iso(d); };
 const lunesDe = f => suma(f, -((new Date(f + "T00:00:00").getDay() + 6) % 7));
 let semana = lunesDe(hoy()), chip = null, ocupado = false, msgEst = "";
+let exG = 100, exQ = "", exEsp = false, exModo = "alim", exVer = 30;
 
 function metas(){
   const m = lj("nutriMetasMicroV1_" + perfilActivo, {}), o = {};
   NUT.forEach(x => { o[x.id] = m[x.id] > 0 ? m[x.id] : x.meta; });
+  EXTRA.forEach(x => { o[x.id] = m[x.id] > 0 ? m[x.id] : x.meta; });
   o.rAzul = typeof m.rAzul === "number" && m.rAzul >= 0 ? m.rAzul : 2;
   o.rCol = typeof m.rCol === "number" && m.rCol >= 0 ? m.rCol : 3;
   return o;
 }
 const cache = () => lj(K_CACHE, {});
 
+// Valores por 100 g de un alimento: si existe en BEDCA con ese nombre, los datos reales; lo que falte allí (sin dato) se completa con la estimación de IA si la hay.
+function estimacion(nombre, C){
+  const nk = norm(nombre), ec = C[nk], eb = window.NutBedca && NutBedca.estado().listo ? NutBedca.comoEstimacion(nombre, NUT.map(x => x.id)) : null;
+  if(!eb) return ec;
+  NUT.forEach(x => { if(eb._sd[x.id] && ec && !ec.bedca && ec[x.id] != null){ eb[x.id] = ec[x.id]; delete eb._sd[x.id]; } });
+  if(!eb.cat && ec && ec.cat) eb.cat = ec.cat;
+  if(ec && ec.gu) eb.gu = Object.assign({}, ec.gu);
+  return eb;
+}
+const PESCADO = /salm[oó]n|at[uú]n|sardina|caballa|boquer|anchoa|bonito|trucha|arenque|merluza|bacalao|mejill|pulpo|calamar|gamba|langostino|dorada|lubina|rape|lenguado|pescadilla|jurel|pez espada|emperador|mero|sepia|almeja|berberecho|ostra|cangrejo|chipir/i;
 function gramosItem(it, e){
   if(it.gramos > 0) return it.gramos;
   const u = norm(it.unidad || "unidad"), q = +it.cantidad > 0 ? +it.cantidad : 1;
@@ -70,27 +96,29 @@ function gramosItem(it, e){
 
 // ---------- Datos de la semana ----------
 function datosSemana(lun, C){
-  const dias = [], pend = new Map(), fuentes = {};
-  NUT.forEach(x => { fuentes[x.id] = {}; });
+  const dias = [], pend = new Map(), fuentes = {}, sinDato = {}, sdO3 = new Set(), B = window.NutBedca && NutBedca.estado().listo;
+  NUT.forEach(x => { fuentes[x.id] = {}; sinDato[x.id] = new Set(); });
   const est = (typeof estado !== "undefined" && estado && estado.dias) || {};
   for(let i = 0; i < 7; i++){
-    const f = suma(lun, i), d = est[f], r = { f, n: 0, sin: 0, v: {}, azul: 0, col: 0, veg: 0 };
+    const f = suma(lun, i), d = est[f], r = { f, n: 0, sin: 0, v: {}, azul: 0, col: 0, veg: 0, nb: 0, o3: 0, ala: 0 };
     NUT.forEach(x => { r.v[x.id] = 0; });
     if(d && d.comidas) COMIDAS.forEach(cid => (d.comidas[cid] || []).forEach(it => {
       if(!it || !it.nombre) return;
       r.n++;
-      const nk = norm(it.nombre), e = C[nk], g = gramosItem(it, e);
+      const nk = norm(it.nombre), e = estimacion(it.nombre, C), g = gramosItem(it, e), eb = B && NutBedca.porNombre(it.nombre);
+      if(eb){ r.nb++; if(g > 0){ const a = NutBedca.o3(eb), b = NutBedca.val(eb, "ala"); if(a != null) r.o3 += a * g / 100; else if(PESCADO.test(it.nombre)) sdO3.add(it.nombre); if(b != null) r.ala += b * g / 100; } }
+      else if(g > 0 && B && PESCADO.test(it.nombre)) sdO3.add(it.nombre);
       if(!e || !(g > 0)){ r.sin++; pend.set(nk + "|" + norm(it.unidad || "unidad"), { n: it.nombre, u: it.unidad || "unidad" }); }
       if(!e) return;
       if(e.cat === "azul") r.azul += g > 0 ? g / 125 : 1;
       else if(e.cat === "colageno") r.col += 1;
       else if(e.cat === "vegetal") r.veg += 1;
       if(!(g > 0)) return;
-      NUT.forEach(x => { const v = (e[x.id] || 0) * g / 100; r.v[x.id] += v; fuentes[x.id][it.nombre] = (fuentes[x.id][it.nombre] || 0) + v; });
+      NUT.forEach(x => { if(e._sd && e._sd[x.id]){ sinDato[x.id].add(it.nombre); return; } const v = (e[x.id] || 0) * g / 100; r.v[x.id] += v; fuentes[x.id][it.nombre] = (fuentes[x.id][it.nombre] || 0) + v; });
     }));
     dias.push(r);
   }
-  return { dias, pend: Array.from(pend.values()), fuentes };
+  return { dias, pend: Array.from(pend.values()), fuentes, sinDato, sdO3: Array.from(sdO3) };
 }
 
 // ---------- Analítica: prioridades ----------
@@ -161,15 +189,77 @@ function sugerencias(bajos, pr){
   const out = [];
   bajos.forEach(x => {
     if(pr.noSubir[x.id]) return;
-    const al = ALIM[x.id]; if(!al) return;
-    out.push('<li><b>' + esc(x.n) + (pr.prio[x.id] ? " ⭐" : "") + ":</b> " + al.l.slice(0, 4).map(a => esc(a[0]) + " (" + a[1] + ")").join(", ") + ' <a href="#" data-act="chip" data-id="' + x.id + '" style="color:var(--accent)">ver más</a></li>');
+    const real = bedcaListo() ? ranking(defExp(x.id), false).out.slice(0, 4).map(r => [r.e.nombre, nf(r.v)]) : null, al = ALIM[x.id];
+    if(!real && !al) return;
+    out.push('<li><b>' + esc(x.n) + (pr.prio[x.id] ? " ⭐" : "") + ":</b> " + (real || al.l.slice(0, 4)).map(a => esc(a[0]) + " (" + a[1] + ")").join(", ") + ' <a href="#" data-act="chip" data-id="' + x.id + '" style="color:var(--accent)">ver más</a></li>');
   });
-  return out.length ? '<ul style="margin:6px 0 0 18px;padding:0;font-size:0.85rem">' + out.join("") + '</ul><div class="pie" style="font-size:0.74rem;color:var(--muted);margin-top:4px">Valores aproximados por 100 g.</div>' : "";
+  return out.length ? '<ul style="margin:6px 0 0 18px;padding:0;font-size:0.85rem">' + out.join("") + '</ul><div class="pie" style="font-size:0.74rem;color:var(--muted);margin-top:4px">' + (bedcaListo() ? "Valores de BEDCA por 100 g (sin especias)." : "Valores aproximados por 100 g (lista hecha a mano: no se pudo cargar BEDCA).") + "</div>" : "";
+}
+const bedcaListo = () => !!(window.NutBedca && NutBedca.estado().listo);
+const defExp = id => EXP.find(x => x.id === id);
+const valorExp = (e, x) => x.id === "o3" ? NutBedca.o3(e) : NutBedca.val(e, clave(x));
+const fmt = (v, u) => (v >= 100 ? Math.round(v) : v >= 10 ? Math.round(v * 10) / 10 : Math.round(v * 100) / 100).toString().replace(".", ",") + " " + u;
+// Ranking de alimentos por nutriente (por 100 g). Los que no tienen el dato NO aparecen (nunca se cuentan como 0): solo se cuentan aparte.
+function ranking(x, conEsp){
+  const out = []; let sin = 0; const q = norm(exQ);
+  NutBedca.lista().forEach(e => {
+    if(!conEsp && e.peq) return;
+    if(q && !(" " + norm(e.nombre) + " ").includes(" " + q) && !norm(e.nombre).includes(q)) return;
+    const v = valorExp(e, x); if(v == null){ sin++; return; } out.push({ e, v });
+  });
+  out.sort((a, b) => b.v - a.v); return { out, sin };
+}
+function nutReceta(r, x){
+  if(!Array.isArray(r.ingredientes) || !r.ingredientes.length || typeof r.ingredientes[0] !== "object") return null;
+  let tot = 0, con = 0; const C = cache(), esNut = NUT.some(n => n.id === x.id);
+  r.ingredientes.forEach(i => {
+    const g = num(i.gramos), eb = NutBedca.porNombre(i.nombre); let v = eb ? valorExp(eb, x) : null;
+    if(v == null && !eb && esNut){ const ec = C[norm(i.nombre)]; if(ec && ec[x.id] != null) v = ec[x.id]; }
+    if(v != null && g > 0){ tot += v * g / 100; con++; }
+  });
+  return { v: tot / (num(r.porciones) || 1), con, n: r.ingredientes.length };
+}
+function filasExplorador(){
+  const x = defExp(chip), M = metas(), meta = M[x.id] || x.meta, hay = '';
+  let h = "";
+  if(exModo === "rec"){
+    const rs = (typeof recetas !== "undefined" ? recetas : []) || [], q = norm(exQ); let sinDesglose = 0; const l = [];
+    rs.forEach(r => { if(q && !norm(r.nombre).includes(q)) return; const c = nutReceta(r, x); if(!c){ sinDesglose++; return; } if(c.con > 0) l.push({ r, c }); });
+    l.sort((a, b) => b.c.v - a.c.v);
+    if(!l.length) return '<div style="color:var(--muted);font-size:0.84rem;padding:8px 0">Ninguna receta tuya tiene datos de este nutriente.' + (sinDesglose ? " " + sinDesglose + " recetas no se pueden calcular porque no guardan los ingredientes con gramos (las de IA o de internet)." : "") + "</div>";
+    h += l.slice(0, exVer).map(o => { const pct = meta ? o.c.v / meta * 100 : 0;
+      return '<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)"><span>' + esc(o.r.nombre) + '<small style="display:block;color:var(--muted)">dato en ' + o.c.con + " de " + o.c.n + ' ingredientes</small></span><span style="text-align:right"><b>' + fmt(o.c.v, x.u) + '</b> por ración' + (meta ? '<small style="display:block;color:var(--muted)">' + Math.round(pct) + " % " + (x.lim ? "del límite" : "del objetivo diario") + "</small>" : "") + "</span></div>"; }).join("");
+    if(l.length > exVer) h += '<button type="button" data-act="mas" style="margin-top:8px;padding:7px 12px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer">Ver más</button>';
+    if(sinDesglose) h += '<div style="font-size:0.76rem;color:var(--muted);margin-top:6px">' + sinDesglose + " receta(s) sin ingredientes con gramos no entran en la lista.</div>";
+    return h;
+  }
+  const R = ranking(x, exEsp), g = exG > 0 ? exG : 100;
+  if(!R.out.length) return '<div style="color:var(--muted);font-size:0.84rem;padding:8px 0">No hay alimentos con ese filtro.</div>';
+  h += R.out.slice(0, exVer).map(o => { const cant = o.v * g / 100, pct = meta ? cant / meta * 100 : 0, para = !x.lim && o.v > 0 && meta ? meta / o.v * 100 : 0;
+    let extra = "";
+    if(x.id === "o3"){ const a = NutBedca.val(o.e, "epa"), b = NutBedca.val(o.e, "dha"); extra = "EPA " + (a == null ? "sin dato" : fmt(a * g / 100, "g")) + " · DHA " + (b == null ? "sin dato" : fmt(b * g / 100, "g")); }
+    return '<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)"><span>' + esc(o.e.nombre) + (extra ? '<small style="display:block;color:var(--muted)">' + extra + "</small>" : "") + '</span><span style="text-align:right;white-space:nowrap"><b>' + fmt(cant, x.u) + '</b><small style="display:block;color:var(--muted)">' + (meta ? Math.round(pct) + " % " + (x.lim ? "del límite" : "del objetivo") : "") + (para && para < 3000 ? (meta ? " · " : "") + "objetivo con ≈ " + Math.round(para) + " g" : "") + "</small></span></div>"; }).join("");
+  if(R.out.length > exVer) h += '<button type="button" data-act="mas" style="margin-top:8px;padding:7px 12px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer">Ver más (' + (R.out.length - exVer) + ')</button>';
+  h += '<div style="font-size:0.76rem;color:var(--muted);margin-top:8px">' + R.sin + " alimentos de BEDCA no tienen este dato y no aparecen (no es lo mismo que «0»)." + (x.id === "o3" ? " BEDCA solo trae EPA/DHA de unos pocos pescados." : "") + (x.id === "o3" || true ? " Alimentos emparejados con la base de la app: " + NutBedca.montaje().emparejados + " de " + NutBedca.montaje().total + "." : "") + (x.id === "ala" ? " Es el dato «18:3» de BEDCA, que en la práctica es casi todo ALA, pero no lo separa." : "") + "</div>";
+  return h;
 }
 function buscador(pr){
-  let h = '<div class="recetas-sec" style="margin-top:12px"><h2><span>🔎 Alimentos con…</span></h2><div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">' +
-    CHIPS.map(c => '<button type="button" data-act="chip" data-id="' + c[0] + '" style="padding:6px 10px;border-radius:999px;border:1px solid ' + (chip === c[0] ? "var(--accent)" : "var(--line)") + ";background:" + (chip === c[0] ? "var(--accent-soft)" : "var(--panel)") + ";color:" + (chip === c[0] ? "var(--accent)" : "var(--ink)") + ';font-size:0.8rem;cursor:pointer">' + c[1] + "</button>").join("") + "</div>";
-  if(chip && ALIM[chip]){
+  const ok = bedcaListo(), st = window.NutBedca ? NutBedca.estado() : { listo: false, error: "no cargado" };
+  const botones = ok ? EXP.map(x => [x.id, x.c]).concat([["col", "Colágeno"]]) : CHIPS;
+  let h = '<div class="recetas-sec" style="margin-top:12px"><h2><span>🔎 Alimentos con…</span></h2>' + (ok ? "" : '<div style="font-size:0.8rem;color:var(--warn);margin-bottom:8px">⚠️ No pude cargar los nutrientes reales de BEDCA' + (st.error ? " (" + esc(st.error) + ")" : "") + '. Se muestra una lista aproximada hecha a mano. <button type="button" data-act="reintentar" style="margin-left:6px;padding:4px 10px;border-radius:8px;border:1px solid var(--accent);background:var(--accent-soft);color:var(--accent);cursor:pointer">Reintentar</button></div>') +
+    '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">' +
+    botones.map(c => '<button type="button" data-act="chip" data-id="' + c[0] + '" style="padding:6px 10px;border-radius:999px;border:1px solid ' + (chip === c[0] ? "var(--accent)" : "var(--line)") + ";background:" + (chip === c[0] ? "var(--accent-soft)" : "var(--panel)") + ";color:" + (chip === c[0] ? "var(--accent)" : "var(--ink)") + ';font-size:0.8rem;cursor:pointer">' + c[1] + "</button>").join("") + "</div>";
+  if(!chip) h += '<div style="font-size:0.82rem;color:var(--muted)">Elige un nutriente para ver los alimentos que más tienen' + (ok ? ", con la cantidad y el % de tu objetivo diario." : ".") + "</div>";
+  if(chip && ok && chip !== "col"){
+    const x = defExp(chip), id = chip === "o3" ? null : chip;
+    if(id && pr.noSubir[id]) h += '<div style="color:var(--warn);font-size:0.84rem;margin-bottom:6px">⚠️ Tu última analítica tiene este valor alto (' + esc(pr.noSubir[id]) + '). Consúltalo con tu médico antes de subirlo.</div>';
+    const sp = 'padding:6px 11px;border-radius:8px;border:1px solid ';
+    h += '<div style="display:flex;gap:6px;margin-bottom:8px"><button type="button" data-act="modo" data-m="alim" style="' + sp + (exModo === "alim" ? "var(--accent);background:var(--accent-soft);color:var(--accent)" : "var(--line);background:var(--panel);color:var(--ink)") + ';cursor:pointer;font-size:0.82rem">🥦 Alimentos</button><button type="button" data-act="modo" data-m="rec" style="' + sp + (exModo === "rec" ? "var(--accent);background:var(--accent-soft);color:var(--accent)" : "var(--line);background:var(--panel);color:var(--ink)") + ';cursor:pointer;font-size:0.82rem">📖 Mis recetas</button></div>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px;font-size:0.82rem"><input type="text" data-exp="q" placeholder="Filtrar por nombre (ej.: pescado)" value="' + esc(exQ) + '" style="flex:1 1 150px;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--panel-alt);color:var(--ink)">' +
+      (exModo === "alim" ? '<label style="display:flex;gap:5px;align-items:center;color:var(--muted)">Cantidad <input type="number" data-exp="g" min="1" step="any" value="' + exG + '" style="width:72px;padding:7px;border-radius:8px;border:1px solid var(--line);background:var(--panel-alt);color:var(--ink)"> g</label><label style="display:flex;gap:5px;align-items:center;color:var(--muted)"><input type="checkbox" data-exp="esp" ' + (exEsp ? "checked" : "") + '> incluir especias y hierbas secas</label>' : "") + '</div>' +
+      '<div id="anaLista" style="font-size:0.84rem">' + filasExplorador() + '</div>' +
+      '<div style="font-size:0.74rem;color:var(--muted);margin-top:6px">' + (x.id === "o3" ? "Omega 3 = EPA + DHA. " : "") + "El objetivo diario es una referencia habitual para un adulto (puedes cambiarla en «Ajustar metas»), no una recomendación personal. Datos de BEDCA (AESAN) por 100 g.</div>";
+  } else if(chip && ALIM[chip] && (!ok || chip === "col")){
     const al = ALIM[chip], id = chip === "o3" ? null : chip;
     if(id && pr.noSubir[id]) h += '<div style="color:var(--warn);font-size:0.84rem;margin-bottom:6px">⚠️ Tu última analítica tiene este valor alto (' + esc(pr.noSubir[id]) + '). Consúltalo con tu médico antes de subirlo.</div>';
     h += '<div style="font-size:0.84rem">' + al.l.map(a => '<div style="display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid var(--line)"><span>' + esc(a[0]) + '</span><b>' + (a[1] != null ? a[1] + " " + (a[2] || al.u) : "") + '</b></div>').join("") + '</div><div style="font-size:0.74rem;color:var(--muted);margin-top:6px">' + (chip === "col" ? "No existe una cantidad diaria oficial de colágeno: se trata de variedad en la dieta. " : "Por 100 g, valores aproximados que varían según especie y cocinado. ") + "</div>";
@@ -194,13 +284,17 @@ function render(){
     const med = reg.reduce((s, d) => s + d.v[x.id], 0) / reg.length, meta = M[x.id], pct = meta ? med / meta * 100 : 0, t3 = top3(S.fuentes[x.id]);
     if(!x.limite && pct < 70 && !(pr.noSubir[x.id])) bajos.push(x);
     h += '<div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="display:flex;justify-content:space-between;gap:8px"><b>' + x.n + (pr.prio[x.id] ? ' ⭐' : '') + (pr.noSubir[x.id] ? ' 🚫' : '') + '</b><span style="font-size:0.85rem">' + nf(med) + " / " + nf(meta) + " " + x.u + (x.limite ? " (límite)" : "") + '</span></div>' + barra(pct, x.limite) +
-      '<div style="font-size:0.78rem;color:var(--muted)">' + Math.round(pct) + " % · " + textoEstado(x, pct) + (pr.prio[x.id] ? " · prioridad: " + esc(pr.prio[x.id]) + " bajo en tu analítica" : "") + (pr.noSubir[x.id] ? " · " + esc(pr.noSubir[x.id]) + " alto en tu analítica: no conviene subirlo" : "") + (t3.length ? "<br>Tus mayores fuentes: " + t3.map(k => esc(k) + " (" + nf(S.fuentes[x.id][k]) + ")").join(", ") : "") + "</div></div>";
+      '<div style="font-size:0.78rem;color:var(--muted)">' + Math.round(pct) + " % · " + textoEstado(x, pct) + (pr.prio[x.id] ? " · prioridad: " + esc(pr.prio[x.id]) + " bajo en tu analítica" : "") + (pr.noSubir[x.id] ? " · " + esc(pr.noSubir[x.id]) + " alto en tu analítica: no conviene subirlo" : "") + (t3.length ? "<br>Tus mayores fuentes: " + t3.map(k => esc(k) + " (" + nf(S.fuentes[x.id][k]) + ")").join(", ") : "") + (S.sinDato[x.id].size ? "<br>⚠️ Sin dato de " + x.n.toLowerCase() + " en BEDCA para: " + Array.from(S.sinDato[x.id]).slice(0, 3).map(esc).join(", ") + (S.sinDato[x.id].size > 3 ? " y " + (S.sinDato[x.id].size - 3) + " más" : "") + " (no se cuentan como 0, pero la cifra queda corta)." : "") + "</div></div>";
   });
   h += (pr.notas.length ? '<div style="font-size:0.8rem;color:var(--muted);margin-top:8px">🩸 En tu última analítica: ' + pr.notas.map(esc).join(", ") + ". Ese valor en sangre lo regula el cuerpo y casi nunca refleja lo que comes: coméntalo con tu médico.</div>" : "") + "</div>";
   // Raciones
   const azul = S.dias.reduce((s, d) => s + d.azul, 0), col = S.dias.reduce((s, d) => s + d.col, 0), vegDias = S.dias.filter(d => d.veg > 0).length;
   const prot = reg.reduce((s, d) => s + (((estado.dias || {})[d.f] && totalesDelDia(d.f).prot) || 0), 0) / reg.length, vc = reg.reduce((s, d) => s + d.v.vc, 0) / reg.length;
-  h += '<div class="recetas-sec" style="margin-top:12px"><h2><span>🐟 Omega 3 y colágeno (por semana)</span></h2>' +
+  const nreg = reg.length, mo3 = reg.reduce((s, d) => s + d.o3, 0) / nreg, mala = reg.reduce((s, d) => s + d.ala, 0) / nreg, nbTot = reg.reduce((s, d) => s + d.nb, 0), nTot = reg.reduce((s, d) => s + d.n, 0);
+  const bloqueO3 = bedcaListo() ? '<div style="padding:6px 0;border-bottom:1px solid var(--line)"><b>Omega 3 con datos de BEDCA</b> (media por día)<div style="display:flex;justify-content:space-between;gap:8px;margin-top:4px"><span>EPA + DHA (pescado)</span><span>' + fmt(mo3, "g") + " / " + fmt(M.o3, "g") + '</span></div>' + barra(M.o3 ? mo3 / M.o3 * 100 : 0, false) +
+    '<div style="display:flex;justify-content:space-between;gap:8px"><span>ALA (vegetal)</span><span>' + fmt(mala, "g") + " / " + fmt(M.ala, "g") + '</span></div>' + barra(M.ala ? mala / M.ala * 100 : 0, false) +
+    '<div style="font-size:0.76rem;color:var(--muted)">' + nbTot + " de " + nTot + " alimentos registrados están en BEDCA; solo esos suman aquí." + (S.sdO3.length ? " ⚠️ Pescados/mariscos sin dato de EPA/DHA (no se cuentan como 0): " + S.sdO3.slice(0, 3).map(esc).join(", ") + (S.sdO3.length > 3 ? " y " + (S.sdO3.length - 3) + " más" : "") + "." : "") + "</div></div>" : "";
+  h += '<div class="recetas-sec" style="margin-top:12px"><h2><span>🐟 Omega 3 y colágeno (por semana)</span></h2>' + bloqueO3 +
     '<div style="padding:6px 0"><b>Pescado azul:</b> ≈ ' + nf(azul) + " raciones · meta " + M.rAzul + puntosDias(S.dias, "azul", 0) + '<div style="font-size:0.78rem;color:var(--muted);margin-top:4px">' + (vegDias ? "Fuentes vegetales (nueces, lino, chía) en " + vegDias + (vegDias === 1 ? " día" : " días") + ". " : "") + 'El omega 3 vegetal (ALA) se aprovecha mucho peor que el del pescado.</div></div>' +
     '<div style="padding:6px 0;border-top:1px solid var(--line)"><b>Fuentes de colágeno:</b> ' + Math.round(col) + " · meta " + M.rCol + puntosDias(S.dias, "col", 0) + '<div style="font-size:0.78rem;color:var(--muted);margin-top:4px">Proteína media ' + Math.round(prot) + " g/día · vitamina C media " + Math.round(vc) + ' mg/día: el cuerpo fabrica su colágeno con proteína y vitamina C. Que comer colágeno mejore articulaciones o piel tiene evidencia limitada: tómalo como variedad.</div></div></div>';
   // Sugerencias
@@ -212,9 +306,9 @@ function render(){
     '<div style="margin-top:8px"><button type="button" data-act="iaSemana" ' + (ocupado ? "disabled" : "") + ' style="padding:8px 12px;border-radius:8px;border:1px solid var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:700;cursor:pointer">' + (g && g.texto ? "🔄 Volver a generar" : "Generar lectura") + '</button> <span id="anaIA" style="font-size:0.8rem;color:var(--muted)"></span></div></div>';
   h += buscador(pr);
   // Metas
-  h += '<details style="margin-top:12px"><summary style="cursor:pointer;color:var(--muted);font-size:0.86rem">⚙️ Ajustar metas</summary><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">' + NUT.map(x => '<label style="font-size:0.8rem;color:var(--muted)">' + x.n + " (" + x.u + (x.limite ? ", límite" : "") + ')<input type="number" min="0" step="any" data-meta="' + x.id + '" value="' + M[x.id] + '" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--panel-alt);color:var(--ink)"></label>').join("") +
+  h += '<details style="margin-top:12px"><summary style="cursor:pointer;color:var(--muted);font-size:0.86rem">⚙️ Ajustar metas</summary><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">' + NUT.concat(EXTRA.map(x => ({ id: x.id, n: x.n, u: x.u, limite: x.lim }))).map(x => '<label style="font-size:0.8rem;color:var(--muted)">' + x.n + " (" + x.u + (x.limite ? ", límite" : "") + ')<input type="number" min="0" step="any" data-meta="' + x.id + '" value="' + M[x.id] + '" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--panel-alt);color:var(--ink)"></label>').join("") +
     '<label style="font-size:0.8rem;color:var(--muted)">Pescado azul (raciones/semana)<input type="number" min="0" step="any" data-meta="rAzul" value="' + M.rAzul + '" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--panel-alt);color:var(--ink)"></label><label style="font-size:0.8rem;color:var(--muted)">Fuentes de colágeno (por semana; 7 = a diario)<input type="number" min="0" step="any" data-meta="rCol" value="' + M.rCol + '" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--panel-alt);color:var(--ink)"></label></div><div style="font-size:0.74rem;color:var(--muted);margin-top:6px">Las metas de partida son valores habituales para un adulto. Cámbialas según tu caso (edad, sexo, embarazo…) o lo que te indique tu médico.</div></details>';
-  h += '<div style="font-size:0.74rem;color:var(--muted);margin-top:12px">Cifras estimadas por IA a partir de los nombres y cantidades que registras: son aproximadas. Los suplementos no se cuentan salvo que los registres como alimento. Orientación, no un consejo médico.</div>';
+  h += '<div style="font-size:0.74rem;color:var(--muted);margin-top:12px">Los alimentos que están en la base BEDCA usan sus valores reales; el resto son cifras estimadas por IA a partir del nombre y la cantidad, y son aproximadas. Los suplementos no se cuentan salvo que los registres como alimento. Orientación, no un consejo médico.</div>';
   root.innerHTML = h;
 }
 
@@ -253,17 +347,45 @@ document.addEventListener("click", async ev => {
   const a = b.dataset.act; if(a === "chip") ev.preventDefault();
   if(a === "prev"){ semana = suma(semana, -7); render(); }
   else if(a === "next"){ if(semana < lunesDe(hoy())){ semana = suma(semana, 7); render(); } }
-  else if(a === "chip"){ chip = chip === b.dataset.id && !b.closest("ul") ? null : b.dataset.id; render(); const r = $("anaRoot"); const t = r.querySelector('[data-act="buscarIA"]'); if(t && t.scrollIntoView) t.scrollIntoView({ block: "center" }); }
+  else if(a === "modo"){ exModo = b.dataset.m; exVer = 30; render(); }
+  else if(a === "mas"){ exVer += 30; const l = $("anaLista"); if(l) l.innerHTML = filasExplorador(); }
+  else if(a === "reintentar"){ if(window.NutBedca) NutBedca.cargar(); }
+  else if(a === "chip"){ chip = chip === b.dataset.id && !b.closest("ul") ? null : b.dataset.id; exVer = 30; render(); const r = $("anaRoot"); const t = r.querySelector('[data-act="buscarIA"]'); if(t && t.scrollIntoView) t.scrollIntoView({ block: "center" }); }
   else if(a === "estimar"){ if(ocupado || sinClave()) return; const S = datosSemana(semana, cache()); ocupado = true; render();
     try{ await estimar(S.pend); msgEst = ""; }catch(e){ msgEst = "⚠️ " + (e && e.message ? e.message : "No se pudo estimar."); } ocupado = false; render(); }
   else if(a === "iaSemana"){ if(ocupado || sinClave()) return; lecturaSemana(); }
   else if(a === "buscarIA"){ if(sinClave()) return; buscarLibre(); }
 });
+// Filtro y cantidad del explorador: solo se repinta la lista (para no perder el cursor al escribir)
+document.addEventListener("input", ev => {
+  const i = ev.target; if(!i || !i.dataset || !i.dataset.exp) return;
+  if(i.dataset.exp === "q") exQ = i.value; else if(i.dataset.exp === "g") exG = num(i.value) > 0 ? num(i.value) : 100; else return;
+  exVer = 30; const l = $("anaLista"); if(l && chip && chip !== "col") l.innerHTML = filasExplorador();
+});
 document.addEventListener("change", ev => {
+  const e = ev.target; if(e && e.dataset && e.dataset.exp === "esp"){ exEsp = e.checked; exVer = 30; const l = $("anaLista"); if(l) l.innerHTML = filasExplorador(); return; }
   const i = ev.target; if(!i || !i.dataset || !i.dataset.meta) return;
   const m = lj("nutriMetasMicroV1_" + perfilActivo, {}), v = parseFloat(String(i.value).replace(",", "."));
   if(isFinite(v) && v >= 0){ m[i.dataset.meta] = v; sj("nutriMetasMicroV1_" + perfilActivo, m); render(); }
 });
+// Lo que usa «Qué me falta hoy» (nutricion-extra.js): nutrientes que vas cortos hoy y lo que aporta un alimento por 100 g (si ya está estimado).
+window.AnalisisNut = {
+  faltantes: function(f){
+    const C = cache(), M = metas(), pr = prioridades(), S = datosSemana(lunesDe(f), C), d = S.dias.find(x => x.f === f), lista = [];
+    if(!d || !d.n) return { lista: lista, sinEstimar: 0, total: 0 };
+    if(d.sin >= d.n) return { lista: lista, sinEstimar: d.sin, total: d.n }; // ningún alimento del día está estimado todavía: no se puede decir qué falta
+    NUT.forEach(x => {
+      if(x.limite || pr.noSubir[x.id]) return;
+      const meta = M[x.id]; if(!(meta > 0)) return;
+      const falta = meta - d.v[x.id];
+      if(falta > 0.3 * meta) lista.push({ id: x.id, n: x.n, u: x.u, falta: falta, meta: meta });
+    });
+    return { lista: lista, sinEstimar: d.sin, total: d.n };
+  },
+  aporte: function(nombre){ return estimacion(nombre, cache()) || null; }
+};
+// Nutrientes reales de BEDCA: se piden en segundo plano (el Worker los guarda en el aparato 30 días) y se repinta al llegar.
+if(window.NutBedca){ NutBedca.alCargar(() => { const p = document.querySelector('.panel[data-panel="ana"]'); if(p && !p.hidden) render(); if(window.NutExtra) try{ NutExtra.renderFaltaHoy(); }catch(e){} }); setTimeout(() => NutBedca.cargar(), 800); }
 // Engancha con las pestañas y el cambio de perfil de nutricion.js
 const mp0 = window.mostrarPestana;
 if(typeof mp0 === "function") window.mostrarPestana = function(p){ const r = mp0.apply(this, arguments); if(p === "ana") render(); return r; };

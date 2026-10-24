@@ -56,7 +56,14 @@ function nombreSuper(id){ const x = SUPERS.find(t=>t[0]===id); return x ? x[1] :
 // Medidas para la ficha de raciones. Las equivalencias en gramos son estimadas y se pueden corregir (se recuerdan por alimento).
 const UNIDADES = [["g","gramos (g)"],["100g","100 g"],["mg","miligramos (mg)"],["kg","kilogramos (kg)"],["ml","mililitros (ml)"],["l","litros (l)"],["racion","ración del envase"],["unidad","unidad"],["pequena","unidad pequeña"],["mediana","unidad mediana"],["grande","unidad grande"],["loncha","loncha"],["rebanada","rebanada"],["vaso","vaso (200 ml)"],["taza","taza"],["cucharada","cucharada"],["cucharadita","cucharadita"],["punado","puñado"]];
 const REGLAS_MEDIDA = [
-  [/\b(huevo|huevos)\b/, {unidad:55}],
+  [/\b(huevo|huevos)\b/, {unidad:60}],
+  [/\b(platano|banana|banano)\b/, {unidad:120}],
+  [/\bmanzana\b/, {unidad:180}], [/\bpera\b/, {unidad:170}], [/\bnaranja\b(?!.*\b(zumo|mermelada|refresco|bebida)\b)/, {unidad:150}],
+  [/\bmandarina\b/, {unidad:70}], [/\bkiwi\b/, {unidad:75}], [/\bmelocoton\b/, {unidad:150}], [/\baguacate\b/, {unidad:150}],
+  [/\byogur\b/, {unidad:125}],
+  [/\btomate\b(?!.*\b(frito|triturado|salsa|concentrado|puré|pure|ketchup)\b)/, {unidad:120}],
+  [/\bzanahoria\b/, {unidad:80}], [/\bcebolla\b/, {unidad:100}],
+  [/\bpatata\b(?!.*\b(frita|fritas|chips|pure|copos|bolsa|congelada)\b)/, {unidad:170}],
   [/\b(pan|baguette|chapata|tostada|tostadas|molde)\b/, {rebanada:30}],
   [/\b(jamon|queso|fiambre|pavo|lomo|chorizo|salchichon|mortadela|bacon|beicon|york)\b/, {loncha:20}],
   [/\b(leche|agua|zumo|bebida|caldo|horchata|refresco|cola|cerveza|vino)\b/, {taza:240}],
@@ -72,7 +79,9 @@ function medidasDefecto(p){
   const d = {unidad: p.cantidadG || p.porcionG || 100, racion: p.porcionG || 100, loncha:20, rebanada:30, taza:240, cucharada:15, cucharadita:5,
     mg:0.001, kg:1000, ml:1, l:1000, vaso:200, punado:30};
   const n = " " + slug(p.nombre).replace(/-/g," ") + " ";
-  REGLAS_MEDIDA.forEach(r=>{ if(r[0].test(n)) Object.assign(d, r[1]); });
+  let tipica = false; // true = el alimento tiene una «unidad» típica conocida (1 huevo, 1 plátano…): se propone por defecto
+  REGLAS_MEDIDA.forEach(r=>{ if(r[0].test(n)){ Object.assign(d, r[1]); if(r[1].unidad) tipica = true; } });
+  d.tipica = tipica;
   d.mediana = d.unidad; d.pequena = Math.round(d.unidad*0.75*10)/10; d.grande = Math.round(d.unidad*1.3*10)/10; // tamaños: estimación, corregible en la ficha
   return d;
 }
@@ -476,7 +485,21 @@ async function fetchOFFConReintento(url){
   throw ultimo;
 }
 // Respaldo cuando la base de datos no responde o no tiene el alimento: valores por 100 g estimados por la IA.
+const CLAVE_EST_IA = "dietaEstimacionesIAV1"; // estimaciones de IA ya hechas: no se vuelve a gastar una llamada por el mismo alimento
+function leerEstIA(){ const e = leerJSON(CLAVE_EST_IA, {}); return (e && typeof e==="object" && !Array.isArray(e)) ? e : {}; }
+function guardarEstIA(clave, p){
+  const e = leerEstIA(); e[clave] = {p, t:Date.now()};
+  const ks = Object.keys(e); if(ks.length > 300){ ks.sort((x,y)=>e[x].t-e[y].t).slice(0, ks.length-300).forEach(k=>delete e[k]); }
+  escribirJSON(CLAVE_EST_IA, e);
+}
 async function estimarAlimentoIA(termino){
+  const claveCache = slug(termino), guardada = leerEstIA()[claveCache];
+  if(guardada && guardada.p && guardada.p.kcal100 >= 0) return Object.assign({}, guardada.p, {desdeCache:true});
+  const p = await estimarAlimentoIANueva(termino);
+  guardarEstIA(claveCache, p);
+  return p;
+}
+async function estimarAlimentoIANueva(termino){
   const prompt = 'Estima los valores nutricionales por 100 g del alimento "' + termino + '" (alimento genérico, tal como se come normalmente; ' +
     'si es arroz, pasta o legumbres sin más datos, considera cocido). Devuelve SOLO un objeto JSON, sin texto extra ni ```, con estas claves: ' +
     'nombre (nombre corto en español), kcal100, grasa100, carbh100, prot100 (números; gramos por 100 g). Son aproximaciones.';
@@ -563,7 +586,7 @@ function tarjetaProducto(p, gramosIni, onAgregar, onQuitar, conComida){
   function armar(){
     armada = true;
     const clave = claveAlim(p), def = medidasDefecto(p);
-    let uni = gramosIni ? "g" : (p.porcionG ? "racion" : "100g"), n = gramosIni ? Number(gramosIni) : 1;
+    let uni = gramosIni ? "g" : (p.porcionG ? "racion" : (def.tipica ? "unidad" : "100g")), n = gramosIni ? Number(gramosIni) : 1;
     const gUni = u => u==="g" ? 1 : u==="100g" ? 100 : ((leerEquiv()[clave]||{})[u] > 0 ? leerEquiv()[clave][u] : def[u]);
     const nomUni = u => (UNIDADES.find(x=>x[0]===u)||[u,u])[1];
     const esPeq = u => u==="g" || u==="ml" || u==="mg";
@@ -672,6 +695,7 @@ function crearPanelBusqueda(opts){
     </div>
     <button class="buscar" type="button">Buscar</button>${ayu("Busca en los alimentos genéricos en español y en los productos de supermercado. Open Food Facts es opcional (botón al final). Marca, país y fresco/procesado solo afectan a Open Food Facts.")}
     <button class="escanear" type="button">📷 Escanear código de barras</button>
+    <button class="foto-etiqueta" type="button">🏷️ Foto de la etiqueta</button>
     <div class="rep-nota nota-busq"></div>
     <div class="resultados"></div>
     <div class="mas-cont"></div>
@@ -764,6 +788,7 @@ function crearPanelBusqueda(opts){
         const p = await estimarAlimentoIA(termino);
         d.remove();
         resDiv.insertBefore(tarjetaProducto(p, "", elegir), resDiv.firstChild);
+        if(p.desdeCache){ const av = document.createElement("div"); av.className = "estado"; av.textContent = "Ya habías estimado este alimento antes: se ha recuperado sin gastar una llamada de IA."; resDiv.insertBefore(av, resDiv.firstChild); }
       }catch(e){
         btn.disabled = false; btn.textContent = "✨ Estimar «" + termino + "» con IA";
         const n = d.querySelector(".rep-nota"); n.textContent = "No se pudo estimar: " + e.message;
@@ -771,18 +796,20 @@ function crearPanelBusqueda(opts){
     };
     resDiv.appendChild(d);
   }
-  let destOff = null, ultLoc = {gen:[], sup:[]}, limLoc = {gen:30, sup:30}, locDiv = null, offDiv = null;
+  let destOff = null, ultLoc = {gen:[], sup:[], nota:"", partes:null}, limLoc = {gen:30, sup:30}, locDiv = null, offDiv = null;
   function secLoc(t){ const d = document.createElement("div"); d.className = "frec-tit"; d.textContent = t; locDiv.appendChild(d); }
   function estLoc(t){ const d = document.createElement("div"); d.className = "estado"; d.textContent = t; locDiv.appendChild(d); }
   function masLoc(txt, fn){ const d = document.createElement("div"); d.className = "mas-cont"; const bt = document.createElement("button"); bt.type = "button"; bt.textContent = txt; bt.onclick = fn; d.appendChild(bt); locDiv.appendChild(d); }
   async function pintarLocal(){
     const B = window.BuscadorBase, tiendaSel = ultimaB.f.tienda;
     let errores = [];
-    ultLoc = {gen:[], sup:[]};
+    ultLoc = {gen:[], sup:[], nota:"", partes:null};
     if(B){ try{ const c = await B.cargar(); errores = c.errores || []; ultLoc = B.buscar(ultimaB.termino, tiendaSel); }catch(e){ errores = [(e && e.message) || "error"]; } }
     else errores = ["buscar.js no está cargado"];
     locDiv.innerHTML = "";
     if(errores.length) estLoc("No se pudo cargar " + errores.join(" · ") + ". Comprueba que tengas la sesión de Google iniciada y que el Worker esté configurado con los datos.");
+    if(ultLoc.nota) estLoc("ℹ️ " + ultLoc.nota);
+    if(ultLoc.partes && !ultLoc.partesAdemas){ pintarPartesLoc(); return; }
     if(!tiendaSel){
       secLoc("🥚 Alimentos genéricos (" + ultLoc.gen.length + ")");
       if(!ultLoc.gen.length) estLoc("Sin coincidencias entre los alimentos genéricos.");
@@ -793,6 +820,16 @@ function crearPanelBusqueda(opts){
     if(!ultLoc.sup.length) estLoc("Sin coincidencias en la base de productos de supermercado.");
     ultLoc.sup.slice(0, limLoc.sup).forEach(p => locDiv.appendChild(tarjetaProducto(p, "", elegir)));
     if(ultLoc.sup.length > limLoc.sup) masLoc("Ver más productos", ()=>{ limLoc.sup += 30; pintarLocal(); });
+    if(ultLoc.partes) pintarPartesLoc();
+  }
+  // Plato de varias palabras («pollo con arroz»): cada alimento por separado.
+  function pintarPartesLoc(){
+    secLoc(ultLoc.partesAdemas ? "🧩 O cada alimento por separado" : "🧩 Cada alimento por separado");
+    ultLoc.partes.forEach(x=>{
+      const t = document.createElement("div"); t.className = "frec-tit"; t.textContent = "«" + x.t + "»"; locDiv.appendChild(t);
+      x.gen.concat(x.sup).forEach(p => locDiv.appendChild(tarjetaProducto(p, "", elegir)));
+      if(x.totGen > x.gen.length) estLoc("Hay " + (x.totGen - x.gen.length) + " más de «" + x.t + "»: búscalo solo para verlos todos.");
+    });
   }
   async function cargarOFF(btn){
     btn.disabled = true; btn.textContent = "Buscando en Open Food Facts…";
@@ -877,6 +914,10 @@ function crearPanelBusqueda(opts){
         resDiv.innerHTML = `<div class="estado">No se pudo buscar el código: ${esc(e.message)}</div>`;
       }
     });
+  };
+  box.querySelector(".foto-etiqueta").onclick = ()=>{
+    if(!window.NutExtra){ return; }
+    NutExtra.etiqueta(resDiv, (p)=>{ resDiv.innerHTML = ""; resDiv.appendChild(tarjetaProducto(p, "", elegir)); });
   };
   input.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); buscar(); } });
 
@@ -2232,6 +2273,7 @@ function render(){
       lista.appendChild(fila);
     });
     div.appendChild(lista);
+    if(window.NutExtra) div.appendChild(NutExtra.barraCopiar(c.id)); // Copiar de otro día / Repetir la última vez
 
     if(buscadorAbiertoEn === c.id) div.appendChild(crearBuscador(c.id, false));
     if(buscadorSnackAbiertoEn === c.id) div.appendChild(crearBuscador(c.id, true));
@@ -2261,6 +2303,7 @@ function render(){
   });
 
   renderHeat();
+  if(window.NutExtra) NutExtra.renderFaltaHoy(); // Qué me falta hoy
 }
 
 function crearBuscador(comidaId, esSnack){
@@ -2271,10 +2314,14 @@ function crearBuscador(comidaId, esSnack){
   box.innerHTML = `
     <div class="tabs-buscador">
       <button type="button" class="tab-alimento">🔍 Alimentos</button>
+      <button type="button" class="tab-escribir">✍️ Escribir</button>
+      <button type="button" class="tab-recientes">🕘 Recientes</button>
       <button type="button" class="tab-receta">📖 Mis recetas</button>
       <button type="button" class="tab-guardada">🍽️ Guardadas</button>
     </div>
     <div class="panel-alimento"></div>
+    <div class="panel-escribir" style="display:none"></div>
+    <div class="panel-recientes" style="display:none"></div>
     <div class="panel-receta" style="display:none"></div>
     <div class="panel-guardada" style="display:none"></div>
     <button class="cerrar-buscador">Cerrar</button>`;
@@ -2285,6 +2332,8 @@ function crearBuscador(comidaId, esSnack){
   const panelAlimento = box.querySelector(".panel-alimento");
   const panelReceta = box.querySelector(".panel-receta");
   const panelGuardada = box.querySelector(".panel-guardada");
+  const tabEscribir = box.querySelector(".tab-escribir"), tabRecientes = box.querySelector(".tab-recientes");
+  const panelEscribir = box.querySelector(".panel-escribir"), panelRecientes = box.querySelector(".panel-recientes");
 
   function agregarItem(nuevoItem){
     if(esSnack){
@@ -2313,6 +2362,20 @@ function crearBuscador(comidaId, esSnack){
     tabAlimento.classList.toggle("on", activo==="alimento");
     tabReceta.classList.toggle("on", activo==="receta");
     tabGuardada.classList.toggle("on", activo==="guardada");
+    tabEscribir.classList.toggle("on", activo==="escribir");
+    tabRecientes.classList.toggle("on", activo==="recientes");
+    panelEscribir.style.display = activo==="escribir" ? "block" : "none";
+    panelRecientes.style.display = activo==="recientes" ? "block" : "none";
+    if(activo==="escribir" && !panelEscribir.firstChild && window.NutExtra){
+      panelEscribir.appendChild(NutExtra.panelEscribir((lista)=>{
+        lista.forEach(x=>agregarItem({ nombre:x.p.nombre, gramos:x.g, kcal:(x.p.kcal100*x.g)/100,
+          grasa:(x.p.grasa100*x.g)/100, carbh:(x.p.carbh100*x.g)/100, prot:(x.p.prot100*x.g)/100 }));
+      }));
+    }
+    if(activo==="recientes"){
+      panelRecientes.innerHTML = "";
+      if(window.NutExtra) panelRecientes.appendChild(NutExtra.panelRecientes(agregarItem));
+    }
     panelAlimento.style.display = activo==="alimento" ? "block" : "none";
     panelReceta.style.display = activo==="receta" ? "block" : "none";
     panelGuardada.style.display = activo==="guardada" ? "block" : "none";
@@ -2371,6 +2434,8 @@ function crearBuscador(comidaId, esSnack){
   tabAlimento.onclick = ()=>{ tabBuscadorPorComida[claveTab]="alimento"; pintarTabs(); };
   tabReceta.onclick = ()=>{ tabBuscadorPorComida[claveTab]="receta"; pintarTabs(); };
   tabGuardada.onclick = ()=>{ tabBuscadorPorComida[claveTab]="guardada"; pintarTabs(); };
+  tabEscribir.onclick = ()=>{ tabBuscadorPorComida[claveTab]="escribir"; pintarTabs(); };
+  tabRecientes.onclick = ()=>{ tabBuscadorPorComida[claveTab]="recientes"; pintarTabs(); };
   pintarTabs();
 
   box.querySelector(".cerrar-buscador").onclick = ()=>{

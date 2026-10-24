@@ -298,8 +298,8 @@
   .receta-acciones .guardar{background:var(--accent);color:#0a1f14;}
   .receta-acciones .cancelar{background:transparent;border:1px solid var(--line)!important;color:var(--muted);}
 
-  .tabs-buscador{display:flex;gap:6px;margin-bottom:10px;}
-  .tabs-buscador button{flex:1;background:var(--bg);border:1px solid var(--line);color:var(--muted);
+  .tabs-buscador{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;}
+  .tabs-buscador button{flex:1 1 auto;background:var(--bg);border:1px solid var(--line);color:var(--muted);
     padding:7px;border-radius:7px;font-size:0.82rem;cursor:pointer;}
   .tabs-buscador button.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:700;}
   .receta-usar{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-top:8px;}
@@ -413,3 +413,50 @@
   .ref-etq span{display:block;overflow:hidden;white-space:nowrap;}
   .ref-bloque{margin:4px 0 16px;}
   .ref-bloque h3{font-size:0.85rem;margin:0 0 2px;}
+
+  /* ---- Copiar de otro día / Repetir la última vez ---- */
+  .comida-acc{padding:6px 16px 12px;display:flex;gap:6px;flex-wrap:wrap;border-top:1px solid var(--line);}
+  .acc-btn{background:var(--bg);border:1px solid var(--line);color:var(--muted);padding:6px 10px;border-radius:7px;font-size:0.78rem;cursor:pointer;}
+  .acc-btn:hover{border-color:var(--accent);color:var(--accent);}
+  .cp-panel{flex-basis:100%;background:var(--panel-alt);border:1px solid var(--line);border-radius:8px;padding:10px;margin-top:6px;}
+  .cp-fila{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
+  .cp-fila label{flex:1;min-width:140px;font-size:0.78rem;color:var(--muted);display:flex;flex-direction:column;gap:3px;}
+  .cp-fila select,.cp-fila input{padding:7px 8px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--ink);font-size:0.9rem;}
+  .cp-dias{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
+  .cp-dia{background:var(--bg);border:1px solid var(--line);color:var(--muted);padding:6px 9px;border-radius:7px;font-size:0.78rem;cursor:pointer;}
+  .cp-dia.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:700;}
+  .cp-item{display:flex;gap:8px;align-items:flex-start;padding:7px 0;border-top:1px solid var(--line);font-size:0.88rem;cursor:pointer;}
+  .cp-item input{margin-top:3px;}
+  .cp-nom small{display:block;color:var(--muted);font-size:0.76rem;}
+  .cp-pie{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+  .cp-ok{background:var(--accent);color:#0a1f14;border:none;border-radius:8px;padding:9px 14px;font-weight:700;cursor:pointer;font-size:0.88rem;}
+  .cp-ok:disabled{opacity:.45;cursor:default;}
+  .cp-x{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:9px 14px;cursor:pointer;font-size:0.88rem;}
+  /* ---- Qué me falta hoy ---- */
+  .falta-sec{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:0 0 12px;}
+  .falta-sec h2{font-size:0.95rem;margin:0 0 8px;}
+  .fh-res{font-size:0.9rem;margin-bottom:6px;}
+  .fh-micro{font-size:0.8rem;color:var(--muted);margin-bottom:8px;}
+  .fh-fila{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:0.9rem;}
+  .fh-fila small{display:block;color:var(--muted);font-size:0.76rem;}
+  .fh-fila button{background:var(--accent-soft);border:1px solid var(--accent);color:var(--accent);border-radius:8px;padding:6px 10px;font-size:0.8rem;font-weight:700;cursor:pointer;white-space:nowrap;}
+
+  /* Escribir con IA, foto de etiqueta, recientes */
+  .esc-panel textarea{width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font-size:0.92rem;font-family:inherit;resize:vertical;margin-bottom:8px;}
+  .esc-tit{font-size:0.85rem;margin:10px 0 6px;}
+  .esc-fila{border-top:1px solid var(--line);padding:8px 0;}
+  .esc-fila.esc-ia{background:rgba(255,190,60,.07);}
+  .esc-chk{display:flex;gap:8px;align-items:flex-start;font-size:0.9rem;cursor:pointer;}
+  .esc-chk small{display:block;color:var(--muted);font-size:0.74rem;margin-top:2px;}
+  .esc-ctl{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:6px 0 0 24px;}
+  .esc-sel{flex:1 1 180px;min-width:0;padding:6px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--ink);font-size:0.8rem;}
+  .esc-g input{width:70px;padding:6px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--ink);}
+  .esc-kc{font-size:0.85rem;min-width:62px;text-align:right;}
+  .esc-pie{margin-top:10px;}
+  .etq-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+  .etq-grid label{font-size:0.78rem;color:var(--muted);display:flex;flex-direction:column;gap:3px;}
+  .etq-grid .etq-nom{grid-column:1/-1;}
+  .etq-grid input{padding:7px 8px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--ink);font-size:0.9rem;}
+  .foto-etiqueta{margin-top:6px;}
+  .rec-fila{display:flex;justify-content:space-between;align-items:center;gap:8px;border-top:1px solid var(--line);padding:8px 0;font-size:0.9rem;}
+  .rec-fila small{display:block;color:var(--muted);font-size:0.76rem;}
