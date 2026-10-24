@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.json">
+<script src="tema.js"></script>
+<title>Informes</title>
+<link rel="icon" type="image/png" href="icono.png">
+<link rel="apple-touch-icon" href="icono.png">
+<meta name="theme-color" content="#10151f">
+<style>
+  :root{ --bg:#10151f; --panel:#1b2330; --panel-alt:#232c3b; --ink:#eef2f6; --muted:#8a94a3; --accent:#35c26a; --accent-soft:rgba(53,194,106,0.15); --warn:#e0703f; --line:#2a3242; --azul:#5aa9ff; }
+  :root[data-theme="light"]{ --bg:#f4f6f8; --panel:#ffffff; --panel-alt:#eef1f5; --ink:#1b2330; --muted:#667085; --accent:#1f9d52; --accent-soft:rgba(31,157,82,0.12); --warn:#c8562e; --line:#d7dce3; color-scheme:light; }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);padding:20px 14px 80px;}
+  .wrap{max-width:900px;margin:0 auto;}
+  h1{font-size:1.3rem;margin:0 0 14px;font-weight:700;}
+  h2{font-size:1rem;margin:0 0 8px;font-weight:700;}
+  .navapp{display:flex;gap:4px;margin:0 0 14px;background:#1b2330;border:1px solid #2a3242;border-radius:10px;padding:4px;}
+  .navapp a{flex:1;text-align:center;padding:9px 1px;border-radius:7px;color:#8a94a3;text-decoration:none;font-size:0.54rem;font-weight:800;letter-spacing:0;}
+  .navapp a[aria-current="page"]{background:rgba(53,194,106,0.15);color:#35c26a;}
+  .navapp{overflow-x:auto;scrollbar-width:none;}.navapp::-webkit-scrollbar{display:none;}.navapp a{white-space:nowrap;padding-left:7px;padding-right:7px;}
+  .tabs{display:flex;gap:6px;margin-bottom:12px;}
+  .tabs button{flex:1;background:var(--panel);border:1px solid var(--line);color:var(--muted);padding:9px 4px;border-radius:8px;font-size:0.86rem;cursor:pointer;font-weight:600;}
+  .tabs button.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);}
+  .navf{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px;}
+  .navf button{background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:6px 14px;font-size:1rem;cursor:pointer;}
+  .navf button[disabled]{opacity:.35;cursor:default;}
+  .navf .et{font-weight:700;font-size:0.95rem;text-align:center;flex:1;}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px;}
+  .card .cab{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;}
+  .grande{font-size:1.5rem;font-weight:800;}
+  .sub{color:var(--muted);font-size:0.8rem;}
+  .d-up{color:var(--warn);} .d-dn{color:var(--azul);} .d-ok{color:var(--accent);}
+  .tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:6px;}
+  .tile{background:var(--panel-alt);border-radius:10px;padding:10px;}
+  .tile .t{font-size:0.74rem;color:var(--muted);} .tile .v{font-size:1.15rem;font-weight:800;margin-top:2px;}
+  svg.gr{width:100%;height:auto;display:block;margin-top:8px;}
+  svg.gr text{fill:var(--muted);font-size:9px;}
+  .leyenda{display:flex;gap:10px;flex-wrap:wrap;font-size:0.74rem;color:var(--muted);margin-top:4px;}
+  .leyenda i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px;vertical-align:-1px;}
+  .al{margin:6px 0 0;padding:0;list-style:none;font-size:0.86rem;}
+  .al li{padding:6px 0;border-bottom:1px solid var(--line);} .al li:last-child{border-bottom:none;}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0;}
+  .chip{border-radius:999px;padding:3px 10px;font-size:0.78rem;font-weight:600;border:1px solid var(--line);}
+  .chip.alto{color:var(--warn);border-color:var(--warn);} .chip.bajo{color:var(--azul);border-color:var(--azul);}
+  .btn{background:var(--accent-soft);border:1px solid var(--accent);color:var(--accent);border-radius:8px;padding:9px 14px;font-size:0.86rem;font-weight:700;cursor:pointer;}
+  .btn[disabled]{opacity:.5;cursor:default;}
+  .ia{background:var(--panel-alt);border-radius:8px;padding:10px;font-size:0.86rem;margin-top:8px;white-space:pre-wrap;}
+  .pie{font-size:0.74rem;color:var(--muted);margin-top:8px;}
+  table.t2{width:100%;border-collapse:collapse;font-size:0.82rem;margin-top:6px;}
+  table.t2 th{text-align:left;color:var(--muted);font-weight:600;padding:4px 6px;border-bottom:1px solid var(--line);}
+  table.t2 td{padding:5px 6px;border-bottom:1px solid var(--line);}
+  .vacio{color:var(--muted);font-size:0.86rem;font-style:italic;}
+  a.ir{color:var(--accent);font-size:0.82rem;text-decoration:none;}
+</style>
+<script>(function(){var o=Storage.prototype.setItem;window.__nubeRaw=function(k,v){o.call(localStorage,k,v)};window.__nubeSucias={};window.__nubeOn=false;Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localStorage&&window.__nubeOn){window.__nubeSucias[k]=1;window.dispatchEvent(new Event("nube-cambio"))}};setTimeout(function(){if(!window.__nubeVivo){var d=document.createElement("div");d.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99998;background:#7a1f1f;color:#fff;padding:10px 14px;font:14px system-ui,sans-serif;text-align:center";d.textContent="⚠️ La entrada con Google no cargó: tus datos NO se están guardando en la nube. Recarga la página; si sigue igual, avísame.";(document.body||document.documentElement).appendChild(d)}},6000);})();</script>
+</head>
+<body>
+<button id="btnTema" onclick="alternarTema()" title="Cambiar tema" aria-label="Cambiar entre tema claro y oscuro" style="position:fixed;top:12px;right:12px;z-index:500;width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-size:1rem;cursor:pointer">☀️</button>
+<div class="wrap">
+<nav class="navapp" aria-label="Áreas de la app">
+  <a href="nutricion.html">NUTRICIÓN</a>
+  <a href="ejercicios.html">FITNESS</a>
+  <a href="tareas.html">TAREAS</a>
+  <a href="calendario.html">CALENDARIO</a>
+  <a href="salud.html">SALUD</a>
+  <a href="huawei.html">HUAWEI</a>
+  <a href="informes.html" aria-current="page">INFORMES</a>
+</nav>
+<h1>Informes</h1>
+<div class="tabs" id="tabsPerfil">
+  <button type="button" data-perfil="Mamy">Mamy</button>
+  <button type="button" data-perfil="Filha">Filha</button>
+</div>
+<div class="tabs" id="tabsModo">
+  <button type="button" data-modo="dia">Día</button>
+  <button type="button" data-modo="semana">Semana</button>
+  <button type="button" data-modo="mes">Mes</button>
+  <button type="button" data-modo="anio">Año</button>
+</div>
+<div class="navf"><button type="button" id="ant" aria-label="Anterior">‹</button><div class="et" id="etq"></div><button type="button" id="sig" aria-label="Siguiente">›</button></div>
+<div id="informe"></div>
+</div>
+<script src="claves.js"></script>
+<script type="module" src="nube.js" onerror="var d=document.createElement('div');d.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99998;background:#7a1f1f;color:#fff;padding:10px 14px;font:14px system-ui,sans-serif;text-align:center';d.textContent='⚠️ El archivo nube.js no se pudo descargar.';document.body.appendChild(d)"></script>
+<script>
+const PERFILES = ["Mamy","Filha"], CLAVE_PERFIL_ACTIVO = "dietaPerfilActivo";
+const MESES = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"], DIAS_S = ["dom","lun","mar","mié","jue","vie","sáb"], LET = ["L","M","X","J","V","S","D"];
+const COMIDAS = ["desayuno","almuerzo","cena","snacks"];
+const MED_CINTA = [["cintura","Cintura"],["abdomenBajo","Abdomen bajo"],["caderas","Caderas"],["pecho","Pecho"],["biceps","Brazo"],["muslo","Muslo"],["pantorrilla","Pantorrilla"]];
+const COMP = [["grasaPct","Grasa (%)"],["musculoEsqKg","Músculo esquelético (kg)"]];
+let perfil = (function(){ const p = localStorage.getItem(CLAVE_PERFIL_ACTIVO); return PERFILES.includes(p) ? p : PERFILES[0]; })();
+let modo = localStorage.getItem("informeModoV1") || "semana"; if(!["dia","semana","mes","anio"].includes(modo)) modo = "semana";
+let D = null;
+
+function lj(k, d){ try{ const v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; }catch(e){ return d; } }
+function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function iso(d){ return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0"); }
+function hoyISO(){ return iso(new Date()); }
+function fd(f){ return new Date(f + "T00:00:00"); }
+function suma(f, n){ const d = fd(f); d.setDate(d.getDate() + n); return iso(d); }
+let ancla = hoyISO();
+const pl = (n, u, v) => n + " " + (n === 1 ? u : v);
+const nf = n => String(Math.round(n * 10) / 10).replace(".", ",");
+const ni = n => Math.round(n).toLocaleString("es-ES");
+const fh = m => { m = Math.round(m); return Math.floor(m / 60) + " h " + String(m % 60).padStart(2, "0") + " min"; };
+const prom = a => { a = a.filter(x => x != null && isFinite(x)); return a.length ? a.reduce((s, x) => s + x, 0) / a.length : null; };
+const norm = s => String(s == null ? "" : s).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+// ---------- Periodos ----------
+function rango(m, a){
+  const d = fd(a);
+  if(m === "dia") return { desde: a, hasta: a };
+  if(m === "semana"){ const lun = suma(a, -((d.getDay() + 6) % 7)); return { desde: lun, hasta: suma(lun, 6) }; }
+  if(m === "mes") return { desde: iso(new Date(d.getFullYear(), d.getMonth(), 1)), hasta: iso(new Date(d.getFullYear(), d.getMonth() + 1, 0)) };
+  return { desde: d.getFullYear() + "-01-01", hasta: d.getFullYear() + "-12-31" };
+}
+function mover(m, a, n){
+  const d = fd(a);
+  if(m === "dia") return suma(a, n);
+  if(m === "semana") return suma(a, 7 * n);
+  if(m === "mes") return iso(new Date(d.getFullYear(), d.getMonth() + n, 1));
+  return iso(new Date(d.getFullYear() + n, 0, 1));
+}
+function listaDias(desde, hasta){ const r = []; for(let f = desde; f <= hasta; f = suma(f, 1)) r.push(f); return r; }
+function etiquetaPeriodo(m, a){
+  const r = rango(m, a), d = fd(a), x = fd(r.desde), y = fd(r.hasta);
+  if(m === "dia") return DIAS_S[d.getDay()] + " " + d.getDate() + " " + MESES[d.getMonth()] + " " + d.getFullYear();
+  if(m === "semana") return x.getDate() + " " + MESES[x.getMonth()] + " – " + y.getDate() + " " + MESES[y.getMonth()] + " " + y.getFullYear();
+  if(m === "mes") return MESES[d.getMonth()].toUpperCase() + " " + d.getFullYear();
+  return String(d.getFullYear());
+}
+
+// ---------- Datos ----------
+function cargar(p){
+  return { hw: lj("huaweiDiaV1_" + p, {}) || {}, est: lj("dietaDiarioV3_" + p, { meta: null, dias: {} }) || { dias: {} }, med: lj("dietaMedidasV1_" + p, []) || [],
+    ej: lj("ejercicioHistorial_" + p, []) || [], serie: lj("huaweiSerieV1_" + p, {}) || {}, pru: lj("saludPruebasV1_" + p, []) || [], metas: lj("perfilMetasV1_" + p, {}) || {} };
+}
+function infoDia(f){
+  const h = D.hw[f] || {}, e = (D.est.dias || {})[f];
+  let kcal = 0, gr = 0, ch = 0, pr = 0, n = 0;
+  if(e && e.comidas) COMIDAS.forEach(id => (e.comidas[id] || []).forEach(it => { kcal += +it.kcal || 0; gr += +it.grasa || 0; ch += +it.carbh || 0; pr += +it.prot || 0; n++; }));
+  const ej = Array.isArray(D.ej) ? D.ej.filter(x => x && x.fecha === f) : [];
+  let min = 0, ek = 0; ej.forEach(x => { min += parseFloat(x.minutos) || 0; if(typeof x.kcal === "number" && x.kcal >= 0) ek += x.kcal; });
+  return { f, pasos: h.pasos > 0 ? h.pasos : null, sueno: h.sueno && h.sueno.min > 0 ? h.sueno : null, fc: h.fc && h.fc.med > 0 ? h.fc : null, spo2: h.spo2 && h.spo2.med > 0 ? h.spo2 : null,
+    kcal: n ? Math.round(kcal) : null, gr: n ? gr : null, ch: n ? ch : null, pr: n ? pr : null, nal: n, ejMin: min, ejN: ej.length, ejKcal: ek, quem: (e && +e.quemadas) || 0 };
+}
+// Cubos para los gráficos: días (semana/mes) o meses (año)
+function cubos(m, r){
+  if(m === "anio"){
+    return MESES.map((mm, i) => { const ini = r.desde.slice(0, 4) + "-" + String(i + 1).padStart(2, "0") + "-01", fin = iso(new Date(+r.desde.slice(0, 4), i + 1, 0));
+      return { etq: mm, dias: listaDias(ini, fin).map(infoDia) }; });
+  }
+  return listaDias(r.desde, r.hasta).map((f, i) => ({ etq: m === "semana" ? LET[i] : String(fd(f).getDate()), dias: [infoDia(f)] }));
+}
+const dd = (c, k) => c.dias.map(x => x[k]);
+function resumen(m, a){
+  const r = rango(m, a), dias = listaDias(r.desde, r.hasta).map(infoDia);
+  const g = k => dias.map(x => x[k]).filter(v => v != null);
+  const s = dias.filter(x => x.sueno);
+  return { r, dias, nDias: dias.length,
+    pasos: prom(g("pasos")), nPasos: g("pasos").length,
+    sMin: prom(s.map(x => x.sueno.min)), sDeep: prom(s.map(x => x.sueno.deep)), sLight: prom(s.map(x => x.sueno.light)), sRem: prom(s.map(x => x.sueno.rem)), sAwake: prom(s.map(x => x.sueno.awake)), nSueno: s.length,
+    fc: prom(dias.filter(x => x.fc).map(x => x.fc.med)), fcMin: Math.min(...dias.filter(x => x.fc).map(x => x.fc.min).concat([Infinity])), fcMax: Math.max(...dias.filter(x => x.fc).map(x => x.fc.max).concat([-Infinity])), nFc: dias.filter(x => x.fc).length,
+    spo2: prom(dias.filter(x => x.spo2).map(x => x.spo2.med)), spo2Min: Math.min(...dias.filter(x => x.spo2).map(x => x.spo2.min).concat([Infinity])), nSpo2: dias.filter(x => x.spo2).length,
+    kcal: prom(g("kcal")), nKcal: g("kcal").length, gr: prom(g("gr")), ch: prom(g("ch")), pr: prom(g("pr")),
+    ejMin: dias.reduce((t, x) => t + x.ejMin, 0), ejN: dias.reduce((t, x) => t + x.ejN, 0), ejDias: dias.filter(x => x.ejN > 0).length, ejKcal: dias.reduce((t, x) => t + x.ejKcal, 0) };
+}
+
+// ---------- Gráficos (SVG) ----------
+const COL_SUENO = ["#5b6bd6", "#8fb4ff", "#c08bf0", "#e0703f"];
+function barras(vals, etqs, o){
+  o = o || {}; const W = 320, H = 118, pl = 2, pb = 16, pt = 10, n = vals.length, bw = (W - pl * 2) / n, hh = H - pb - pt;
+  const tot = v => Array.isArray(v) ? v.reduce((s, x) => s + (x || 0), 0) : (v || 0);
+  const mx = Math.max(o.meta || 0, ...vals.map(tot), 1) * 1.08; let s = '<svg class="gr" viewBox="0 0 ' + W + ' ' + H + '" role="img">';
+  s += '<line x1="0" y1="' + (H - pb) + '" x2="' + W + '" y2="' + (H - pb) + '" stroke="var(--line)"/>';
+  vals.forEach((v, i) => {
+    const x = pl + i * bw + bw * 0.15, w = bw * 0.7; let y0 = H - pb;
+    if(Array.isArray(v)){ v.forEach((p, j) => { if(!p) return; const h = p / mx * hh; y0 -= h; s += '<rect x="' + x.toFixed(1) + '" y="' + y0.toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + h.toFixed(1) + '" fill="' + (o.cols || COL_SUENO)[j] + '"/>'; }); }
+    else if(v){ const h = v / mx * hh; s += '<rect x="' + x.toFixed(1) + '" y="' + (y0 - h).toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + h.toFixed(1) + '" rx="2" fill="' + (o.color || "var(--accent)") + '"/>'; }
+    if(n <= 12 || i % 5 === 0) s += '<text x="' + (pl + i * bw + bw / 2).toFixed(1) + '" y="' + (H - 4) + '" text-anchor="middle">' + esc(etqs[i]) + '</text>';
+  });
+  if(o.meta){ const y = H - pb - o.meta / mx * hh; s += '<line x1="0" y1="' + y.toFixed(1) + '" x2="' + W + '" y2="' + y.toFixed(1) + '" stroke="var(--warn)" stroke-dasharray="4 3"/><text x="' + (W - 2) + '" y="' + (y - 2).toFixed(1) + '" text-anchor="end">meta</text>'; }
+  s += '<text x="2" y="8">' + esc(o.fmt ? o.fmt(mx / 1.08) : Math.round(mx / 1.08)) + '</text></svg>';
+  return s;
+}
+function linea(pts, fmt){
+  if(pts.length < 2) return "";
+  const W = 320, H = 100, p = 14, xs = pts.map(q => fd(q.f).getTime()), ys = pts.map(q => q.y), x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys), ry = (y1 - y0) || 1, rx = (x1 - x0) || 1;
+  const X = t => p + (t - x0) / rx * (W - 2 * p), Y = v => H - p - (v - y0) / ry * (H - 2 * p);
+  let s = '<svg class="gr" viewBox="0 0 ' + W + ' ' + H + '" role="img"><polyline fill="none" stroke="var(--accent)" stroke-width="2" points="' + pts.map(q => X(fd(q.f).getTime()).toFixed(1) + "," + Y(q.y).toFixed(1)).join(" ") + '"/>';
+  pts.forEach(q => { s += '<circle cx="' + X(fd(q.f).getTime()).toFixed(1) + '" cy="' + Y(q.y).toFixed(1) + '" r="2.5" fill="var(--accent)"/>'; });
+  return s + '<text x="2" y="9">' + fmt(y1) + '</text><text x="2" y="' + (H - 3) + '">' + fmt(y0) + '</text></svg>';
+}
+function delta(cur, prev, op){
+  op = op || {}; if(cur == null || prev == null || !prev) return "";
+  const d = (cur - prev) / Math.abs(prev) * 100; if(Math.abs(d) < 1) return '<span class="sub">= que el periodo anterior</span>';
+  const bueno = op.masEsBueno == null ? null : (d > 0) === op.masEsBueno, cls = bueno == null ? "" : (bueno ? "d-ok" : "d-up");
+  return '<span class="' + cls + '">' + (d > 0 ? "▲" : "▼") + " " + Math.abs(Math.round(d)) + '%</span> <span class="sub">vs periodo anterior</span>';
+}
+function hace1(m, a){ const d = fd(a); return iso(new Date(d.getFullYear() - 1, d.getMonth(), Math.min(d.getDate(), 28))); }
+const nombrePeriodoAnt = { dia: "día anterior", semana: "semana anterior", mes: "mes anterior", anio: "año anterior" };
+
+// ---------- Series con hora (solo últimos 60 días, guardadas en este aparato) ----------
+const pad2 = n => String(n).padStart(2, "0");
+const hm = m => { m = ((Math.round(m) % 1440) + 1440) % 1440; return Math.floor(m / 60) + ":" + pad2(m % 60); };
+const SER = f => (D.serie && D.serie[f]) || null;
+const COL_FASE = ["#5b6bd6", "#8fb4ff", "#c08bf0", "#e0703f"], NOM_FASE = ["Profundo", "Ligero", "REM", "Despierto"];
+const AVISO_SERIE = '<div class="sub" style="margin-top:6px">Las curvas del día se guardan 60 días. Si falta este día, sincroniza en Huawei con «traer 90 días».</div>';
+
+// Curva del día: vals cada `paso` minutos desde las 0:00 (0 = sin dato)
+function curva(vals, o){
+  const W = 320, H = 130, pl = 2, pr = 28, pt = 8, pb = 16, n = vals.length, lo = o.lo, hi = o.hi;
+  const X = i => pl + i / (n - 1) * (W - pl - pr), Y = v => pt + (1 - (v - lo) / ((hi - lo) || 1)) * (H - pt - pb);
+  let s = '<svg class="gr" viewBox="0 0 ' + W + ' ' + H + '" role="img">', d = "", prev = -99;
+  [lo, Math.round((lo + hi) / 2), hi].forEach(t => { s += '<line x1="' + pl + '" y1="' + Y(t).toFixed(1) + '" x2="' + (W - pr) + '" y2="' + Y(t).toFixed(1) + '" stroke="var(--line)" stroke-dasharray="2 3"/><text x="' + (W - pr + 3) + '" y="' + (Y(t) + 3).toFixed(1) + '">' + Math.round(t) + '</text>'; });
+  vals.forEach((v, i) => { if(!(v > 0)) return; d += (i - prev > (o.gap || 6) ? "M" : "L") + X(i).toFixed(1) + "," + Y(v).toFixed(1) + " "; prev = i; });
+  s += '<path d="' + d + '" fill="none" stroke="' + (o.color || "#e0567a") + '" stroke-width="1.4" stroke-linejoin="round"/>';
+  [0, 6, 12, 18, 24].forEach(h => { s += '<text x="' + (pl + h / 24 * (W - pl - pr)).toFixed(1) + '" y="' + (H - 3) + '" text-anchor="' + (h === 0 ? "start" : h === 24 ? "end" : "middle") + '">' + h + ':00</text>'; });
+  return s + "</svg>";
+}
+function barrasSpo2(vals){
+  const W = 320, H = 118, pl = 2, pr = 28, pt = 8, pb = 16, n = vals.length, xs = vals.filter(v => v > 0);
+  if(!xs.length) return "";
+  const lo = Math.min(92, Math.floor(Math.min(...xs)) - 1), hi = 100, bw = Math.max(2, (W - pl - pr) / n * 0.8), Y = v => pt + (1 - (v - lo) / (hi - lo)) * (H - pt - pb);
+  let s = '<svg class="gr" viewBox="0 0 ' + W + ' ' + H + '" role="img">';
+  [lo, Math.round((lo + hi) / 2), hi].forEach(t => { s += '<line x1="' + pl + '" y1="' + Y(t).toFixed(1) + '" x2="' + (W - pr) + '" y2="' + Y(t).toFixed(1) + '" stroke="var(--line)" stroke-dasharray="2 3"/><text x="' + (W - pr + 3) + '" y="' + (Y(t) + 3).toFixed(1) + '">' + t + '%</text>'; });
+  vals.forEach((v, i) => { if(!(v > 0)) return; const x = pl + i / n * (W - pl - pr), col = v < 70 ? "#e5484d" : v < 90 ? "#f0a43a" : "#3fa34d"; s += '<rect x="' + x.toFixed(1) + '" y="' + Y(v).toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + (H - pb - Y(v)).toFixed(1) + '" fill="' + col + '"/>'; });
+  [0, 6, 12, 18, 24].forEach(h => { s += '<text x="' + (pl + h / 24 * (W - pl - pr)).toFixed(1) + '" y="' + (H - 3) + '" text-anchor="' + (h === 0 ? "start" : h === 24 ? "end" : "middle") + '">' + h + ':00</text>'; });
+  return s + "</svg>";
+}
+// Barras flotantes mín–máx con punto en la media (semana, mes, año)
+function rangos(items, etqs, o){
+  o = o || {}; const W = 320, H = 118, pl = 2, pb = 16, pt = 10, n = items.length, bw = (W - pl * 2) / n, ok = items.filter(Boolean);
+  if(!ok.length) return "";
+  const lo = Math.floor(Math.min(...ok.map(x => x.min)) - 2), hi = Math.ceil(Math.max(...ok.map(x => x.max)) + 2), Y = v => pt + (1 - (v - lo) / ((hi - lo) || 1)) * (H - pb - pt);
+  let s = '<svg class="gr" viewBox="0 0 ' + W + ' ' + H + '" role="img"><line x1="0" y1="' + (H - pb) + '" x2="' + W + '" y2="' + (H - pb) + '" stroke="var(--line)"/>';
+  items.forEach((x, i) => {
+    if(x){ const cx = pl + i * bw + bw / 2, w = Math.max(3, bw * 0.45); s += '<rect x="' + (cx - w / 2).toFixed(1) + '" y="' + Y(x.max).toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + Math.max(2, Y(x.min) - Y(x.max)).toFixed(1) + '" rx="2" fill="' + (o.color || "var(--accent)") + '" opacity="0.55"/>';
+      if(x.avg != null) s += '<circle cx="' + cx.toFixed(1) + '" cy="' + Y(x.avg).toFixed(1) + '" r="2.4" fill="' + (o.color || "var(--accent)") + '"/>'; }
+    if(n <= 12 || i % 5 === 0) s += '<text x="' + (pl + i * bw + bw / 2).toFixed(1) + '" y="' + (H - 4) + '" text-anchor="middle">' + esc(etqs[i]) + '</text>';
+  });
+  return s + '<text x="2" y="8">' + (o.fmt ? o.fmt(hi) : hi) + '</text><text x="2" y="' + (H - pb - 2) + '">' + (o.fmt ? o.fmt(lo) : lo) + '</text></svg>';
+}
+function lineaSueno(sg){
+  if(!sg || !sg.length) return "";
+  const W = 320, H = 100, pl = 2, pr = 2, a = Math.min(...sg.map(x => x[0])), b = Math.max(...sg.map(x => x[1])), X = m => pl + (m - a) / ((b - a) || 1) * (W - pl - pr), nivel = [66, 44, 22, 0];
+  let s = '<svg class="gr" viewBox="0 0 ' + W + ' ' + H + '" role="img">';
+  sg.forEach(x => { const w = Math.max(1, X(x[1]) - X(x[0])); s += '<rect x="' + X(x[0]).toFixed(1) + '" y="' + (4 + nivel[x[2]]) + '" width="' + w.toFixed(1) + '" height="18" rx="2" fill="' + COL_FASE[x[2]] + '"/>'; });
+  s += '<text x="' + pl + '" y="' + (H - 4) + '">' + hm(a) + '</text><text x="' + (W - pr) + '" y="' + (H - 4) + '" text-anchor="end">' + hm(b) + '</text>';
+  const mid = Math.round((a + b) / 2); s += '<text x="' + X(mid).toFixed(1) + '" y="' + (H - 4) + '" text-anchor="middle">' + hm(mid) + '</text>';
+  return s + "</svg>";
+}
+function vecesDespierto(sg){
+  if(!sg || !sg.length) return null;
+  const o = sg.slice().sort((x, y) => x[0] - y[0]), dorm = o.filter(x => x[2] !== 3); if(!dorm.length) return 0;
+  const ini = dorm[0][0], fin = dorm[dorm.length - 1][1];
+  return o.filter(x => x[2] === 3 && x[0] >= ini && x[1] <= fin).length;
+}
+// Referencias de Huawei Salud (las que aparecen en tus capturas): profundo 20–60 %, ligero < 55 %, REM 10–30 %, despierto 0–1 veces, horas 6–10 h
+function tablaFases(deep, light, rem, sg, totalMin){
+  const tot = deep + light + rem; if(!(tot > 0)) return "";
+  const f = (nom, v, mn, mx, ref) => { const p = v / tot * 100, est = mn != null && p < mn ? "Bajo" : mx != null && p > mx ? "Alto" : "Normal"; return "<tr><td>" + nom + "</td><td><b>" + Math.round(p) + " %</b></td><td>" + ref + '</td><td class="' + (est === "Normal" ? "d-ok" : "d-up") + '">' + est + "</td></tr>"; };
+  let r = f("Profundo", deep, 20, 60, "20–60 %") + f("Ligero", light, null, 55, "< 55 %") + f("REM", rem, 10, 30, "10–30 %");
+  const v = vecesDespierto(sg); if(v != null) r += "<tr><td>Veces despierto</td><td><b>" + v + "</b></td><td>0–1 veces</td><td class=\"" + (v <= 1 ? "d-ok" : "d-up") + '">' + (v <= 1 ? "Normal" : "Alto") + "</td></tr>";
+  const h = totalMin / 60; r += "<tr><td>Horas de sueño</td><td><b>" + nf(h) + " h</b></td><td>6–10 h</td><td class=\"" + (h >= 6 && h <= 10 ? "d-ok" : "d-up") + '">' + (h < 6 ? "Por debajo" : h > 10 ? "Por encima" : "Normal") + "</td></tr>";
+  return '<table class="t2"><tr><th>Fase</th><th>Tu dato</th><th>Referencia</th><th></th></tr>' + r + '</table><div class="pie">Referencias de Huawei Salud. «Veces despierto» se cuenta con los tramos de sueño y puede no coincidir con la cuenta de Huawei.</div>';
+}
+function reposoEst(vals){
+  const a = vals.filter(v => v > 0).sort((x, y) => x - y); if(a.length < 24) return null;
+  const k = Math.max(3, Math.floor(a.length * 0.1)); return a.slice(0, k).reduce((s, v) => s + v, 0) / k;
+}
+function listaActs(hist, max){
+  const l = hist.slice().sort((a, b) => (b.fecha || "").localeCompare(a.fecha || "")).slice(0, max);
+  return '<table class="t2"><tr><th>Día</th><th>Actividad</th><th>Min</th><th>kcal</th></tr>' + l.map(x => "<tr><td>" + esc(String(x.fecha).slice(8) + "/" + String(x.fecha).slice(5, 7)) + "</td><td>" + esc(x.nombre || x.tipo || "") + "</td><td>" + Math.round(x.minutos || 0) + "</td><td>" + (typeof x.kcal === "number" ? Math.round(x.kcal) : "–") + "</td></tr>").join("") + "</table>";
+}
+
+// ---------- Tarjetas ----------
+function tarjetaPasos(c, p, cub){
+  if(modo === "dia"){
+    const x = c.dias[0], se = SER(x.f);
+    if(!x.pasos) return '<div class="card"><h2>👣 Pasos</h2><div class="vacio">Sin datos de pasos este día.</div></div>';
+    let g = ""; if(se && se.ph) g = barras(se.ph.map(v => v || null), se.ph.map((v, i) => String(i)), { fmt: ni });
+    return '<div class="card"><h2>👣 Pasos</h2><div class="grande">' + ni(x.pasos) + '</div>' + (g ? '<div class="sub">Pasos por hora</div>' + g : "") + '</div>';
+  }
+  if(!c.nPasos) return '<div class="card"><h2>👣 Pasos</h2><div class="vacio">Sin datos de pasos en este periodo. Sincroniza en Huawei.</div></div>';
+  return '<div class="card"><h2>👣 Pasos</h2><div class="cab"><div><span class="grande">' + ni(c.pasos) + '</span> <span class="sub">de media al día · ' + pl(c.nPasos, "día", "días") + ' con dato</span></div><div>' + delta(c.pasos, p.pasos, { masEsBueno: true }) + '</div></div>' +
+    barras(cub.map(b => prom(dd(b, "pasos"))), cub.map(b => b.etq), { fmt: ni }) + '</div>';
+}
+function tarjetaSueno(c, p, cub){
+  const leg = '<div class="leyenda">' + NOM_FASE.map((n, i) => '<span><i style="background:' + COL_FASE[i] + '"></i>' + n + '</span>').join("") + '</div>';
+  if(modo === "dia"){
+    const x = c.dias[0].sueno, se = SER(c.dias[0].f);
+    if(!x) return '<div class="card"><h2>😴 Sueño</h2><div class="vacio">Sin datos de sueño esta noche.</div></div>';
+    let s = '<div class="card"><h2>😴 Sueño</h2><div class="cab"><div><span class="grande">' + fh(x.min) + '</span></div><div class="sub">' + esc(x.ini || "") + " – " + esc(x.fin || "") + '</div></div>';
+    if(se && se.sg) s += lineaSueno(se.sg) + leg; else s += '<div class="tiles"><div class="tile"><div class="t">Profundo</div><div class="v">' + fh(x.deep) + '</div></div><div class="tile"><div class="t">Ligero</div><div class="v">' + fh(x.light) + '</div></div><div class="tile"><div class="t">REM</div><div class="v">' + fh(x.rem) + '</div></div><div class="tile"><div class="t">Despierto</div><div class="v">' + fh(x.awake) + '</div></div></div>' + AVISO_SERIE;
+    return s + tablaFases(x.deep, x.light, x.rem, se && se.sg, x.min) + '</div>';
+  }
+  if(!c.nSueno) return '<div class="card"><h2>😴 Sueño</h2><div class="vacio">Sin datos de sueño en este periodo.</div></div>';
+  return '<div class="card"><h2>😴 Sueño</h2><div class="cab"><div><span class="grande">' + fh(c.sMin) + '</span> <span class="sub">de media · ' + pl(c.nSueno, "noche", "noches") + '</span></div><div>' + delta(c.sMin, p.sMin, { masEsBueno: true }) + '</div></div>' +
+    barras(cub.map(b => { const s = b.dias.filter(x => x.sueno); return s.length ? [prom(s.map(x => x.sueno.deep)), prom(s.map(x => x.sueno.light)), prom(s.map(x => x.sueno.rem)), prom(s.map(x => x.sueno.awake))] : null; }), cub.map(b => b.etq), { fmt: v => Math.round(v / 60) + " h", cols: COL_FASE }) + leg +
+    tablaFases(c.sDeep, c.sLight, c.sRem, null, c.sMin) + '</div>';
+}
+function tarjetaPulso(c, p, cub){
+  if(modo === "dia"){
+    const x = c.dias[0], se = SER(x.f), h = x.fc, o = x.spo2;
+    let s = '<div class="card"><h2>❤️ Pulso</h2>';
+    if(se && se.fc){
+      const v = se.fc, nz = v.filter(q => q > 0), ult = v.length - 1 - v.slice().reverse().findIndex(q => q > 0), rep = reposoEst(v), lo = Math.max(20, Math.min(...nz) - 10), hi = Math.max(...nz) + 10;
+      s += '<div class="cab"><div><span class="grande">' + Math.min(...nz) + "–" + Math.max(...nz) + '</span> <span class="sub">ppm · rango del día</span></div><div><b>' + Math.round(prom(nz)) + ' ppm</b> <span class="sub">media · última a las ' + hm(ult * 5) + '</span></div></div>' +
+        (rep ? '<div class="sub">Reposo (estimado): ' + Math.round(rep) + ' ppm. Huawei calcula el suyo de otra forma, puede diferir.</div>' : "") + curva(v, { lo, hi });
+    } else s += h ? '<div class="tiles"><div class="tile"><div class="t">Media</div><div class="v">' + Math.round(h.med) + ' ppm</div></div><div class="tile"><div class="t">Rango</div><div class="v">' + h.min + "–" + h.max + '</div></div></div>' + AVISO_SERIE : '<div class="vacio">Sin datos de pulso.</div>';
+    s += '</div><div class="card"><h2>🫁 Oxígeno (SpO₂)</h2>';
+    if(se && se.sp){
+      const v = se.sp, nz = v.filter(q => q > 0), ult = v.length - 1 - v.slice().reverse().findIndex(q => q > 0);
+      s += '<div class="cab"><div><span class="grande">' + nf(prom(nz)) + ' %</span> <span class="sub">media</span></div><div class="sub">Rango ' + Math.min(...nz) + " – " + Math.max(...nz) + ' % · última a las ' + hm(ult * 10) + ' (' + v[ult] + ' %)</div></div>' + barrasSpo2(v) +
+        '<div class="leyenda"><span><i style="background:#e5484d"></i>&lt; 70 %</span><span><i style="background:#f0a43a"></i>70–89 %</span><span><i style="background:#3fa34d"></i>≥ 90 %</span></div>';
+    } else s += o ? '<div class="tiles"><div class="tile"><div class="t">Media</div><div class="v">' + nf(o.med) + ' %</div></div><div class="tile"><div class="t">Mínimo</div><div class="v">' + nf(o.min) + ' %</div></div></div>' + AVISO_SERIE : '<div class="vacio">Sin datos de oxígeno.</div>';
+    return s + '</div>';
+  }
+  let s = '<div class="card"><h2>❤️ Pulso</h2>';
+  s += c.nFc ? '<div class="cab"><div><span class="grande">' + Math.round(c.fc) + '</span> <span class="sub">ppm de media · rango ' + c.fcMin + " – " + c.fcMax + '</span></div><div>' + delta(c.fc, p.fc) + '</div></div>' +
+    rangos(cub.map(b => { const f = b.dias.filter(x => x.fc); return f.length ? { min: Math.min(...f.map(x => x.fc.min)), max: Math.max(...f.map(x => x.fc.max)), avg: prom(f.map(x => x.fc.med)) } : null; }), cub.map(b => b.etq), { color: "#e0567a" }) + '<div class="sub">Cada barra va del mínimo al máximo; el punto es la media.</div>' : '<div class="vacio">Sin datos de pulso.</div>';
+  s += '</div><div class="card"><h2>🫁 Oxígeno (SpO₂)</h2>';
+  s += c.nSpo2 ? '<div class="cab"><div><span class="grande">' + nf(c.spo2) + ' %</span> <span class="sub">de media · mínimo ' + nf(c.spo2Min) + ' %</span></div></div>' +
+    rangos(cub.map(b => { const f = b.dias.filter(x => x.spo2); return f.length ? { min: Math.min(...f.map(x => x.spo2.min)), max: Math.max(...f.map(x => x.spo2.max != null ? x.spo2.max : x.spo2.med)), avg: prom(f.map(x => x.spo2.med)) } : null; }), cub.map(b => b.etq), { color: "var(--azul)", fmt: v => v + "%" }) : '<div class="vacio">Sin datos de oxígeno.</div>';
+  return s + '</div>';
+}
+function metaKcal(){ return D.est && D.est.meta > 0 ? D.est.meta : null; }
+const NOM_COMIDA = { desayuno: "Desayuno", almuerzo: "Almuerzo", cena: "Cena", snacks: "Snacks" };
+function tarjetaNutri(c, p, cub){
+  const meta = metaKcal();
+  if(modo === "dia"){
+    const x = c.dias[0]; if(!x.nal) return '<div class="card"><h2>🍽️ Nutrición</h2><div class="vacio">Sin comidas registradas este día.</div></div>';
+    const e = (D.est.dias || {})[x.f] || {}, filas = COMIDAS.map(id => { const l = (e.comidas && e.comidas[id]) || []; if(!l.length) return ""; const t = l.reduce((a, it) => ({ k: a.k + (+it.kcal || 0), p: a.p + (+it.prot || 0), c: a.c + (+it.carbh || 0), g: a.g + (+it.grasa || 0) }), { k: 0, p: 0, c: 0, g: 0 });
+      return "<tr><td>" + NOM_COMIDA[id] + "</td><td><b>" + ni(t.k) + "</b></td><td>" + Math.round(t.p) + "</td><td>" + Math.round(t.c) + "</td><td>" + Math.round(t.g) + "</td></tr>"; }).join("");
+    const pct = meta ? Math.min(100, x.kcal / meta * 100) : null;
+    return '<div class="card"><h2>🍽️ Nutrición</h2><div class="grande">' + ni(x.kcal) + ' kcal</div><div class="sub">' + (meta ? "Meta " + ni(meta) + " kcal · " : "") + 'ejercicio +' + ni(x.ejKcal + x.quem) + ' kcal</div>' +
+      (pct != null ? '<div style="height:8px;background:var(--panel-alt);border-radius:6px;overflow:hidden;margin:8px 0"><div style="height:100%;width:' + pct + '%;background:' + (x.kcal > meta ? "var(--warn)" : "var(--accent)") + '"></div></div>' : "") +
+      '<table class="t2"><tr><th>Comida</th><th>kcal</th><th>Prot (g)</th><th>Hidr (g)</th><th>Grasa (g)</th></tr>' + filas + '<tr style="font-weight:700"><td>Total</td><td>' + ni(x.kcal) + "</td><td>" + Math.round(x.pr) + "</td><td>" + Math.round(x.ch) + "</td><td>" + Math.round(x.gr) + '</td></tr></table></div>';
+  }
+  if(!c.nKcal) return '<div class="card"><h2>🍽️ Nutrición</h2><div class="vacio">Sin comidas registradas en este periodo.</div></div>';
+  const leg = '<div class="leyenda"><span><i style="background:#35c26a"></i>Proteínas</span><span><i style="background:#f0a43a"></i>Hidratos</span><span><i style="background:#e0567a"></i>Grasa</span></div>';
+  return '<div class="card"><h2>🍽️ Nutrición</h2><div class="cab"><div><span class="grande">' + ni(c.kcal) + '</span> <span class="sub">kcal de media · ' + c.nKcal + " de " + c.nDias + ' días registrados' + (meta ? " · meta " + ni(meta) : "") + '</span></div><div>' + delta(c.kcal, p.kcal) + '</div></div>' +
+    '<div class="sub">Media diaria: proteínas ' + Math.round(c.pr) + ' g · hidratos ' + Math.round(c.ch) + ' g · grasa ' + Math.round(c.gr) + ' g</div>' +
+    barras(cub.map(b => prom(dd(b, "kcal"))), cub.map(b => b.etq), { meta: meta, fmt: ni }) +
+    '<div class="sub" style="margin-top:8px">De dónde vienen las calorías (proteína y carbohidratos 4 kcal/g, grasa 9 kcal/g)</div>' +
+    barras(cub.map(b => { const pr = prom(dd(b, "pr")), ch = prom(dd(b, "ch")), gr = prom(dd(b, "gr")); return pr == null ? null : [pr * 4, ch * 4, gr * 9]; }), cub.map(b => b.etq), { fmt: ni, cols: ["#35c26a", "#f0a43a", "#e0567a"] }) + leg + '</div>';
+}
+function tarjetaPeso(c){
+  const med = (D.med || []).filter(x => x && x.fecha).sort((a, b) => a.fecha < b.fecha ? -1 : 1), pes = med.filter(x => x.peso > 0);
+  const en = med.filter(x => x.fecha >= c.r.desde && x.fecha <= c.r.hasta), enP = en.filter(x => x.peso > 0), ult = pes[pes.length - 1];
+  let s = '<div class="card"><h2>⚖️ Peso y medidas</h2>';
+  if(!ult) return s + '<div class="vacio">Aún no hay mediciones.</div></div>';
+  const ini = D.metas && D.metas.pesoInicial > 0 ? D.metas.pesoInicial : null;
+  s += '<div class="cab"><div><span class="grande">' + nf(ult.peso) + ' kg</span> <span class="sub">última medición (' + ult.fecha.slice(8) + "/" + ult.fecha.slice(5, 7) + ')</span></div>' + (ini ? '<div class="sub">' + (ult.peso - ini > 0 ? "+" : "") + nf(ult.peso - ini) + ' kg desde el inicio</div>' : "") + '</div>';
+  if(enP.length >= 2){ const a = enP[0], b = enP[enP.length - 1], d = b.peso - a.peso; s += '<div class="sub">En este periodo: ' + nf(a.peso) + ' → ' + nf(b.peso) + ' kg (' + (d > 0 ? "+" : "") + nf(d) + ' kg)</div>' + linea(enP.map(x => ({ f: x.fecha, y: x.peso })), v => nf(v)); }
+  else if(enP.length === 1) s += '<div class="sub">1 medición en este periodo.</div>';
+  else s += '<div class="sub">Sin mediciones de peso en este periodo.</div>';
+  const campos = COMP.concat(MED_CINTA.filter(x => x[0] !== "pantorrilla" || perfil === "Filha")), filas = [];
+  campos.forEach(([id, et]) => { const v = en.filter(x => x[id] > 0); if(!v.length) return; const a = v[0][id], b = v[v.length - 1][id]; filas.push('<tr><td>' + et + '</td><td>' + nf(a) + '</td><td>' + nf(b) + '</td><td>' + (v.length > 1 ? (b - a > 0 ? "+" : "") + nf(b - a) : "–") + '</td></tr>'); });
+  if(filas.length) s += '<table class="t2"><tr><th>Medida</th><th>Primera</th><th>Última</th><th>Cambio</th></tr>' + filas.join("") + '</table>';
+  return s + '</div>';
+}
+
+function tarjetaFitness(c, p, cub){
+  const hist = (D.ej || []).filter(x => x && x.fecha >= c.r.desde && x.fecha <= c.r.hasta), tipos = {};
+  hist.forEach(x => { const t = x.nombre || x.tipo || "otro"; tipos[t] = (tipos[t] || 0) + 1; });
+  if(!c.ejN) return '<div class="card"><h2>🏃 Fitness</h2><div class="vacio">Sin ejercicios registrados en este periodo.</div></div>';
+  const top = modo === "dia" ? "" : Object.keys(tipos).sort((a, b) => tipos[b] - tipos[a]).slice(0, 5).map(t => esc(t) + " ×" + tipos[t]).join(" · ");
+  return '<div class="card"><h2>🏃 Fitness</h2><div class="cab"><div><span class="grande">' + c.ejN + '</span> <span class="sub">' + (c.ejN === 1 ? "ejercicio" : "ejercicios") + " en " + pl(c.ejDias, "día", "días") + " · " + fh(c.ejMin) + (c.ejKcal ? " · " + ni(c.ejKcal) + " kcal" : "") + '</span></div><div>' + delta(c.ejMin, p.ejMin, { masEsBueno: true }) + '</div></div>' +
+    (top ? '<div class="sub">' + top + '</div>' : "") + (modo === "dia" ? "" : barras(cub.map(b => { const s = b.dias.reduce((t, x) => t + x.ejMin, 0); return s || null; }), cub.map(b => b.etq), { color: "#f0a43a", fmt: v => Math.round(v) + " min" })) +
+    (modo === "anio" ? "" : listaActs(hist, modo === "dia" ? 10 : 12)) + '</div>';
+}
+function ultimaAnalitica(){
+  const l = (D.pru || []).filter(x => x && x.tipo === "analitica" && Array.isArray(x.valores) && x.valores.length).sort((a, b) => (a.fecha || "").localeCompare(b.fecha || ""));
+  return l.length ? l[l.length - 1] : null;
+}
+function estadoVal(x){
+  if(x.v != null){ if(x.max != null && x.v > x.max) return "alto"; if(x.min != null && x.v < x.min) return "bajo"; if(x.min != null || x.max != null) return "ok"; }
+  return x.e === "alto" || x.e === "bajo" ? x.e : "ok";
+}
+function fueraDe(a){ return a ? a.valores.filter(x => ["alto", "bajo"].includes(estadoVal(x))) : []; }
+function tarjetaAnalitica(){
+  const a = ultimaAnalitica(); let s = '<div class="card"><h2>🩸 Última analítica leída</h2>';
+  if(!a) return s + '<div class="vacio">Aún no hay analíticas leídas con IA. Hazlo en Salud › Pruebas.</div></div>';
+  const f = fueraDe(a);
+  s += '<div class="sub">' + a.fecha.slice(8) + "/" + a.fecha.slice(5, 7) + "/" + a.fecha.slice(0, 4) + ' · ' + (f.length ? f.length + " valor" + (f.length === 1 ? "" : "es") + " fuera de rango" : "todo dentro de rango") + '</div>';
+  if(f.length) s += '<div class="chips">' + f.map(x => '<span class="chip ' + estadoVal(x) + '">' + esc(x.n) + " " + (estadoVal(x) === "alto" ? "↑" : "↓") + " " + (x.v != null ? nf(x.v) : esc(x.t)) + '</span>').join("") + '</div>';
+  return s + '<a class="ir" href="salud.html">Ver detalle en Salud ›</a></div>';
+}
+
+// ---------- Avisos (reglas locales, sin IA) ----------
+function avisos(c, p){
+  const r = [];
+  if(c.nSueno >= 3 && c.sMin < 360) r.push(["⚠️", "Duermes de media " + fh(c.sMin) + ": menos de 6 h."]);
+  if(c.nSueno >= 3){ const cortas = c.dias.filter(x => x.sueno && x.sueno.min < 300).length; if(cortas >= 2) r.push(["⚠️", cortas + " noches con menos de 5 h de sueño."]); }
+  if(c.nSpo2 >= 1 && isFinite(c.spo2Min) && c.spo2Min < 90) r.push(["⚠️", "El oxígeno bajó hasta " + nf(c.spo2Min) + " % en algún momento. Puede ser ruido del reloj; si se repite, coméntalo con tu médico."]);
+  if(c.nFc >= 3 && p.nFc >= 3 && p.fc && c.fc > p.fc * 1.1) r.push(["⚠️", "El pulso medio sube un " + Math.round((c.fc / p.fc - 1) * 100) + " % respecto al " + nombrePeriodoAnt[modo] + "."]);
+  if(c.nPasos >= 3 && p.nPasos >= 3 && p.pasos && c.pasos < p.pasos * 0.75) r.push(["ℹ️", "Caminas un " + Math.round((1 - c.pasos / p.pasos) * 100) + " % menos que el " + nombrePeriodoAnt[modo] + "."]);
+  const meta = metaKcal();
+  if(meta && modo !== "dia"){ const por = c.dias.filter(x => x.kcal != null && x.kcal > meta * 1.1).length; if(por >= 3) r.push(["ℹ️", por + " días comiendo más de un 10 % por encima de tu meta (" + ni(meta) + " kcal)."]); }
+  if(modo !== "dia"){ const hasta = c.r.hasta < hoyISO() ? c.r.hasta : hoyISO(), trans = listaDias(c.r.desde, hasta).length; if(trans >= 5 && c.nKcal < trans / 2) r.push(["ℹ️", "Solo hay comidas registradas en " + c.nKcal + " de " + trans + " días: las medias de nutrición pueden no ser fiables."]); }
+  const a1 = resumen(modo, hace1(modo, ancla));
+  if(c.nSueno >= 3 && a1.nSueno >= 3 && Math.abs(c.sMin - a1.sMin) >= 10) r.push(["ℹ️", "Duermes de media " + Math.round(Math.abs(c.sMin - a1.sMin)) + " min " + (c.sMin < a1.sMin ? "menos" : "más") + " que en el mismo periodo del año pasado."]);
+  if(c.nFc >= 3 && a1.nFc >= 3 && Math.abs(c.fc - a1.fc) >= 3) r.push(["ℹ️", "Tu pulso medio es " + Math.round(Math.abs(c.fc - a1.fc)) + " ppm " + (c.fc < a1.fc ? "más bajo" : "más alto") + " que en el mismo periodo del año pasado."]);
+  if(c.nPasos >= 3 && a1.nPasos >= 3 && a1.pasos && Math.abs(c.pasos / a1.pasos - 1) >= 0.15) r.push(["ℹ️", "Caminas un " + Math.round(Math.abs(c.pasos / a1.pasos - 1) * 100) + " % " + (c.pasos < a1.pasos ? "menos" : "más") + " que en el mismo periodo del año pasado."]);
+  const f = fueraDe(ultimaAnalitica()); if(f.length) r.push(["🩸", f.length + " valor" + (f.length === 1 ? "" : "es") + " fuera de rango en la última analítica (" + f.slice(0, 3).map(x => esc(x.n)).join(", ") + (f.length > 3 ? "…" : "") + ")."]);
+  return r;
+}
+function tarjetaAvisos(c, p){
+  const a = avisos(c, p);
+  return '<div class="card"><h2>🔔 Avisos del periodo</h2>' + (a.length ? '<ul class="al">' + a.map(x => "<li>" + x[0] + " " + x[1] + "</li>").join("") + "</ul>" : '<div class="vacio">Nada que destacar con los datos de este periodo.</div>') +
+    '<div class="pie">Reglas orientativas calculadas en tu móvil, no un diagnóstico.</div></div>';
+}
+
+// ---------- Conclusión con IA (solo cuando la pides; se guarda para no repetir llamadas) ----------
+function textoDatos(c, p){
+  const L = [], g = (n, v, u) => v != null && isFinite(v) ? n + ": " + nf(v) + (u || "") : null;
+  const par = (t, x) => [g("pasos/día", x.pasos), g("sueño medio (min)", x.sMin), x.sMin ? g("profundo (min)", x.sDeep) : null, g("pulso medio", x.fc), g("SpO2 media", x.spo2, " %"), isFinite(x.spo2Min) ? g("SpO2 mínima", x.spo2Min, " %") : null, g("kcal comidas/día", x.kcal), g("proteínas g/día", x.pr), g("hidratos g/día", x.ch), g("grasa g/día", x.gr), x.ejN ? "ejercicios: " + x.ejN + " (" + Math.round(x.ejMin) + " min)" : null].filter(Boolean);
+  L.push("PERIODO ACTUAL (" + modo + ", " + c.r.desde + " a " + c.r.hasta + ", días con dato: pasos " + c.nPasos + ", sueño " + c.nSueno + ", comidas " + c.nKcal + "): " + par("a", c).join("; "));
+  L.push("PERIODO ANTERIOR: " + (par("b", p).join("; ") || "sin datos"));
+  if(metaKcal()) L.push("Meta calórica: " + metaKcal() + " kcal");
+  const a = ultimaAnalitica(); if(a){ const f = fueraDe(a); L.push("Última analítica (" + a.fecha + "): " + (f.length ? "fuera de rango: " + f.slice(0, 12).map(x => x.n + " " + (x.v != null ? nf(x.v) : x.t) + " " + x.u + " (ref " + (x.r || "") + ")").join("; ") : "todo en rango")); }
+  const av = avisos(c, p).map(x => x[1]); if(av.length) L.push("Avisos locales: " + av.join(" | "));
+  return L.join("\n");
+}
+function claveIA(c){ return "informeIAV1_" + perfil + "|" + modo + "|" + c.r.desde; }
+function tarjetaIA(c){
+  const g = lj(claveIA(c), null);
+  return '<div class="card"><h2>🤖 Conclusión con IA</h2>' + (g && g.texto ? '<div class="ia">' + esc(g.texto) + '</div><div class="pie">Generada el ' + esc(g.fecha) + '. Orientación, no un diagnóstico.</div>' : '<div class="sub">Resume todo el periodo y propone mejoras concretas. Solo se envían cifras agregadas, sin tu nombre.</div>') +
+    '<div style="margin-top:10px"><button type="button" class="btn" id="btnIA">' + (g && g.texto ? "🔄 Volver a generar" : "Generar conclusión") + '</button> <span class="sub" id="estIA"></span></div></div>';
+}
+let iaOcupada = false;
+async function generarIA(){
+  if(iaOcupada) return;
+  if(!window.IAClaves || !IAClaves.tieneGemini()) return avisar("Falta la clave de Gemini. Ponla una vez en ⚙️ Ajustes.");
+  const c = resumen(modo, ancla), p = resumen(modo, mover(modo, ancla, -1)), btn = document.getElementById("btnIA"), est = document.getElementById("estIA");
+  if(!(c.nPasos + c.nSueno + c.nKcal + c.ejN + c.nFc)) return avisar("No hay datos en este periodo para analizar.");
+  iaOcupada = true; btn.disabled = true; est.textContent = "Pensando…";
+  const prompt = "Eres un asistente de bienestar para una persona adulta que sigue su salud en una app familiar. Con los datos agregados de abajo, escribe en español sencillo: 1) un resumen de 4 a 6 frases de cómo fue el periodo (sueño, actividad, alimentación, pulso, oxígeno), destacando lo que cambió respecto al periodo anterior; 2) tres sugerencias concretas y realistas para el próximo periodo; 3) si hay valores de analítica fuera de rango, recuerda que debe comentarlos con su médico, sin interpretarlos como diagnóstico. No diagnostiques, no indiques medicación ni suplementos y no inventes datos que no estén en el texto. Si faltan datos, dilo. Máximo 220 palabras, sin títulos ni listas largas.\n\nDATOS:\n" + textoDatos(c, p);
+  try{
+    const t = await IAClaves.geminiTexto(prompt);
+    if(!t) throw new Error("La IA no devolvió texto. Prueba otra vez.");
+    localStorage.setItem(claveIA(c), JSON.stringify({ texto: t.slice(0, 2500), fecha: hoyISO() }));
+    iaOcupada = false; pintar();
+  }catch(e){ iaOcupada = false; btn.disabled = false; est.textContent = "⚠️ " + (e && e.message ? e.message : "No se pudo generar."); }
+}
+
+// ---------- Pintar ----------
+function pintar(){
+  const r = rango(modo, ancla), c = resumen(modo, ancla), p = resumen(modo, mover(modo, ancla, -1)), cub = modo === "dia" ? [] : cubos(modo, r);
+  document.getElementById("etq").textContent = etiquetaPeriodo(modo, ancla);
+  document.getElementById("sig").disabled = r.hasta >= hoyISO();
+  document.querySelectorAll("#tabsPerfil button").forEach(b => b.classList.toggle("on", b.dataset.perfil === perfil));
+  document.querySelectorAll("#tabsModo button").forEach(b => b.classList.toggle("on", b.dataset.modo === modo));
+  document.getElementById("informe").innerHTML = tarjetaAvisos(c, p) + tarjetaIA(c) + tarjetaSueno(c, p, cub) + tarjetaPasos(c, p, cub) + tarjetaPulso(c, p, cub) + tarjetaNutri(c, p, cub) + tarjetaPeso(c) + tarjetaFitness(c, p, cub) + tarjetaAnalitica();
+  const b = document.getElementById("btnIA"); if(b) b.onclick = generarIA;
+}
+function refrescarDatos(){ D = cargar(perfil); pintar(); }
+document.querySelectorAll("#tabsPerfil button").forEach(b => b.onclick = () => { perfil = b.dataset.perfil; try{ localStorage.setItem(CLAVE_PERFIL_ACTIVO, perfil); }catch(e){} refrescarDatos(); });
+document.querySelectorAll("#tabsModo button").forEach(b => b.onclick = () => { modo = b.dataset.modo; try{ localStorage.setItem("informeModoV1", modo); }catch(e){} pintar(); });
+document.getElementById("ant").onclick = () => { ancla = mover(modo, ancla, -1); pintar(); };
+document.getElementById("sig").onclick = () => { const n = mover(modo, ancla, 1); if(rango(modo, n).desde <= hoyISO()) { ancla = n; pintar(); } };
+// La nube puede traer datos nuevos después de abrir la página
+window.addEventListener("storage", () => { if(!iaOcupada) refrescarDatos(); });
+document.addEventListener("visibilitychange", () => { if(!document.hidden && !iaOcupada) refrescarDatos(); });
+refrescarDatos();
+</script>
+</body>
+</html>

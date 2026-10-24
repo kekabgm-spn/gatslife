@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="tema.js"></script>
+<title>Ajustes y claves</title><link rel="icon" type="image/png" href="icono.png">
+<style>
+:root{--bg:#10151f;--card:#1b2330;--line:#2a3242;--ink:#e8ecf2;--muted:#8a94a3;--accent:#35c26a;color-scheme:dark}
+:root[data-theme="light"]{--bg:#f4f6f8;--card:#fff;--line:#d7dce3;--ink:#1b2330;--muted:#5d6675;--accent:#1f9d52;color-scheme:light}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;padding:18px}
+main{max-width:560px;margin:0 auto}a.v{color:var(--accent);text-decoration:none}
+.c{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:12px 0}
+label{display:block;margin:10px 0 4px;font-size:.88rem}input{width:100%;padding:10px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--ink);font-size:1rem}
+button{margin-top:10px;padding:11px 16px;border-radius:10px;border:1px solid var(--accent);background:transparent;color:var(--accent);font-weight:700;font-size:.95rem}
+.n{color:var(--muted);font-size:.8rem;margin:6px 0 0}.ok{color:var(--accent);font-size:.85rem;margin-left:8px}
+</style>
+<script>(function(){var o=Storage.prototype.setItem;window.__nubeRaw=function(k,v){o.call(localStorage,k,v)};window.__nubeSucias={};window.__nubeOn=false;Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localStorage&&window.__nubeOn){window.__nubeSucias[k]=1;window.dispatchEvent(new Event("nube-cambio"))}};setTimeout(function(){if(!window.__nubeVivo){var d=document.createElement("div");d.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99998;background:#7a1f1f;color:#fff;padding:10px 14px;font:14px system-ui,sans-serif;text-align:center";d.textContent="⚠️ La entrada con Google no cargó: tus datos NO se están guardando en la nube. Recarga la página; si sigue igual, avísame.";(document.body||document.documentElement).appendChild(d)}},6000);})();</script>
+</head><body><main>
+<a class="v" href="index.html">← Volver</a><h1>⚙️ Ajustes y claves</h1>
+<h2 style="font-size:1.05rem;margin:16px 0 0">Perfil</h2><div class="c" id="tabsP" style="display:flex;gap:8px"><button id="pMamy" onclick="selP('Mamy')" style="flex:1;margin:0">Mamy</button><button id="pFilha" onclick="selP('Filha')" style="flex:1;margin:0">Filha</button></div>
+<div class="c"><b>👤 Mi perfil y metas diarias</b><button type="button" class="ayu" data-t="Es lo mismo que «Meta» y «Reparto de macros» de Nutrición: si lo cambias aquí o allí, se ve igual en los dos sitios. Sirven de meta en Nutrición y para calcular las calorías quemadas en Fitness." title="Es lo mismo que «Meta» y «Reparto de macros» de Nutrición: si lo cambias aquí o allí, se ve igual en los dos sitios. Sirven de meta en Nutrición y para calcular las calorías quemadas en Fitness." aria-label="Más información" aria-expanded="false">i</button>
+<label>Altura (en cm, por ejemplo 166)</label><input id="m_altura" type="number" inputmode="decimal">
+<label>Peso inicial (kg)</label><input id="m_peso" type="number" inputmode="decimal" step="0.1">
+<label>Calorías al día (kcal)</label><input id="m_kcal" type="number" inputmode="numeric">
+<label>Proteínas (g)</label><input id="m_prot" type="number" inputmode="numeric">
+<label>Carbohidratos (g)</label><input id="m_carb" type="number" inputmode="numeric">
+<label>Grasas (g)</label><input id="m_grasa" type="number" inputmode="numeric">
+<p class="n" id="m_aviso"></p>
+<button onclick="gPerfil()">Guardar perfil</button><span class="ok" id="m_ok"></span></div>
+<h2 style="font-size:1.05rem;margin:22px 0 0">Copia de seguridad<button type="button" class="ayu" data-t="Una sola copia con todo: tus datos de este aparato y lo compartido (Casa, Calendario, Invitaciones) tal como está ahora en la nube. Las claves de API no se incluyen. Al restaurar, antes se descarga sola una copia de lo que hay ahora, y lo restaurado se sube a la nube." title="Una sola copia con todo: tus datos de este aparato y lo compartido (Casa, Calendario, Invitaciones) tal como está ahora en la nube. Las claves de API no se incluyen. Al restaurar, antes se descarga sola una copia de lo que hay ahora, y lo restaurado se sube a la nube." aria-label="Más información" aria-expanded="false">i</button></h2>
+<div class="c"><p class="n" id="cp_estado" style="margin-top:0"></p>
+<button id="cp_bajar" onclick="exportarCopia()">⬇️ Descargar copia</button><button id="cp_subir" onclick="document.getElementById('fCopia').click()" style="margin-left:8px">⬆️ Restaurar copia</button>
+<input type="file" id="fCopia" accept="application/json,.json" style="display:none" onchange="importarCopia(this.files[0])"><p class="n" id="cp_msg"></p>
+<p class="n">Restaurar necesita conexión, porque lo restaurado también se sube a la nube. También acepta los archivos de copia antiguos de Calendario y de Ejercicios.</p></div>
+<h2 style="font-size:1.05rem;margin:22px 0 0">Reiniciar mis datos</h2>
+<div class="c"><p class="n" style="margin-top:0">Borra tus datos personales (comidas, ejercicio, salud, metas e historial) de este aparato y de la nube. No toca Casa, Calendario compartido ni Invitaciones, ni las claves. Tus otros aparatos se vaciarán solos la próxima vez que abras la app con conexión.</p>
+<button id="rBtn" type="button" onclick="rAbrir()" style="border-color:#e5484d;color:#e5484d">🗑️ Reiniciar mis datos…</button>
+<div id="rCaja" style="display:none"><p class="n">Antes de borrar se descargará una copia de seguridad en este aparato. Hace falta conexión a internet.</p>
+<label for="rTxt">Escribe REINICIAR para confirmar</label><input id="rTxt" type="text" autocomplete="off" autocapitalize="characters">
+<button id="rGo" type="button" onclick="rEjecutar()" disabled style="border-color:#e5484d;color:#e5484d">Borrar mis datos</button><button type="button" onclick="rCerrar()" style="margin-left:8px">Cancelar</button>
+<p class="n" id="rMsg"></p></div></div>
+<h2 style="font-size:1.05rem;margin:22px 0 0">Datos compartidos (Casa, Calendario, Invitaciones)</h2>
+<div class="c"><p class="n" style="margin-top:0">Casa, Calendario e Invitaciones son de las dos. Aquí se descarga una copia de ellos y se pasan al formato nuevo, en el que cada tarea y cada evento se guarda por separado y dos cambios a la vez no se pisan. Solo hace falta migrar una vez, desde un solo aparato.</p>
+<p class="n" id="sh_estado">Comprobando…</p>
+<button id="sh_copia" type="button" onclick="shCopia()" disabled>⬇️ 1. Descargar copia de lo compartido</button>
+<button id="sh_migrar" type="button" onclick="shMigrar()" disabled style="margin-left:8px">🔄 2. Migrar al formato nuevo</button>
+<p class="n" id="sh_msg"></p></div>
+<h2 style="font-size:1.05rem;margin:22px 0 0">Claves<button type="button" class="ayu" data-t="Las claves se guardan solo en este aparato. Tendrás que ponerlas una vez en cada móvil u ordenador. Nunca las compartas ni las pegues en el código." title="Las claves se guardan solo en este aparato. Tendrás que ponerlas una vez en cada móvil u ordenador. Nunca las compartas ni las pegues en el código." aria-label="Más información" aria-expanded="false">i</button></h2><p class="n" id="notaClaves"></p>
+<div id="lista"></div>
+<script src="claves.js"></script>
+<script>
+const CLAVES=[
+ ["Gemini 1 (leer fotos y recetas con IA)","dietaGeminiKey","AIza..."],
+ ["Gemini 2 (respaldo: solo se usa si la 1 es inválida o fue revocada)","dietaGeminiKey2","AIza..."],
+ ["Modelo de Gemini","dietaGeminiModelo","gemini-3.1-flash-lite"],
+ ["Tope diario de llamadas a la IA en este aparato","iaTopeDia","40"],
+ ["Spoonacular (recetas reales, opcional)","dietaSpoonacularKey",""],
+ ["YouTube 1 (videos en Fitness)","fam_ex_yt_key",""],
+ ["YouTube 2 (respaldo: solo si la 1 es inválida o fue revocada)","fam_ex_yt_key2",""]];
+document.getElementById("lista").innerHTML=CLAVES.map((c,i)=>`<div class="c"><label for="k${i}">${c[0]}</label><input id="k${i}" type="${(i==2||i==3)?'text':'password'}" placeholder="${c[2]}" autocomplete="off"><button onclick="g(${i})">Guardar</button><span class="ok" id="o${i}"></span><button onclick="b(${i})" style="border-color:var(--line);color:var(--muted)">Borrar</button></div>`).join("");
+CLAVES.forEach((c,i)=>{document.getElementById("k"+i).value=localStorage.getItem(c[1])||""});
+if(window.IAClaves && IAClaves.proxyActivo()){ [0,1,4,5,6].forEach(i=>{document.getElementById("k"+i).closest(".c").style.display="none";}); document.getElementById("notaClaves").innerHTML="🔒 Las claves de Gemini, YouTube y Spoonacular están guardadas en tu servidor, no en este aparato. No tienes que ponerlas aquí. Solo quedan el modelo y el tope diario."; }
+function g(i){const v=document.getElementById("k"+i).value.trim();if(v)localStorage.setItem(CLAVES[i][1],v);document.getElementById("o"+i).textContent=v?"✓ Guardada":"";}
+function b(i){localStorage.removeItem(CLAVES[i][1]);document.getElementById("k"+i).value="";document.getElementById("o"+i).textContent="Borrada";}
+
+let PF = localStorage.getItem("dietaPerfilActivo")==="Filha" ? "Filha" : "Mamy";
+const J=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch(e){return d}};
+function selP(p){PF=p;localStorage.setItem("dietaPerfilActivo",p);cargaP();}
+function cargaP(){
+  ["Mamy","Filha"].forEach(x=>document.getElementById("p"+x).style.background=x===PF?"rgba(53,194,106,.18)":"transparent");
+  const m=J("perfilMetasV1_"+PF,{}), pd=J("dietaPerfilDatosV1_"+PF,{});
+  const dd=J("dietaDiarioV3_"+PF,{}), rp=J("dietaRepartoV1_"+PF,null), kc=dd.meta||m.kcal||"";
+  m_altura.value=m.altura||pd.altura||""; m_peso.value=m.pesoInicial||""; m_kcal.value=kc;
+  const gr=(pct,k)=>(kc&&pct)?Math.round(kc*pct/100/k):"";
+  m_prot.value=rp?gr(rp.prot,4):(m.prot||""); m_carb.value=rp?gr(rp.carb,4):(m.carb||""); m_grasa.value=rp?gr(rp.grasa,9):(m.grasa||"");
+  m_ok.textContent=""; avisoM(); grafico();
+  ["altura","peso","kcal","prot","carb","grasa"].forEach(i=>document.getElementById("m_"+i).oninput=avisoM);
+}
+function avisoM(){const k=+m_kcal.value,s=(+m_prot.value)*4+(+m_carb.value)*4+(+m_grasa.value)*9;
+  m_aviso.textContent=(k&&s)?`Tus gramos suman ${Math.round(s)} kcal`+(Math.abs(s-k)>k*0.05?` (no coincide con las ${k} kcal; se usará la meta de kcal y el reparto proporcional de tus gramos).`:" ✓"):"";}
+function gPerfil(){
+  const n=x=>{const v=parseFloat(String(document.getElementById("m_"+x).value).replace(",","."));return v>0?v:null};
+  let alt=n("altura"); if(alt&&alt<3){alt=Math.round(alt*100); m_altura.value=alt;}
+  const m={altura:alt,pesoInicial:n("peso"),kcal:n("kcal"),prot:n("prot"),carb:n("carb"),grasa:n("grasa")};
+  localStorage.setItem("perfilMetasV1_"+PF,JSON.stringify(m));
+  const pd=J("dietaPerfilDatosV1_"+PF,{}); if(m.altura){pd.altura=m.altura;localStorage.setItem("dietaPerfilDatosV1_"+PF,JSON.stringify(pd));}
+  const ck="dietaDiarioV3_"+PF, e=J(ck,{meta:null,dias:{}}); if(!e.dias)e.dias={}; if(m.kcal){e.meta=Math.round(m.kcal);localStorage.setItem(ck,JSON.stringify(e));}
+  const tot=(m.prot||0)*4+(m.carb||0)*4+(m.grasa||0)*9;
+  if(tot>0){let p=Math.round((m.prot||0)*4/tot*100),c=Math.round((m.carb||0)*4/tot*100);localStorage.setItem("dietaRepartoV1_"+PF,JSON.stringify({prot:p,carb:c,grasa:100-p-c}));}
+  m_ok.textContent="✓ Guardado"; grafico();
+}
+function grafico(){ if(!document.getElementById("grafPeso")) return;
+  const m=J("perfilMetasV1_"+PF,{}), med=J("dietaMedidasV1_"+PF,[]).filter(x=>x&&x.peso>0&&x.fecha).sort((a,b)=>a.fecha<b.fecha?-1:1);
+  let pts=med.map(x=>[x.fecha,x.peso]); const meta=m.metaPeso;
+  if(m.pesoInicial&&!pts.length)pts=[["Inicio",m.pesoInicial]]; else if(m.pesoInicial)pts.unshift(["Inicio",m.pesoInicial]);
+  const g=document.getElementById("grafPeso");
+  if(!pts.length){g.innerHTML='<p class="n">Aún no hay peso cargado.</p>';return;}
+  const W=340,H=170,pl=34,pr=10,pt=12,pb=26,vs=pts.map(p=>p[1]),mn=Math.min(...vs)-1,mx=Math.max(...vs)+1;
+  const X=i=>pl+(pts.length===1?(W-pl-pr)/2:i*(W-pl-pr)/(pts.length-1)),Y=v=>pt+(mx-v)/(mx-mn)*(H-pt-pb);
+  let s=`<svg viewBox="0 0 ${W} ${H}" style="width:100%">`;
+  for(let i=0;i<=3;i++){const v=mn+(mx-mn)*i/3,y=Y(v);s+=`<line x1="${pl}" x2="${W-pr}" y1="${y}" y2="${y}" stroke="var(--line)"/><text x="${pl-4}" y="${y+3}" text-anchor="end" font-size="9" fill="var(--muted)">${v.toFixed(1)}</text>`;}
+  s+=`<polyline fill="none" stroke="var(--accent)" stroke-width="2" points="${pts.map((p,i)=>X(i)+","+Y(p[1])).join(" ")}"/>`;
+  pts.forEach((p,i)=>{s+=`<circle cx="${X(i)}" cy="${Y(p[1])}" r="3.5" fill="var(--accent)"><title>${p[0]}: ${p[1]} kg</title></circle>`;});
+  s+=`<text x="${pl}" y="${H-8}" font-size="9" fill="var(--muted)">${pts[0][0]}</text><text x="${W-pr}" y="${H-8}" text-anchor="end" font-size="9" fill="var(--muted)">${pts[pts.length-1][0]}</text></svg>`;
+  const d=pts[pts.length-1][1]-pts[0][1];
+  g.innerHTML=s+`<p class="n">Último: ${pts[pts.length-1][1]} kg · cambio desde el inicio: ${d>0?"+":""}${d.toFixed(1)} kg</p>`;
+}
+cargaP();
+</script></main><script>
+const SECRETAS=["dietaGeminiKey","dietaGeminiKey2","dietaSpoonacularKey","fam_ex_yt_key","fam_ex_yt_key2"];
+// Datos que son del aparato y no se guardan en la copia ni se restauran (perfil activo, marcas de control).
+const NO_COPIAR=["dietaPerfilActivo","copiaUltimaV1","migracionNombresV1"];
+const esControl=k=>k.indexOf("nube")===0||SECRETAS.indexOf(k)>=0||NO_COPIAR.indexOf(k)>=0;
+const hoyL=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
+const conTope=(p,ms)=>Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej(new Error("tiempo agotado")),ms))]);
+const errTxt=e=>e&&e.message?e.message:String(e);
+let copiaOcupada=false;
+function ocupar(si){copiaOcupada=si;["cp_bajar","cp_subir"].forEach(i=>{const b=document.getElementById(i);if(b)b.disabled=si;});}
+
+// ---------- Aviso de 30 días sin copia (se guarda en este aparato) ----------
+function diasSinCopia(){
+  const u=localStorage.getItem("copiaUltimaV1");if(!/^\d{4}-\d{2}-\d{2}$/.test(u||""))return null;
+  return Math.max(0,Math.round((new Date(hoyL()+"T00:00:00")-new Date(u+"T00:00:00"))/86400000));
+}
+function pintarEstadoCopia(){
+  const el=document.getElementById("cp_estado"),d=diasSinCopia();
+  if(d===null){el.textContent="⚠️ No hay registro de ninguna copia descargada desde este aparato.";el.style.color="#c98a00";}
+  else if(d>=30){el.textContent="⚠️ Hace "+d+" días que no descargas una copia en este aparato.";el.style.color="#c98a00";}
+  else{el.textContent="Última copia descargada en este aparato: "+(d===0?"hoy":"hace "+d+(d===1?" día":" días"))+".";el.style.color="";}
+}
+
+// ---------- Descargar ----------
+function compartidosListos(){return navigator.onLine&&!!(window.Familia&&window.Familia.listo&&window.Familia.leerCompartidos);}
+async function armarCopia(){
+  const datos={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(!esControl(k))datos[k]=localStorage.getItem(k);}
+  let compartidos=null,nota="";
+  if(compartidosListos()){
+    try{compartidos=await conTope(window.Familia.leerCompartidos(),12000);}catch(e){nota="no se pudo leer lo compartido ("+errTxt(e)+")";}
+  }else nota="no hay conexión o la sincronización no está activa, así que la copia no incluye lo compartido";
+  return {copia:{app:"nuestra-app",version:2,fecha:new Date().toISOString(),perfil:localStorage.getItem("dietaPerfilActivo"),datos,compartidos},nota};
+}
+function bajar(obj,nombre){
+  const blob=new Blob([JSON.stringify(obj,null,1)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=nombre;
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+}
+async function exportarCopia(op){
+  op=op||{};const msg=document.getElementById("cp_msg"),propio=!copiaOcupada;
+  if(propio)ocupar(true);
+  msg.textContent="Preparando copia…";
+  try{
+    const r=await armarCopia(),c=r.copia;
+    bajar(c,(op.prefijo||"nuestra-app-copia-")+hoyL()+".json");
+    if(!op.noMarcar){localStorage.setItem("copiaUltimaV1",hoyL());pintarEstadoCopia();}
+    const cs=c.compartidos?" + Casa "+c.compartidos.casa.length+", Calendario "+c.compartidos.calendario.length+", Invitaciones "+c.compartidos.invitaciones.length:"";
+    msg.textContent="✓ Copia descargada ("+Object.keys(c.datos).length+" datos de este aparato"+cs+")."+(r.nota?" ⚠️ "+r.nota+".":"");
+    return c;
+  }catch(e){msg.textContent="⚠️ No se pudo preparar la copia: "+errTxt(e);throw e;}
+  finally{if(propio)ocupar(false);}
+}
+
+// ---------- Restaurar ----------
+function nombresNuevos(t){return String(t).split('"Kakin"').join('"Mamy"').split('"Hija"').join('"Filha"').split('_Kakin"').join('_Mamy"').split('_Hija"').join('_Filha"');}
+const DE_CONTENIDO=["calEventosV1","calEspecialistasV2","calVistaV1","tareasKokuk_v1","tareasFiltros_v1"];
+// Entiende la copia nueva y también los archivos antiguos de Calendario y de Ejercicios.
+function leerArchivoCopia(j,yo){
+  if(j&&j.app==="nuestra-app"&&j.datos&&typeof j.datos==="object")
+    return {fecha:j.fecha,datos:j.datos,compartidos:(j.compartidos&&typeof j.compartidos==="object")?j.compartidos:null};
+  if(j&&j.app==="calendario"&&Array.isArray(j.eventos)){
+    const ev=j.eventos.filter(e=>e&&typeof e.titulo==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(e.fecha||""))
+      .map((e,i)=>Object.assign({hechos:[],omitir:[],repite:"no",para:"Ambas"},e,{id:e.id||("r"+Date.now().toString(36)+i)}));
+    const datos={};if(Array.isArray(j.especialistas))datos.calEspecialistasV2=JSON.stringify(j.especialistas);
+    return {fecha:j.exportado,datos,compartidos:{calendario:ev}};
+  }
+  if(j&&Array.isArray(j.rutina)&&j.perfil){
+    const pj=j.perfil==="Kakin"?"Mamy":j.perfil==="Hija"?"Filha":j.perfil;
+    if(pj!==yo)throw new Error("Esta copia de Ejercicios es del perfil "+pj+" y tú eres "+yo+". No se cambió nada.");
+    const datos={};datos["fam_ex_rutina_"+yo]=JSON.stringify(j.rutina);
+    if(Array.isArray(j.videosGuardados))datos["fam_ex_videos_"+yo]=JSON.stringify(j.videosGuardados);
+    if(Array.isArray(j.favoritos))datos["fam_ex_favoritos_"+yo]=JSON.stringify(j.favoritos);
+    return {fecha:j.generado,datos,compartidos:null};
+  }
+  throw new Error("Este archivo no es una copia de Nuestra App.");
+}
+function importarCopia(f){
+  const msg=document.getElementById("cp_msg"),inp=document.getElementById("fCopia");
+  if(!f)return;
+  if(copiaOcupada){msg.textContent="Espera a que termine lo anterior.";inp.value="";return;}
+  const r=new FileReader();
+  r.onerror=()=>{msg.textContent="⚠️ No se pudo leer el archivo.";inp.value="";};
+  r.onload=async()=>{
+    ocupar(true);
+    try{
+      const yo=window.Familia&&window.Familia.perfil;
+      if(!navigator.onLine||!yo||!window.Familia.listo||!window.Familia.restaurarCompartidos||!window.__nubeEnviar)
+        throw new Error("Hace falta conexión y la sincronización activa para restaurar (lo restaurado se sube a la nube). Espera unos segundos o recarga la página. No se cambió nada.");
+      let j;try{j=JSON.parse(r.result);}catch(e){throw new Error("Este archivo no es una copia de Nuestra App.");}
+      const c=leerArchivoCopia(j,yo),otro=yo==="Mamy"?"Filha":"Mamy",claves={};let saltadas=0;
+      Object.keys(c.datos).forEach(k0=>{
+        if(esControl(k0))return;
+        let k=k0,v=String(c.datos[k0]);const m=k0.match(/^(.*)_(Kakin|Hija)$/);
+        if(m){k=m[1]+"_"+(m[2]==="Kakin"?"Mamy":"Filha");v=nombresNuevos(v);}
+        else if(DE_CONTENIDO.indexOf(k0)>=0)v=nombresNuevos(v);
+        if(k.endsWith("_"+otro)){saltadas++;return;}
+        claves[k]=v;
+      });
+      const nk=Object.keys(claves).length,cs=c.compartidos||{},lin=[];
+      if(nk)lin.push("• "+nk+" datos de este aparato (se reemplazan los que tengan el mismo nombre; no se borra nada más)"+(saltadas?". "+saltadas+" del otro perfil no se restauran":""));
+      const nom={casa:"tareas de Casa",calendario:"eventos del calendario",invitaciones:"invitaciones"};
+      ["casa","calendario","invitaciones"].forEach(n=>{if(Array.isArray(cs[n]))lin.push("• "+cs[n].length+" "+nom[n]+" COMPARTIDOS: reemplazan lo que hay ahora en la nube, para las dos");});
+      if(!c.compartidos)lin.push("• Esta copia no trae lo compartido (Casa, Calendario, Invitaciones): eso se queda como está.");
+      if(!nk&&!c.compartidos)throw new Error("La copia no tiene nada que restaurar para tu perfil. No se cambió nada.");
+      if(!(await confirmar("Restaurar la copia del "+String(c.fecha||"").slice(0,10)+":\n"+lin.join("\n")+"\n\nAntes se descargará sola una copia de lo que hay ahora, por si te arrepientes. ¿Continuar?"))){msg.textContent="Cancelado. No se cambió nada.";return;}
+      msg.textContent="Descargando una copia de lo que hay ahora…";
+      const pre=await exportarCopia({prefijo:"nuestra-app-antes-de-restaurar-",noMarcar:true});
+      if(c.compartidos&&!pre.compartidos)throw new Error("No se pudo guardar antes una copia de lo compartido, así que no se restauró nada.");
+      msg.textContent="Restaurando…";
+      Object.keys(claves).forEach(k=>localStorage.setItem(k,claves[k]));
+      const subido=nk?await window.__nubeEnviar():true;
+      let txt="✓ Restaurados "+nk+" datos de este aparato"+(subido?" y subidos a la nube":". ⚠️ Quedaron pendientes de subir: se subirán solos cuando haya conexión")+".";
+      if(c.compartidos){
+        try{
+          const rs=await window.Familia.restaurarCompartidos(c.compartidos),pz=[];
+          Object.keys(rs).forEach(n=>pz.push(rs[n].omitida?nom[n]+": omitidas (la copia las traía vacías y en la nube hay "+rs[n].hayAhora+")":nom[n]+": "+rs[n].despues));
+          txt+=" Compartido → "+pz.join("; ")+".";
+        }catch(e){txt+=" ⚠️ Lo compartido NO se restauró del todo: "+errTxt(e)+" Tienes la copia previa descargada.";}
+      }
+      msg.textContent=txt+" Una copia previa quedó descargada como «nuestra-app-antes-de-restaurar».";
+      cargaP();shRefrescar();
+    }catch(e){msg.textContent="⚠️ "+errTxt(e);}
+    finally{ocupar(false);inp.value="";}
+  };
+  r.readAsText(f);
+}
+function elegirPerfil(p){PF=p;var t=document.getElementById("tabsP");if(t)t.style.display="none";cargaP();}
+function rAbrir(){document.getElementById("rCaja").style.display="block";document.getElementById("rTxt").value="";document.getElementById("rGo").disabled=true;document.getElementById("rMsg").textContent="";}
+function rCerrar(){document.getElementById("rCaja").style.display="none";}
+document.getElementById("rTxt").oninput=function(e){document.getElementById("rGo").disabled=e.target.value.trim().toUpperCase()!=="REINICIAR";};
+async function rEjecutar(){
+  const msg=document.getElementById("rMsg"),go=document.getElementById("rGo");
+  if(!window.__nubeReiniciar){msg.textContent="⚠️ La sincronización no está activa en esta pantalla. Recarga la página e inténtalo de nuevo. No se borró nada.";return;}
+  if(!navigator.onLine){msg.textContent="⚠️ Hace falta conexión a internet. No se borró nada.";return;}
+  go.disabled=true;msg.textContent="Descargando copia y borrando…";
+  try{
+    await exportarCopia({prefijo:"nuestra-app-antes-de-reiniciar-",noMarcar:true});
+    await window.__nubeReiniciar();
+    msg.textContent="✓ Datos reiniciados. Recargando…";setTimeout(function(){location.reload()},1200);
+  }catch(e){msg.textContent="⚠️ No se borró nada: "+(e&&e.message?e.message:e);go.disabled=false;}
+}
+
+pintarEstadoCopia();
+
+// ---------- Datos compartidos: copia y migración (Fase 3) ----------
+let shCopiaHecha=false, shModo=null;
+const shN=o=>"Casa "+o.casa+" · Calendario "+o.calendario+" · Invitaciones "+o.invitaciones;
+function shListo(){return !!(window.Familia&&window.Familia.listo&&window.Familia.migracion);}
+async function shRefrescar(){
+  const el=document.getElementById("sh_estado"),bc=document.getElementById("sh_copia"),bm=document.getElementById("sh_migrar");
+  if(!shListo()){el.textContent="Sin conexión, o la sincronización todavía no está activa. Espera unos segundos o recarga la página.";bc.disabled=true;bm.disabled=true;return;}
+  try{
+    const e=await window.Familia.migracion.estado();shModo=e.modo;
+    bc.disabled=false;
+    if(e.modo==="nuevo"){el.textContent="✔ Formato nuevo activo ("+shN(e.nuevo)+"). Cada tarea y cada evento se guarda por separado.";bm.style.display="none";}
+    else{el.textContent="Formato anterior ("+shN(e.anterior)+"). Pendiente de migrar.";bm.style.display="";bm.disabled=!shCopiaHecha;}
+  }catch(err){el.textContent="⚠️ No se pudo leer el estado: "+(err&&err.message?err.message:err);}
+}
+async function shCopia(){
+  const msg=document.getElementById("sh_msg"),bc=document.getElementById("sh_copia");
+  bc.disabled=true;msg.textContent="Descargando copia…";
+  try{
+    const c=await window.Familia.migracion.copia();
+    const blob=new Blob([JSON.stringify(c,null,1)],{type:"application/json"});
+    const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="nuestra-app-compartidos-"+new Date().toISOString().slice(0,10)+".json";
+    document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+    shCopiaHecha=true;
+    const n=c.modo==="nuevo"?c.nuevo:c.anterior;
+    msg.textContent="✓ Copia descargada ("+n.casa.length+" tareas de Casa, "+n.calendario.length+" eventos, "+n.invitaciones.length+" invitaciones). Guarda ese archivo.";
+  }catch(e){msg.textContent="⚠️ No se pudo descargar la copia: "+(e&&e.message?e.message:e);}
+  bc.disabled=false;shRefrescar();
+}
+async function shMigrar(){
+  const msg=document.getElementById("sh_msg"),bm=document.getElementById("sh_migrar");
+  if(!shCopiaHecha){msg.textContent="Primero descarga la copia (botón 1).";return;}
+  if(!navigator.onLine){msg.textContent="⚠️ Hace falta conexión a internet. No se cambió nada.";return;}
+  if(!(await confirmar("Se van a pasar Casa, Calendario e Invitaciones al formato nuevo.\n\nAntes de seguir:\n• Ya descargaste la copia.\n• Cierra la app en los demás aparatos (el móvil de la otra persona, el PC…) hasta que termine.\n\nLo anterior no se borra. ¿Migrar ahora?")))return;
+  bm.disabled=true;msg.textContent="Migrando… no cierres esta pantalla.";
+  try{
+    const r=await window.Familia.migracion.migrar();
+    const dup=Object.keys(r).reduce((t,k)=>t+r[k].duplicados,0);
+    msg.textContent="✓ Migrado: "+r.casa.despues+" tareas de Casa, "+r.calendario.despues+" eventos, "+r.invitaciones.despues+" invitaciones."+(dup?" Se quitaron "+dup+" duplicados.":"")+" Recargando…";
+    setTimeout(function(){location.reload()},2500);
+  }catch(e){msg.textContent="⚠️ No se cambió nada de lo que usas: "+(e&&e.message?e.message:e);bm.disabled=false;}
+}
+(function esperar(n){if(shListo())shRefrescar();else if(n>0)setTimeout(function(){esperar(n-1)},500);else shRefrescar();})(60);
+window.addEventListener("online",shRefrescar);
+</script>
+<script type="module" src="nube.js" onerror="var d=document.createElement('div');d.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99998;background:#7a1f1f;color:#fff;padding:10px 14px;font:14px system-ui,sans-serif;text-align:center';d.textContent='⚠️ El archivo nube.js no se pudo descargar (revisa que esté subido a GitHub con ese nombre exacto).';document.body.appendChild(d)"></script>
+<script src="familia.js" onerror="var d=document.createElement('div');d.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99997;background:#7a1f1f;color:#fff;padding:10px 14px;font:14px system-ui,sans-serif;text-align:center';d.textContent='⚠️ El archivo familia.js no se pudo descargar (revisa que esté subido a GitHub con ese nombre exacto).';document.body.appendChild(d)"></script>
+</body></html>

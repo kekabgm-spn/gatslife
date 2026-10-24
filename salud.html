@@ -1,0 +1,2006 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.json">
+<script src="tema.js"></script>
+<title>Salud</title>
+<link rel="icon" type="image/png" href="icono.png">
+<link rel="apple-touch-icon" href="icono.png">
+<meta name="theme-color" content="#10151f">
+<style>
+  :root{
+    --bg: #10151f;
+    --panel: #1b2330;
+    --panel-alt: #232c3b;
+    --ink: #eef2f6;
+    --muted: #8a94a3;
+    --accent: #35c26a;
+    --accent-soft: rgba(53,194,106,0.15);
+    --warn: #e0703f;
+    --line: #2a3242;
+  }
+  :root[data-theme="light"]{
+    --bg: #f4f6f8;
+    --panel: #ffffff;
+    --panel-alt: #eef1f5;
+    --ink: #1b2330;
+    --muted: #667085;
+    --accent: #1f9d52;
+    --accent-soft: rgba(31,157,82,0.12);
+    --warn: #c8562e;
+    --line: #d7dce3;
+    color-scheme: light;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    padding: 20px 14px 80px;
+  }
+  .wrap{max-width:900px;margin:0 auto;}
+  h1{font-size:1.3rem;margin:0 0 14px;font-weight:700;}
+  h2{font-size:1.02rem;margin:0 0 10px;font-weight:700;}
+
+  .navapp{display:flex;gap:4px;margin:0 0 14px;background:#1b2330;border:1px solid #2a3242;border-radius:10px;padding:4px;}
+  .navapp a{flex:1;text-align:center;padding:9px 2px;border-radius:7px;color:#8a94a3;text-decoration:none;font-size:0.62rem;font-weight:800;letter-spacing:0;}
+  .navapp a[aria-current="page"]{background:rgba(53,194,106,0.15);color:#35c26a;}
+  .navapp{overflow-x:auto;scrollbar-width:none;}.navapp::-webkit-scrollbar{display:none;}.navapp a{white-space:nowrap;padding-left:7px;padding-right:7px;}
+
+  .tabs-perfil{display:flex;gap:6px;margin-bottom:14px;}
+  .tabs-perfil button{
+    flex:1;background:var(--panel);border:1px solid var(--line);color:var(--muted);
+    padding:9px;border-radius:8px;font-size:0.88rem;cursor:pointer;font-weight:600;
+  }
+  .tabs-perfil button.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);}
+  .tabs-vista{display:flex;gap:6px;margin-bottom:14px;}
+  .tabs-vista button{
+    flex:1;background:var(--panel);border:1px solid var(--line);color:var(--muted);
+    padding:9px;border-radius:8px;font-size:0.88rem;cursor:pointer;font-weight:600;
+  }
+  .tabs-vista button.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);}
+
+  .tabs-sec{display:flex;gap:6px;margin-bottom:16px;overflow-x:auto;padding-bottom:2px;}
+  .tabs-sec button{
+    flex:0 0 auto;background:var(--panel);border:1px solid var(--line);color:var(--muted);
+    padding:8px 12px;border-radius:8px;font-size:0.82rem;cursor:pointer;font-weight:600;white-space:nowrap;
+  }
+  .tabs-sec button.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);}
+
+  section.panel{display:none;}
+  section.panel.on{display:block;}
+
+  .tarjeta{
+    background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    padding:12px 14px;margin-bottom:8px;
+  }
+  .tarjeta-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+  .tarjeta-nombre{font-weight:700;font-size:0.95rem;}
+  .tarjeta-meta{color:var(--muted);font-size:0.78rem;margin-top:2px;}
+  .tarjeta-notas{font-size:0.85rem;margin-top:6px;white-space:pre-wrap;}
+  .tarjeta-btns{display:flex;gap:6px;flex-shrink:0;}
+  .tarjeta-btns button{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;}
+  .tarjeta-btns button:hover{color:var(--accent);}
+  .tarjeta-btns button.del:hover{color:var(--warn);}
+  .archivo-link{display:inline-block;margin-top:6px;color:var(--accent);font-size:0.82rem;text-decoration:none;}
+
+  .empty{color:var(--muted);font-size:0.88rem;font-style:italic;padding:6px 2px 14px;}
+
+  .form-add{
+    background:var(--panel-alt);border:1px solid var(--line);border-radius:10px;
+    padding:12px;margin-bottom:16px;display:flex;flex-direction:column;gap:8px;
+  }
+  .form-add .fila{display:flex;gap:8px;}
+  .form-add .fila > *{flex:1;}
+  .form-add label{color:var(--muted);font-size:0.78rem;display:block;margin-bottom:3px;}
+  .form-add input, .form-add select, .form-add textarea{
+    width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:8px;
+    background:var(--bg);color:var(--ink);font-size:0.9rem;font-family:inherit;
+  }
+  .form-add textarea{resize:vertical;min-height:50px;}
+  .form-add .check{display:flex;align-items:center;gap:6px;font-size:0.85rem;color:var(--ink);}
+  .btn-guardar{
+    background:var(--accent);color:#0a1f14;border:none;border-radius:8px;
+    padding:10px;font-size:0.9rem;font-weight:700;cursor:pointer;
+  }
+  .btn-cancelar{
+    background:none;border:1px solid var(--line);color:var(--muted);border-radius:8px;
+    padding:10px;font-size:0.85rem;cursor:pointer;
+  }
+  .btn-nueva{
+    width:100%;background:var(--accent);color:#0a1f14;border:none;border-radius:10px;
+    padding:12px;font-size:0.9rem;font-weight:700;cursor:pointer;margin-bottom:16px;
+  }
+
+  .navfecha{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .navfecha button{background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:6px 12px;font-size:1rem;cursor:pointer;}
+  .navfecha .fecha{color:var(--ink);font-size:0.9rem;font-weight:600;text-transform:capitalize;}
+
+  .toma{
+    background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    padding:11px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;
+  }
+  .toma.hecha{opacity:0.55;}
+  .toma.hecha .toma-nombre{text-decoration:line-through;}
+  .toma-check{
+    width:24px;height:24px;border-radius:50%;border:2px solid var(--line);
+    background:none;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--accent);font-size:0.9rem;
+  }
+  .toma-check.on{background:var(--accent);border-color:var(--accent);color:#0a1f14;}
+  .toma-info{flex:1;min-width:0;}
+  .toma-nombre{font-weight:600;font-size:0.92rem;}
+  .toma-meta{color:var(--muted);font-size:0.75rem;margin-top:2px;}
+
+  .form-add .check input{width:auto;flex:none;margin:0;}
+  #banco-med-texto{background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:9px 10px;font-family:inherit;font-size:0.9rem;margin-top:8px;}
+  .tarjeta-frec{display:inline-block;font-size:0.7rem;font-weight:700;color:var(--accent);border:1px solid var(--accent);border-radius:999px;padding:1px 8px;margin-top:4px;}
+  .toma .btn-demanda{background:var(--accent);color:#0a1f14;border:none;border-radius:8px;padding:8px 12px;font-size:0.82rem;font-weight:700;cursor:pointer;flex-shrink:0;}
+  .dem-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
+  .dem-chip{background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:2px 4px 2px 10px;font-size:0.75rem;color:var(--ink);display:inline-flex;align-items:center;gap:4px;}
+  .dem-chip button{background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.8rem;padding:2px 6px;}
+
+  .filtro-zona{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+  .filtro-zona select{flex:1;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font-size:0.86rem;}
+
+  .aviso{color:var(--muted);font-size:0.78rem;margin-top:10px;line-height:1.4;}
+  .cita-grupo-titulo{font-size:0.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin:14px 0 8px 2px;}
+  .link-calendario{display:block;text-align:center;color:var(--accent);text-decoration:none;font-size:0.85rem;font-weight:700;margin-top:10px;}
+
+  /* Historial de tomas */
+  .ht-nav{display:flex;align-items:center;justify-content:space-between;margin:6px 0 8px;}
+  .ht-nav button{background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:4px 12px;font-size:1rem;cursor:pointer;}
+  .ht-filtros{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
+  .ht-filtros button{background:var(--panel);border:1px solid var(--line);color:var(--muted);border-radius:999px;padding:4px 12px;font-size:0.8rem;cursor:pointer;}
+  .ht-filtros button.on{border-color:var(--accent);color:var(--accent);font-weight:700;}
+  .ht-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+  .ht-dow{font-size:0.68rem;color:var(--muted);text-align:center;}
+  .ht-dia{aspect-ratio:1/1;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-size:0.8rem;cursor:pointer;padding:0;opacity:0.45;}
+  .ht-dia.completo{opacity:1;background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:700;}
+  .ht-dia.parcial{opacity:1;border-color:#d4a017;color:var(--ink);}
+  .ht-dia.falta{opacity:1;border-color:var(--warn);color:var(--warn);}
+  .med-guia{background:var(--panel-alt);border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-size:0.82rem;line-height:1.4;margin-bottom:12px;}
+  .tomado-h-btn{background:none;border:none;border-bottom:1px dashed var(--accent);color:var(--accent);font:inherit;font-weight:700;cursor:pointer;padding:0 0 1px;min-width:46px;text-align:left;font-variant-numeric:tabular-nums;}
+  .hora-picker{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+  .hora-picker input[type=time]{padding:6px 8px;border:1px solid var(--accent);border-radius:8px;background:var(--bg);color:var(--ink);font-size:0.95rem;font-family:inherit;}
+  .hora-picker button{border-radius:8px;padding:7px 12px;font-size:0.82rem;font-weight:700;cursor:pointer;border:1px solid var(--line);background:var(--bg);color:var(--ink);}
+  .hora-picker button.ok{background:var(--accent);color:#0a1f14;border-color:var(--accent);}
+  .toma-acc{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+  .toma-acc .btn-hora{background:var(--bg);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:7px 9px;font-size:0.85rem;cursor:pointer;}
+  .hist-ctrl{display:flex;gap:8px;margin:4px 0 8px;}
+  .hist-ctrl input[type=date]{flex:1;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-family:inherit;font-size:0.95rem;}
+  .hist-ctrl button{padding:8px 14px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer;font-weight:600;}
+  .hist-sel{width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-family:inherit;margin-bottom:6px;}
+  .hist-toggle{width:100%;padding:10px;margin:12px 0;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--ink);font-weight:700;cursor:pointer;font-size:0.95rem;}
+  .hl-dia{display:flex;align-items:center;justify-content:space-between;gap:8px;text-align:left;font-weight:700;font-size:0.88rem;margin:14px 0 4px;padding-bottom:4px;border-bottom:1px solid var(--line);text-transform:capitalize;}
+  .hl-dia .estado{font-size:0.72rem;font-weight:700;border-radius:999px;padding:1px 9px;text-transform:none;white-space:nowrap;}
+  .hl-dia .estado.ok{color:var(--accent);border:1px solid var(--accent);}
+  .hl-dia .estado.falta{color:#e0a02c;border:1px solid #e0a02c;}
+  .hl-fila{display:flex;gap:10px;padding:5px 0;font-size:0.88rem;border-bottom:1px solid var(--line);}
+  .hl-fila .h{min-width:46px;font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums;}
+  .hl-fila.falta{color:#e0a02c;}
+  .hl-fila.falta .h{color:#e0a02c;}
+  .hl-fila em{color:var(--muted);font-size:0.75rem;font-style:normal;}
+  .hl-abrir{background:none;border:none;color:var(--accent);cursor:pointer;font-size:0.78rem;font-weight:700;text-decoration:underline;padding:0;}
+  .ar-fecha-campo{margin:10px 0 4px;}
+  .ar-fecha-campo label{display:block;font-size:0.8rem;color:var(--muted);margin-bottom:4px;}
+  .ar-fecha-campo input[type=date],.ar-fecha-campo input[type=month],.ar-fecha-campo input[type=text]{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font-family:inherit;font-size:1rem;}
+  .ar-fecha-campo small{display:block;color:var(--muted);font-size:0.75rem;margin-top:4px;}
+  .ficha-sub{font-size:0.8rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:20px 0 8px;font-weight:700;}
+  .ficha-fila{display:flex;gap:10px;padding:6px 0;font-size:0.88rem;border-bottom:1px solid var(--line);}
+  .ficha-fila b{min-width:128px;color:var(--muted);font-weight:600;}
+  .ficha-fila span{flex:1;min-width:0;white-space:pre-wrap;}
+  .ficha-lin{display:flex;justify-content:space-between;gap:10px;padding:6px 0;font-size:0.88rem;border-bottom:1px solid var(--line);}
+  .ficha-lin .d{color:var(--muted);font-size:0.78rem;white-space:nowrap;text-align:right;}
+  .cruz-esp{display:inline-block;width:11px;height:11px;background:var(--c);clip-path:polygon(34% 0,66% 0,66% 34%,100% 34%,100% 66%,66% 66%,66% 100%,34% 100%,34% 66%,0 66%,0 34%,34% 34%);margin-right:5px;vertical-align:-1px;}
+  .estado-cond{font-size:0.7rem;font-weight:700;border-radius:999px;padding:1px 9px;border:1px solid currentColor;margin-left:6px;vertical-align:1px;white-space:nowrap;}
+  .estado-cond.activa{color:#e0a02c;} .estado-cond.controlada{color:var(--accent);} .estado-cond.remision{color:#5aa2ff;}
+  .chips-med{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
+  .chip-med{background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:2px 10px;font-size:0.78rem;}
+  .cond-meds{display:flex;flex-direction:column;gap:4px;}
+  .cond-sub{font-size:0.82rem;margin-top:6px;}
+  .prb-pend{color:#e0a02c;font-weight:700;font-size:0.78rem;margin-left:6px;}
+  .btn-mini{background:transparent;border:1px solid var(--accent);color:var(--accent);border-radius:8px;padding:4px 10px;font-size:0.78rem;font-weight:700;cursor:pointer;margin-top:6px;}
+  .tomado-card{background:var(--panel);border:1px solid var(--accent);border-radius:12px;padding:10px 14px;margin-bottom:14px;}
+  .tomado-tit{font-weight:700;font-size:0.9rem;color:var(--accent);margin-bottom:6px;}
+  .tomado-fila{display:flex;align-items:center;gap:10px;padding:6px 0;border-top:1px solid var(--line);font-size:0.9rem;}
+  .tomado-fila:first-of-type{border-top:none;}
+  .tomado-h{font-weight:700;min-width:46px;color:var(--accent);font-variant-numeric:tabular-nums;}
+  .tomado-n{flex:1;min-width:0;}
+  .tomado-n em{color:var(--muted);font-size:0.75rem;font-style:normal;}
+  .tomado-fila button{background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.95rem;padding:2px 8px;}
+  .frec-opc{display:flex;flex-direction:column;gap:6px;}
+  .frec-opc button{text-align:left;background:var(--bg);color:var(--ink);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;gap:2px;}
+  .frec-opc button small{color:var(--muted);font-size:0.75rem;}
+  .frec-opc button.on{border-color:var(--accent);background:var(--accent-soft);}
+  .dias-sem{display:flex;gap:6px;}
+  .dias-sem button{flex:1;padding:10px 0;border:1.5px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font-weight:700;cursor:pointer;font-family:inherit;}
+  .dias-sem button.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);}
+  .med-resumen{background:var(--bg);border:1px dashed var(--accent);border-radius:8px;padding:8px 10px;font-size:0.85rem;}
+  .ht-dia{position:relative;}
+  .ht-dia.toca{opacity:1;}
+  .ht-dia i, .ht-leyenda i{display:inline-block;width:6px;height:6px;border-radius:50%;}
+  .ht-dia i{position:absolute;bottom:3px;}
+  .ht-p1{background:var(--accent);} .ht-p2{background:#5aa2ff;}
+  .ht-dia i.ht-p1{left:calc(50% - 7px);} .ht-dia i.ht-p2{left:calc(50% + 1px);}
+  .ht-leyenda{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:0.72rem;color:var(--muted);margin-top:8px;}
+  .ht-leyenda span{display:inline-flex;align-items:center;gap:4px;}
+  .grupo-med{font-size:0.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin:12px 0 6px 2px;}
+  .ht-dia.hoy{outline:2px solid var(--accent);}
+  .ht-dia.sel{box-shadow:0 0 0 2px var(--ink);}
+  .ht-dia.tenue{opacity:0.15;}
+  .ht-vacio{visibility:hidden;}
+  .ht-resumen{font-size:0.85rem;color:var(--muted);margin:8px 0 2px;}
+  .ht-detalle{font-size:0.85rem;margin-top:6px;}
+  .ht-detalle ul{margin:4px 0 0 18px;padding:0;}
+  .tabs-sec{flex-wrap:wrap !important;overflow:visible !important;}
+  #si-form > div, #panel-articulaciones .form-add > div{margin-bottom:12px;}
+  #si-form label{margin-top:2px;}
+
+  /* Analíticas con IA */
+  .ia-fila{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap;}
+  .ia-btn{background:var(--accent-soft);border:1px solid var(--accent);color:var(--accent);border-radius:8px;padding:8px 12px;font-size:0.85rem;font-weight:700;cursor:pointer;}
+  .ia-btn[disabled]{opacity:.5;cursor:default;}
+  .ia-est{font-size:0.8rem;color:var(--muted);}
+  .ia-bloque{margin-top:10px;border-top:1px dashed var(--line);padding-top:10px;}
+  .ia-res{font-size:0.88rem;margin-bottom:8px;}
+  .ia-tab{overflow-x:auto;margin-bottom:8px;}
+  .ia-tab table{width:100%;border-collapse:collapse;font-size:0.8rem;}
+  .ia-tab th{text-align:left;color:var(--muted);font-weight:600;padding:4px 6px;border-bottom:1px solid var(--line);white-space:nowrap;}
+  .ia-tab td{padding:5px 6px;border-bottom:1px solid var(--line);vertical-align:top;}
+  .ia-tab tr.ia-alto td:nth-child(2){color:var(--warn);}
+  .ia-tab tr.ia-bajo td:nth-child(2){color:#5aa9ff;}
+  .ia-u{color:var(--muted);font-size:0.75rem;}
+  .ia-d{font-size:0.75rem;color:var(--muted);}
+  .ia-bloque details{margin-bottom:8px;}
+  .ia-bloque summary{cursor:pointer;color:var(--muted);font-size:0.84rem;margin-bottom:6px;}
+  .ia-conc{background:var(--panel-alt);border-radius:8px;padding:10px;font-size:0.86rem;margin-bottom:8px;white-space:pre-wrap;}
+  .ia-conc ul{margin:6px 0 0 18px;padding:0;white-space:normal;}
+  .ia-pie{font-size:0.74rem;color:var(--muted);margin-top:6px;}
+  .ia-ban{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:10px;padding:12px;margin-bottom:14px;font-size:0.86rem;}
+  .ia-ban.ok{border-left-color:var(--accent);}
+  .ia-chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0;}
+  .ia-chip{border-radius:999px;padding:3px 10px;font-size:0.78rem;font-weight:600;border:1px solid var(--line);}
+  .ia-chip.ia-alto{color:var(--warn);border-color:var(--warn);}
+  .ia-chip.ia-bajo{color:#5aa9ff;border-color:#5aa9ff;}
+  .ia-ban ul{margin:6px 0 0 18px;padding:0;}
+</style>
+<script>(function(){var o=Storage.prototype.setItem;window.__nubeRaw=function(k,v){o.call(localStorage,k,v)};window.__nubeSucias={};window.__nubeOn=false;Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localStorage&&window.__nubeOn){window.__nubeSucias[k]=1;window.dispatchEvent(new Event("nube-cambio"))}};setTimeout(function(){if(!window.__nubeVivo){var d=document.createElement("div");d.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99998;background:#7a1f1f;color:#fff;padding:10px 14px;font:14px system-ui,sans-serif;text-align:center";d.textContent="⚠️ La entrada con Google no cargó: tus datos NO se están guardando en la nube. Recarga la página; si sigue igual, avísame.";(document.body||document.documentElement).appendChild(d)}},6000);})();</script>
+</head>
+<body>
+<button id="btnTema" onclick="alternarTema()" title="Cambiar tema" aria-label="Cambiar entre tema claro y oscuro" style="position:fixed;top:12px;right:12px;z-index:500;width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-size:1rem;cursor:pointer">☀️</button>
+<div class="wrap">
+<nav class="navapp" aria-label="Áreas de la app">
+  <a href="nutricion.html">NUTRICIÓN</a>
+  <a href="ejercicios.html">FITNESS</a>
+  <a href="tareas.html">TAREAS</a>
+  <a href="calendario.html">CALENDARIO</a>
+  <a href="salud.html" aria-current="page">SALUD</a>
+  <a href="huawei.html">HUAWEI</a>
+  <a href="informes.html">INFORMES</a>
+</nav>
+
+<h1>Salud<button type="button" class="ayu" data-t="Las condiciones, cirugías, medicación y pruebas se guardan por perfil y se sincronizan entre dispositivos, igual que Dieta y Fitness. En las analíticas, el archivo se lee con la IA y no se guarda. Los adjuntos de otras pruebas y cirugías se comprimen y tienen un límite de espacio." title="Las condiciones, cirugías, medicación y pruebas se guardan por perfil y se sincronizan entre dispositivos, igual que Dieta y Fitness. En las analíticas, el archivo se lee con la IA y no se guarda. Los adjuntos de otras pruebas y cirugías se comprimen y tienen un límite de espacio." aria-label="Más información" aria-expanded="false">i</button></h1>
+
+<div class="tabs-perfil" id="tabsPerfil">
+  <button type="button" data-perfil="Mamy">Mamy</button>
+  <button type="button" data-perfil="Filha">Filha</button>
+</div>
+
+<div class="tabs-sec" id="tabsSec">
+  <button type="button" data-sec="condiciones">Condiciones</button>
+  <button type="button" data-sec="cirugias">Cirugías</button>
+  <button type="button" data-sec="medicacion">Medicación</button>
+  <button type="button" data-sec="pruebas">Pruebas</button>
+  <button type="button" data-sec="citas">Citas médicas</button>
+  <button type="button" data-sec="articulaciones">Articulaciones</button>
+  <button type="button" data-sec="sintomas">Síntomas</button>
+</div>
+
+<!-- ARTICULACIONES -->
+<section class="panel" id="panel-articulaciones">
+  <div class="fila" style="align-items:center;gap:8px;margin-bottom:10px">
+    <button type="button" class="btn-cancelar" id="ar-ant" aria-label="Día anterior">◀</button>
+    <input type="date" id="ar-fecha" style="flex:1">
+    <button type="button" class="btn-cancelar" id="ar-sig" aria-label="Día siguiente">▶</button>
+    <button type="button" class="btn-guardar" id="ar-hoy">Hoy</button>
+  </div>
+  <div class="tabs-vista"><button type="button" id="ar-v-ant" class="on">Vista anterior</button><button type="button" id="ar-v-pos">Vista posterior</button><button type="button" class="ayu" data-t="Toca una articulación del cuerpo. Se enciende en rojo lo que tenga algún valor. Toca de nuevo un punto ya marcado para quitarlo. Lo que marques se guarda en el día elegido." title="Toca una articulación del cuerpo. Se enciende en rojo lo que tenga algún valor. Toca de nuevo un punto ya marcado para quitarlo. Lo que marques se guarda en el día elegido." aria-label="Más información" aria-expanded="false">i</button></div>
+  <svg id="ar-svg" viewBox="0 0 200 410" style="width:100%;max-width:340px;display:block;margin:0 auto"></svg>
+  <div id="ar-resumen"></div>
+  <div id="ar-ficha"></div>
+  <h2 style="margin-top:22px">Funcionalidad del día</h2>
+  <div class="ar-fecha-campo"><label for="ar-fecha-g">Fecha</label><input type="date" id="ar-fecha-g"><small>Puedes cambiarla si lo apuntas días después.</small></div>
+  <p class="aviso" style="margin:0 0 8px">Dificultad: 0 ninguna · 1 leve · 2 moderada · 3 grave · 4 extrema.</p>
+  <div id="ar-func"></div>
+  <h2 style="margin-top:22px">Días registrados</h2>
+  <div id="ar-hist"></div>
+
+  <h2 style="margin-top:22px">Informe para el médico</h2>
+  <div class="form-add" style="display:block">
+    <p class="aviso" style="margin:0 0 8px">Genera un PDF con tus registros de articulaciones: un día concreto o un mes completo, con el detalle de cada zona, la funcionalidad y tus notas.</p>
+    <div class="tabs-vista"><button type="button" id="inf-t-dia" class="on">Diario</button><button type="button" id="inf-t-mes">Mensual</button></div>
+    <div id="inf-dia" class="ar-fecha-campo"><label for="inf-fecha">Día</label><input type="date" id="inf-fecha"></div>
+    <div id="inf-mes" class="ar-fecha-campo" style="display:none"><label for="inf-mesinp">Mes</label><input type="month" id="inf-mesinp"></div>
+    <div class="ar-fecha-campo"><label for="inf-nombre">Nombre que aparece en el informe</label><input type="text" id="inf-nombre" autocomplete="off"></div>
+    <button type="button" class="btn-guardar" id="inf-generar" style="width:100%;margin-top:12px">📄 Descargar informe PDF</button>
+    <p class="aviso" id="inf-msg" style="margin:8px 0 0"></p>
+  </div>
+</section>
+
+<!-- SÍNTOMAS -->
+<section class="panel" id="panel-sintomas">
+  <button class="btn-nueva" id="si-abrir" type="button">+ Añadir síntoma</button>
+  <div class="form-add" id="si-form" style="display:none;margin-top:12px">
+    <input type="hidden" id="si-id">
+    <div><label>Síntoma</label><input type="text" id="si-nombre" list="si-lista" placeholder="Ej. Migraña, dolor de estómago" autocomplete="off"><datalist id="si-lista"></datalist></div>
+    <div class="fila"><div><label>Fecha</label><input type="date" id="si-fecha"></div><div><label>Hora (opcional)</label><input type="time" id="si-hora"></div></div>
+    <div><label>Nivel (0 = nada, 10 = máximo)</label><div id="si-nivel" style="display:flex;flex-wrap:wrap;gap:4px"></div></div>
+    <div><label>Notas (opcional)</label><textarea id="si-nota" placeholder="Qué lo provocó, qué tomaste, cuánto duró..."></textarea></div>
+    <div class="fila"><button type="button" class="btn-guardar" id="si-guardar">Guardar</button><button type="button" class="btn-cancelar" id="si-cancelar">Cancelar</button></div>
+  </div>
+  <div class="fila" style="margin:12px 0 4px"><select id="si-filtro" style="flex:1"><option value="">Todos los síntomas</option></select></div>
+  <div id="si-historial"></div>
+</section>
+
+<!-- CONDICIONES -->
+<section class="panel" id="panel-condiciones">
+  <h2>Ficha médica</h2>
+  <button type="button" class="btn-nueva" id="ficha-pdf">📄 Descargar resumen PDF</button>
+  <p class="aviso" id="ficha-msg" style="margin:6px 0 0"></p>
+
+  <h3 class="ficha-sub">Datos rápidos</h3>
+  <div id="ficha-datos"></div>
+  <form class="form-add" id="form-ficha" style="display:none">
+    <div><label>Alergias e intolerancias</label><textarea id="ficha-alergias" placeholder="Medicamentos, alimentos…"></textarea></div>
+    <div class="fila">
+      <div><label>Grupo sanguíneo</label>
+        <select id="ficha-sangre"><option value="">Sin indicar</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>0+</option><option>0-</option></select>
+      </div>
+      <div><label>Médico de cabecera</label><input type="text" id="ficha-cabecera" placeholder="Nombre y centro"></div>
+    </div>
+    <div class="fila">
+      <div><label>Contacto de emergencia</label><input type="text" id="ficha-cont-nombre" placeholder="Nombre"></div>
+      <div><label>Teléfono</label><input type="tel" id="ficha-cont-tel" placeholder="Teléfono"></div>
+    </div>
+    <div class="fila">
+      <button type="button" class="btn-guardar" onclick="guardarFicha()">Guardar</button>
+      <button type="button" class="btn-cancelar" onclick="cerrarForm('ficha')">Cancelar</button>
+    </div>
+  </form>
+
+  <h3 class="ficha-sub">Condiciones</h3>
+  <button class="btn-nueva" data-abrir="condiciones">+ Añadir condición</button>
+  <form class="form-add" id="form-condiciones" style="display:none">
+    <input type="hidden" id="cond-id">
+    <div><label>Nombre</label><input type="text" id="cond-nombre" placeholder="Ej. Enfisema"></div>
+    <div class="fila">
+      <div><label>Estado</label>
+        <select id="cond-estado"><option value="activa">Activa</option><option value="controlada">Controlada</option><option value="remision">En remisión</option></select>
+      </div>
+      <div><label>Desde (opcional)</label><input type="date" id="cond-desde"></div>
+    </div>
+    <div><label>Especialista que la lleva</label>
+      <select id="cond-esp"></select>
+      <input type="text" id="cond-esp-otro" placeholder="Escribe la especialidad" style="display:none;margin-top:6px">
+    </div>
+    <div><label>Pastillas relacionadas</label><div id="cond-meds" class="cond-meds"></div></div>
+    <div><label>Notas</label><textarea id="cond-notas" placeholder="Estado, tratamiento, lo que convenga recordar"></textarea></div>
+    <div class="fila">
+      <button type="button" class="btn-guardar" onclick="guardarCondicion()">Guardar</button>
+      <button type="button" class="btn-cancelar" onclick="cerrarForm('condiciones')">Cancelar</button>
+    </div>
+  </form>
+  <div id="lista-condiciones"></div>
+
+  <h3 class="ficha-sub">Medicación actual</h3>
+  <div id="ficha-med"></div>
+  <h3 class="ficha-sub">Próximas citas</h3>
+  <div id="ficha-citas"></div>
+  <h3 class="ficha-sub">Pruebas</h3>
+  <div id="ficha-pruebas"></div>
+  <h3 class="ficha-sub">Cirugías</h3>
+  <div id="ficha-cir"></div>
+</section>
+
+<!-- CIRUGÍAS -->
+<section class="panel" id="panel-cirugias">
+  <button class="btn-nueva" data-abrir="cirugias">+ Añadir cirugía / intervención</button>
+  <form class="form-add" id="form-cirugias" style="display:none">
+    <input type="hidden" id="cir-id">
+    <div><label>Fecha</label><input type="date" id="cir-fecha"></div>
+    <div><label>Qué se hizo</label><input type="text" id="cir-desc" placeholder="Ej. Artroscopia de rodilla"></div>
+    <div><label>Notas / recuperación</label><textarea id="cir-notas"></textarea></div>
+    <div><label>Adjuntar informe o foto (opcional)</label><input type="file" id="cir-archivo" accept="image/*,application/pdf"></div>
+    <div class="fila">
+      <button type="button" class="btn-guardar" onclick="guardarCirugia()">Guardar</button>
+      <button type="button" class="btn-cancelar" onclick="cerrarForm('cirugias')">Cancelar</button>
+    </div>
+  </form>
+  <div id="lista-cirugias"></div>
+</section>
+
+<!-- MEDICACIÓN -->
+<section class="panel" id="panel-medicacion">
+  <h2>Toma de hoy</h2>
+  <div class="med-guia">👉 <b>Cada vez que tomes algo, apúntalo aquí:</b> «Tomé» para lo fijo y «Tomé una» para lo de «si lo necesito». Crear una pastilla nueva se hace <u>una sola vez</u>, en «Mis pastillas» (más abajo).</div>
+  <div class="navfecha">
+    <button id="medDiaAnterior">◀</button>
+    <div class="fecha" id="medFechaLabel"></div>
+    <button id="medDiaSiguiente">▶</button>
+  </div>
+
+  <div class="tomado-card">
+    <div class="tomado-tit" id="tomado-tit">✅ Tomado hoy</div>
+    <div id="lista-tomado"></div>
+  </div>
+
+  <div class="cita-grupo-titulo">Por tomar</div>
+  <div id="lista-tomas"></div>
+
+  <div class="cita-grupo-titulo">Si lo necesito</div>
+  <div id="lista-demanda"></div>
+
+  <div class="cita-grupo-titulo">Próximas</div>
+  <div id="lista-proximas"></div>
+
+  <h2 style="margin-top:22px">Mis pastillas</h2>
+  <div id="lista-medicacion"></div>
+  <button class="btn-nueva" data-abrir="medicacion">+ Añadir pastilla</button>
+  <form class="form-add" id="form-medicacion" style="display:none">
+    <input type="hidden" id="med-id"><input type="hidden" id="med-frec" value=""><input type="hidden" id="med-diasem" value="1">
+    <h3 id="med-form-titulo" style="margin:0;font-size:1rem">Añadir medicación</h3>
+    <div><label><b>1. ¿Cómo se llama?</b></label><input type="text" id="med-nombre" list="med-banco" autocomplete="off" placeholder="Ej. Omeprazol 20 mg"><datalist id="med-banco"></datalist></div>
+    <div>
+      <label><b>2. ¿Cada cuánto la tomas?</b></label>
+      <div class="frec-opc" id="med-frec-opc">
+        <button type="button" data-v="diaria"><b>📅 Todos los días</b><small>Ej.: omeprazol cada mañana</small></button>
+        <button type="button" data-v="semanal"><b>🗓️ Un día fijo a la semana</b><small>Ej.: metotrexato los martes</small></button>
+        <button type="button" data-v="demanda"><b>🆘 Solo cuando lo necesito</b><small>Ej.: ibuprofeno si hay dolor. No sale como obligatoria: la apuntas cuando la tomas.</small></button>
+      </div>
+    </div>
+    <div id="med-resto" style="display:none;flex-direction:column;gap:10px">
+      <div id="med-sem-cont"><label><b>¿Qué día de la semana?</b></label>
+        <div class="dias-sem" id="med-dias">
+          <button type="button" data-d="1">L</button><button type="button" data-d="2">M</button><button type="button" data-d="3">X</button><button type="button" data-d="4">J</button><button type="button" data-d="5">V</button><button type="button" data-d="6">S</button><button type="button" data-d="0">D</button>
+        </div>
+      </div>
+      <div id="med-horario-cont"><label><b>¿A qué hora?</b> (opcional)</label><input type="text" id="med-horario" placeholder="Ej. 8:00 o 8:00, 20:00"></div>
+      <div class="fila">
+        <div><label><b>¿Cuánto por toma?</b></label><input type="number" id="med-cantidad" step="any" min="0" placeholder="Ej. 1"></div>
+        <div><label>Unidad</label>
+          <select id="med-unidad">
+            <option value="mg">mg</option>
+            <option value="comprimidos">comprimido(s)</option>
+            <option value="ml">ml</option>
+            <option value="gotas">gotas</option>
+            <option value="otro">otra</option>
+          </select>
+        </div>
+      </div>
+      <div id="med-dem-cont" class="fila" style="display:none">
+        <div><label>Máximo de tomas al día (opcional)</label><input type="number" id="med-maxdia" min="1" step="1" placeholder="Ej. 3"></div>
+        <div><label>Esperar al menos (horas, opcional)</label><input type="number" id="med-horasmin" min="0" step="any" placeholder="Ej. 8"></div>
+      </div>
+      <div><label>Notas (opcional)</label><textarea id="med-notas" placeholder="Para qué es, indicaciones..."></textarea></div>
+      <label class="check"><input type="checkbox" id="med-activa" checked> Activa (si la desmarcas, deja de aparecer en «Toma de hoy»)</label>
+      <div class="med-resumen" id="med-resumen"></div>
+      <div class="fila">
+        <button type="button" class="btn-guardar" onclick="guardarMedicacion()">Guardar</button>
+        <button type="button" class="btn-cancelar" onclick="cerrarForm('medicacion')">Cancelar</button>
+      </div>
+    </div>
+  </form>
+
+  <details style="margin-top:14px">
+    <summary style="cursor:pointer;color:var(--muted);font-size:0.85rem">📚 Mi banco de nombres (para autocompletar)<button type="button" class="ayu" data-t="Escribí un nombre por línea. Al añadir una pastilla, empezás a escribir y te sugiere el nombre. Los nombres que uses también se suman solos. Se guarda en tu cuenta." title="Escribí un nombre por línea. Al añadir una pastilla, empezás a escribir y te sugiere el nombre. Los nombres que uses también se suman solos. Se guarda en tu cuenta." aria-label="Más información" aria-expanded="false">i</button></summary>
+    <textarea id="banco-med-texto" rows="6" style="width:100%" placeholder="Un nombre por línea"></textarea>
+    <button type="button" class="btn-guardar" id="banco-med-guardar" style="margin-top:8px">Guardar banco</button>
+  </details>
+
+  <h2 style="margin-top:26px">Historial de tomas</h2>
+  <label for="ht-fecha" style="font-size:0.82rem;color:var(--muted)">📅 Buscar fecha</label>
+  <div class="hist-ctrl">
+    <input type="date" id="ht-fecha">
+    <button type="button" id="ht-fecha-limpiar">Ver todo</button>
+  </div>
+  <select id="ht-rango" class="hist-sel">
+    <option value="7">Últimos 7 días</option>
+    <option value="30" selected>Últimos 30 días</option>
+    <option value="90">Últimos 90 días</option>
+    <option value="0">Todo</option>
+  </select>
+  <div class="ht-resumen" id="ht-lista-resumen" style="margin:4px 0 6px"></div>
+  <div id="ht-lista"></div>
+
+  <button type="button" id="ht-cal-toggle" class="hist-toggle">📆 Ver calendario</button>
+  <div id="ht-cal" style="display:none">
+  <div class="ht-nav">
+    <button type="button" id="ht-prev" aria-label="Mes anterior">◀</button>
+    <b id="ht-titulo"></b>
+    <button type="button" id="ht-next" aria-label="Mes siguiente">▶</button>
+  </div>
+  <div class="ht-filtros" id="ht-filtros">
+    <button type="button" data-f="todos" class="on">Todos</button>
+    <button type="button" data-f="completos">Completos</button>
+    <button type="button" data-f="faltas">Con faltas</button>
+  </div>
+  <div class="ht-grid" id="ht-grid"></div>
+  <div class="ht-leyenda"><span><i class="ht-p1"></i> toca algo</span><span class="lv">verde = todo tomado</span><span class="la">ámbar/rojo = faltó algo</span><span><i class="ht-p2"></i> usaste «si lo necesito»</span></div>
+  <div class="ht-resumen" id="ht-resumen"></div>
+  <div class="ht-detalle" id="ht-detalle"></div>
+  <div class="ht-resumen" id="ht-demanda" style="margin-top:10px"></div>
+</div>
+</section>
+
+<!-- PRUEBAS -->
+<section class="panel" id="panel-pruebas">
+  <div class="filtro-zona">
+    <select id="filtroTipoPrueba">
+      <option value="">Todos los tipos</option>
+      <option value="analitica">Analítica</option>
+      <option value="radiografia">Radiografía / imagen</option>
+      <option value="ecografia">Ecografía</option>
+      <option value="otro">Otro</option>
+    </select>
+  </div>
+  <button class="btn-nueva" data-abrir="pruebas">+ Añadir resultado de prueba</button>
+  <form class="form-add" id="form-pruebas" style="display:none">
+    <input type="hidden" id="prb-id">
+    <div class="fila">
+      <div><label id="prb-fecha-lab">Fecha</label><input type="date" id="prb-fecha"></div>
+      <div><label>Tipo</label>
+        <select id="prb-tipo">
+          <option value="analitica">Analítica</option>
+          <option value="radiografia">Radiografía / imagen</option>
+          <option value="ecografia">Ecografía</option>
+          <option value="otro">Otro</option>
+        </select>
+      </div>
+    </div>
+    <div><label>Estado</label>
+      <select id="prb-estado" onchange="prbEtiquetaFecha()"><option value="hecha">Hecha (ya tengo el resultado)</option><option value="pendiente">Pendiente (pedida, aún sin hacer)</option></select>
+    </div>
+    <div><label>Pedida por (especialista)</label>
+      <select id="prb-esp"></select>
+      <input type="text" id="prb-esp-otro" placeholder="Escribe la especialidad" style="display:none;margin-top:6px">
+    </div>
+    <div><label>Para la condición</label><select id="prb-cond"></select></div>
+    <div><label>Resumen / valores</label><textarea id="prb-notas" placeholder="Lo relevante del resultado"></textarea></div>
+    <div><label>Adjuntar resultado (opcional)</label><input type="file" id="prb-archivo" accept="image/*,application/pdf"><div style="font-size:12px;opacity:.7;margin-top:4px">Analíticas: la IA lee el archivo y no se guarda. Otras pruebas: se guarda comprimido si cabe.</div></div>
+    <div class="fila">
+      <button type="button" class="btn-guardar" onclick="guardarPrueba()">Guardar</button>
+      <button type="button" class="btn-cancelar" onclick="cerrarForm('pruebas')">Cancelar</button>
+    </div>
+  </form>
+  <div id="ia-alertas"></div>
+  <div id="lista-pruebas"></div>
+</section>
+
+<!-- CITAS (lectura desde Calendario) -->
+<section class="panel" id="panel-citas">
+  <p class="aviso" style="margin-top:0">Esto es solo una lectura de las citas médicas que ya están en el Calendario — para crear o editar una cita, hacelo ahí.</p>
+  <div id="lista-citas"></div>
+  <a class="link-calendario" href="calendario.html">Ir al Calendario →</a>
+</section>
+
+</div>
+
+<script src="claves.js"></script>
+<script type="module" src="nube.js" onerror="var d=document.createElement('div');d.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99998;background:#7a1f1f;color:#fff;padding:10px 14px;font:14px system-ui,sans-serif;text-align:center';d.textContent='⚠️ El archivo nube.js no se pudo descargar.';document.body.appendChild(d)"></script>
+<script>
+const PERFILES = ["Mamy","Filha"];
+const CLAVE_PERFIL_ACTIVO = "dietaPerfilActivo";
+function cargarPerfilActivo(){ const p = localStorage.getItem(CLAVE_PERFIL_ACTIVO); return PERFILES.includes(p) ? p : PERFILES[0]; }
+function guardarPerfilActivo(p){ localStorage.setItem(CLAVE_PERFIL_ACTIVO, p); }
+let perfilActivo = cargarPerfilActivo();
+
+function claveCond(){ return "saludCondicionesV1_"+perfilActivo; }
+function claveCirugias(){ return "saludCirugiasV1_"+perfilActivo; }
+function claveMed(){ return "saludMedicacionV1_"+perfilActivo; }
+function claveTomas(){ return "saludMedTomasV1_"+perfilActivo; }
+function claveDemanda(){ return "saludMedDemandaV1_"+perfilActivo; }
+function claveBancoMed(){ return "saludBancoMedV1_"+perfilActivo; }
+function clavePruebas(){ return "saludPruebasV1_"+perfilActivo; }
+
+function leerJSON(clave, defecto){ try{ const v = JSON.parse(localStorage.getItem(clave)); return v==null ? defecto : v; }catch(e){ return defecto; } }
+function guardarJSON(clave, valor){
+  try{ localStorage.setItem(clave, JSON.stringify(valor)); return true; }
+  catch(e){ avisar("⚠️ No se pudo guardar: el almacenamiento del móvil está lleno. Borra algún adjunto antiguo e inténtalo de nuevo."); return false; }
+}
+// Límites para que un adjunto no llene el móvil ni impida la sincronización con la nube
+const LIM_CLAVE = 900000, LIM_LOCAL = 4500000;
+const archivosTemp = {}; // analíticas: el archivo vive solo en memoria hasta que la IA lo lee
+function archivoCabe(clave, lista){
+  try{
+    const n = JSON.stringify(lista).length;
+    if(n > LIM_CLAVE) return false;
+    let tot = 0;
+    for(let i=0;i<localStorage.length;i++){ const k = localStorage.key(i); if(k===clave) continue; tot += k.length + (localStorage.getItem(k)||"").length; }
+    return tot + clave.length + n <= LIM_LOCAL;
+  }catch(e){ return false; }
+}
+const MSG_NO_CABE = "El archivo no cabe en la app (se guardó el registro sin él). Guarda el original en tu Drive o en la galería.";
+function nuevoId(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function hoyISO(d){ d = d || new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function fechaLegible(iso){ if(!iso) return "sin fecha"; const [y,m,d]=iso.split("-"); return d+"/"+m+"/"+y; }
+const UNIDAD_ETQ = {mg:"mg", comprimidos:"comp.", ml:"ml", gotas:"gotas", otro:""};
+function dosisTexto(m){ return (m.cantidad!=null && m.cantidad!=="") ? (m.cantidad+" "+(UNIDAD_ETQ[m.unidad]||"")).trim() : ""; }
+
+let condiciones = leerJSON(claveCond(), []);
+let cirugias = leerJSON(claveCirugias(), []);
+let medicacion = leerJSON(claveMed(), []);
+let tomas = leerJSON(claveTomas(), {});
+let demanda = leerJSON(claveDemanda(), {});
+let bancoMed = leerJSON(claveBancoMed(), []);
+let pruebas = leerJSON(clavePruebas(), []);
+let medFechaActual = hoyISO();
+let seccionActiva = "condiciones";
+
+function cambiarPerfil(p){
+  if(p === perfilActivo) return;
+  perfilActivo = p; guardarPerfilActivo(p);
+  condiciones = leerJSON(claveCond(), []);
+  cirugias = leerJSON(claveCirugias(), []);
+  medicacion = leerJSON(claveMed(), []);
+  tomas = leerJSON(claveTomas(), {});
+  demanda = leerJSON(claveDemanda(), {});
+  bancoMed = leerJSON(claveBancoMed(), []);
+  pruebas = leerJSON(clavePruebas(), []);
+  pintarTabsPerfil();
+  renderTodo();
+}
+function pintarTabsPerfil(){
+  document.querySelectorAll("#tabsPerfil button").forEach(b=>{
+    b.classList.toggle("on", b.dataset.perfil === perfilActivo);
+  });
+}
+document.querySelectorAll("#tabsPerfil button").forEach(b=> b.onclick = () => cambiarPerfil(b.dataset.perfil));
+
+document.querySelectorAll("#tabsSec button").forEach(b=> b.onclick = () => cambiarSeccion(b.dataset.sec));
+function cambiarSeccion(s){
+  seccionActiva = s;
+  if(s === "condiciones" && typeof renderCondiciones === "function") renderCondiciones();
+  document.querySelectorAll("#tabsSec button").forEach(b=> b.classList.toggle("on", b.dataset.sec === s));
+  document.querySelectorAll("section.panel").forEach(p=> p.classList.toggle("on", p.id === "panel-"+s));
+}
+
+document.querySelectorAll("[data-abrir]").forEach(b=> b.onclick = () => abrirForm(b.dataset.abrir));
+function abrirForm(sec, item){
+  cerrarTodosLosForms();
+  document.getElementById("form-"+sec).style.display = "flex";
+  if(sec === "condiciones"){
+    document.getElementById("cond-id").value = item ? item.id : "";
+    document.getElementById("cond-nombre").value = item ? item.nombre : "";
+    document.getElementById("cond-desde").value = item ? (item.desde||"") : "";
+    document.getElementById("cond-notas").value = item ? (item.notas||"") : "";
+    document.getElementById("cond-estado").value = (item && item.estado) ? item.estado : "activa";
+    espPonerUI("cond-esp","cond-esp-otro", item ? item.espId : "", item ? item.espTxt : "");
+    const _sel = new Set(item && item.meds ? item.meds : []);
+    document.getElementById("cond-meds").innerHTML = medicacion.length
+      ? medicacion.map(m=>'<label class="check"><input type="checkbox" value="'+m.id+'"'+(_sel.has(m.id)?" checked":"")+'> '+escapar(m.nombre)+(dosisTexto(m)?" · "+escapar(dosisTexto(m)):"")+'</label>').join("")
+      : '<p class="empty" style="margin:0">Aún no hay pastillas. Créalas en la pestaña Medicación.</p>';
+  } else if(sec === "cirugias"){
+    document.getElementById("cir-id").value = item ? item.id : "";
+    document.getElementById("cir-fecha").value = item ? (item.fecha||"") : hoyISO();
+    document.getElementById("cir-desc").value = item ? item.desc : "";
+    document.getElementById("cir-notas").value = item ? (item.notas||"") : "";
+  } else if(sec === "medicacion"){
+    document.getElementById("med-form-titulo").textContent = item ? "Editar medicación" : "Añadir medicación";
+    document.getElementById("med-id").value = item ? item.id : "";
+    document.getElementById("med-nombre").value = item ? item.nombre : "";
+    document.getElementById("med-cantidad").value = item ? (item.cantidad!=null ? item.cantidad : "") : "";
+    document.getElementById("med-unidad").value = item ? (item.unidad||"mg") : "mg";
+    document.getElementById("med-horario").value = item ? (item.horario||"") : "";
+    document.getElementById("med-notas").value = item ? (item.notas||"") : "";
+    document.getElementById("med-activa").checked = item ? !!item.activa : true;
+    document.getElementById("med-maxdia").value = item && item.maxDia!=null ? item.maxDia : "";
+    document.getElementById("med-horasmin").value = item && item.horasMin!=null ? item.horasMin : "";
+    elegirDia(item && item.diaSem!=null ? item.diaSem : 1);
+    elegirFrec(item ? frecDe(item) : "");
+    { const _f = document.getElementById("form-medicacion"); if(_f.scrollIntoView) _f.scrollIntoView({behavior:"smooth", block:"center"}); }
+  } else if(sec === "pruebas"){
+    document.getElementById("prb-id").value = item ? item.id : "";
+    document.getElementById("prb-fecha").value = item ? (item.fecha||"") : hoyISO();
+    document.getElementById("prb-tipo").value = item ? item.tipo : "analitica";
+    document.getElementById("prb-notas").value = item ? (item.notas||"") : "";
+    prbPonerUI(item);
+  }
+}
+function cerrarForm(sec){ document.getElementById("form-"+sec).style.display = "none"; }
+function cerrarTodosLosForms(){ ["condiciones","cirugias","medicacion","pruebas","ficha"].forEach(cerrarForm); }
+
+function leerArchivo(input, comprimir){
+  return new Promise((resolve)=>{
+    const f = input.files && input.files[0];
+    if(!f){ resolve(null); return; }
+    const r = new FileReader();
+    r.onload = async () => {
+      let datos = r.result;
+      if(comprimir && /^data:image\//.test(datos)){ try{ datos = await comprimirImagen(datos, 1600, 0.7); }catch(e){} }
+      resolve({nombre:f.name, datos});
+    };
+    r.onerror = () => resolve(null);
+    r.readAsDataURL(f);
+  });
+}
+
+// ---------- Especialistas: misma lista y mismos colores que el Calendario ----------
+const ESP_TONOS = ["#3ab66c","#ff8a3d","#e5484d","#4cc9f0","#9d6bff","#ff7eb6","#b5e048","#a8325e","#1fbfa6","#b07a4f","#f5d547","#4f5de8","#e23fc4","#22b8cf","#9aa5b5","#d9d2c3"]; // = TONOS de calendario.js
+const ESP_LIBRE_COLOR = "#8fb5a3";
+const ESP_DEFECTO = [["s1","Cabecera",["Mamy","Filha"]],["s2","Traumatólogo",["Mamy"]],["s3","Reumatólogo",["Mamy"]],["s4","Neumólogo",["Mamy"]],["s5","Inflix (terapia)",["Mamy"]],["s6","Matrona",["Mamy","Filha"]],["s7","Vacunas",["Mamy","Filha"]],["s8","Analíticas",["Mamy","Filha"]],["s9","Pruebas",["Mamy","Filha"]],["s10","",["Mamy","Filha"]],["s11","Gastroenterólogo",["Mamy","Filha"]],["s12","Oculista",["Mamy","Filha"]],["s13","Ginecólogo",["Mamy","Filha"]],["s14","Dentista",["Mamy","Filha"]],["s15","",["Mamy","Filha"]],["s16","",["Mamy","Filha"]]];
+function espTodos(){
+  const g = leerJSON("calEspecialistasV2", null);
+  return ESP_DEFECTO.map((d,i)=>{
+    const x = Array.isArray(g) ? g.find(q=>q && q.id===d[0]) : null;
+    return {id:d[0], nombre: (x && typeof x.nombre==="string") ? x.nombre : d[1],
+      tono: (x && Number.isInteger(x.tono) && x.tono>=0 && x.tono<ESP_TONOS.length) ? x.tono : i,
+      perfiles: (x && Array.isArray(x.perfiles)) ? x.perfiles : d[2]};
+  }).filter(s=>s.nombre.trim());
+}
+function espParaPerfil(){ return espTodos().filter(s=>s.perfiles.includes(perfilActivo)); }
+function espInfoDe(id, txt){
+  const t = espTodos(); let s = id ? t.find(x=>x.id===id) : null;
+  if(!s && txt){ const n = String(txt).trim().toLowerCase(); s = t.find(x=>x.nombre.trim().toLowerCase()===n); }
+  if(s) return {nombre:s.nombre.trim(), color:ESP_TONOS[s.tono]};
+  if(txt && String(txt).trim()) return {nombre:String(txt).trim(), color:ESP_LIBRE_COLOR};
+  return null;
+}
+function cruzEsp(info){ return info ? '<span class="cruz-esp" style="--c:'+info.color+'"></span>'+escapar(info.nombre) : ""; }
+// Desplegable de especialistas (+ «Otro» con texto libre)
+function espPonerUI(selId, otroId, id, txt){
+  const sel = document.getElementById(selId), o = document.getElementById(otroId), todos = espTodos(), lista = espParaPerfil();
+  const extra = (id && !lista.find(x=>x.id===id) && todos.find(x=>x.id===id)) ? [todos.find(x=>x.id===id)] : [];
+  sel.innerHTML = '<option value="">— Sin especificar —</option>' + lista.concat(extra).map(s=>'<option value="'+s.id+'">'+escapar(s.nombre.trim())+'</option>').join("") + '<option value="otro">Otro (escribir)…</option>';
+  let v = ""; if(id && todos.find(x=>x.id===id)) v = id; else if(txt) v = "otro";
+  sel.value = v; o.value = v==="otro" ? (txt||"") : ""; o.style.display = v==="otro" ? "" : "none";
+  sel.onchange = ()=>{ o.style.display = sel.value==="otro" ? "" : "none"; };
+}
+function espLeer(selId, otroId){
+  const v = document.getElementById(selId).value;
+  if(v==="otro") return {espId:"", espTxt:document.getElementById(otroId).value.trim()};
+  if(!v) return {espId:"", espTxt:""};
+  const i = espInfoDe(v,""); return {espId:v, espTxt:i ? i.nombre : ""};
+}
+
+// ---------- Datos rápidos ----------
+function claveFicha(){ return "saludFichaV1_"+perfilActivo; }
+function leerFicha(){ return leerJSON(claveFicha(), {}) || {}; }
+function abrirFicha(){
+  cerrarTodosLosForms(); const f = leerFicha();
+  document.getElementById("ficha-alergias").value = f.alergias || "";
+  document.getElementById("ficha-sangre").value = f.sangre || "";
+  document.getElementById("ficha-cabecera").value = f.cabecera || "";
+  document.getElementById("ficha-cont-nombre").value = f.contNombre || "";
+  document.getElementById("ficha-cont-tel").value = f.contTel || "";
+  document.getElementById("form-ficha").style.display = "flex";
+}
+function guardarFicha(){
+  const f = { alergias: document.getElementById("ficha-alergias").value.trim(), sangre: document.getElementById("ficha-sangre").value,
+    cabecera: document.getElementById("ficha-cabecera").value.trim(), contNombre: document.getElementById("ficha-cont-nombre").value.trim(), contTel: document.getElementById("ficha-cont-tel").value.trim() };
+  guardarJSON(claveFicha(), f); cerrarForm("ficha"); renderFicha();
+}
+
+// ---------- Condiciones ----------
+const ESTADO_COND = {activa:"Activa", controlada:"Controlada", remision:"En remisión"};
+function guardarCondicion(){
+  const nombre = document.getElementById("cond-nombre").value.trim();
+  if(!nombre) return avisar("Poné un nombre para la condición.");
+  const id = document.getElementById("cond-id").value || nuevoId();
+  const e = espLeer("cond-esp","cond-esp-otro");
+  const meds = Array.from(document.querySelectorAll("#cond-meds input:checked")).map(x=>x.value);
+  const item = { id, nombre, desde: document.getElementById("cond-desde").value || "", estado: document.getElementById("cond-estado").value,
+    espId: e.espId, espTxt: e.espTxt, meds, notas: document.getElementById("cond-notas").value.trim() };
+  const i = condiciones.findIndex(x=>x.id===id);
+  if(i>-1) condiciones[i] = item; else condiciones.push(item);
+  guardarJSON(claveCond(), condiciones);
+  cerrarForm("condiciones"); renderCondiciones();
+}
+async function borrarCondicion(id){ if(!(await confirmar("¿Borrar esta condición?",{si:"Borrar",peligro:true}))) return; condiciones = condiciones.filter(x=>x.id!==id); guardarJSON(claveCond(), condiciones); renderCondiciones(); }
+function pruebasDeCond(id){ return pruebas.filter(p=>p.cond===id); }
+function renderCondiciones(){
+  renderFicha();
+  const cont = document.getElementById("lista-condiciones");
+  if(!condiciones.length){ cont.innerHTML = '<p class="empty">Sin condiciones registradas todavía.</p>'; return; }
+  cont.innerHTML = condiciones.map(c => {
+    const e = espInfoDe(c.espId, c.espTxt);
+    const meds = (c.meds||[]).map(id=>medicacion.find(m=>m.id===id)).filter(Boolean);
+    const prs = pruebasDeCond(c.id), pend = prs.filter(p=>p.estado==="pendiente");
+    const hechas = prs.filter(p=>p.estado!=="pendiente").sort((a,b)=>(b.fecha||"").localeCompare(a.fecha||""));
+    return `
+    <div class="tarjeta">
+      <div class="tarjeta-top">
+        <div><div class="tarjeta-nombre">${escapar(c.nombre)}${c.estado && ESTADO_COND[c.estado] ? ' <span class="estado-cond '+c.estado+'">'+ESTADO_COND[c.estado]+'</span>' : ""}</div>
+        ${c.desde ? `<div class="tarjeta-meta">Desde ${fechaLegible(c.desde)}</div>` : ""}
+        ${e ? `<div class="cond-sub">${cruzEsp(e)}</div>` : ""}</div>
+        <div class="tarjeta-btns">
+          <button onclick='abrirForm("condiciones", ${JSON.stringify(c)})'>✏️</button>
+          <button class="del" onclick="borrarCondicion('${c.id}')">🗑️</button>
+        </div>
+      </div>
+      ${meds.length ? `<div class="chips-med">${meds.map(m=>'<span class="chip-med">💊 '+escapar(m.nombre)+(dosisTexto(m)?" · "+escapar(dosisTexto(m)):"")+'</span>').join("")}</div>` : ""}
+      ${pend.map(p=>{ const pe = espInfoDe(p.espId,p.espTxt); return '<div class="cond-sub"><span class="prb-pend">⏳ Pendiente</span> '+escapar(TIPO_ETQ[p.tipo]||"Prueba")+(pe ? ' · pedida por '+cruzEsp(pe) : "")+(p.fecha ? ' · prevista '+fechaLegible(p.fecha) : "")+'</div>'; }).join("")}
+      ${hechas.length ? `<div class="cond-sub">Última prueba: ${escapar(TIPO_ETQ[hechas[0].tipo]||"Prueba")} · ${fechaLegible(hechas[0].fecha)}${hechas.length>1 ? " (+"+(hechas.length-1)+" más)" : ""}</div>` : ""}
+      ${c.notas ? `<div class="tarjeta-notas">${escapar(c.notas)}</div>` : ""}
+    </div>`; }).join("");
+}
+
+// ---------- Ficha: datos rápidos + resúmenes automáticos de las demás pestañas ----------
+function citasFuturasMed(){
+  const datos = leerJSON("calEventosV1", null);
+  const evs = (datos && Array.isArray(datos.eventos)) ? datos.eventos : [], hoy = hoyISO();
+  return evs.filter(e => e.cat === "medico" && (e.para === perfilActivo || e.para === "Ambas") && e.fecha >= hoy).sort((a,b)=> a.fecha.localeCompare(b.fecha) || (a.hora||"").localeCompare(b.hora||""));
+}
+function renderFicha(){
+  if(!document.getElementById("ficha-datos")) return;
+  const f = leerFicha();
+  const filas = [["Alergias e intolerancias", f.alergias], ["Grupo sanguíneo", f.sangre], ["Contacto de emergencia", [f.contNombre, f.contTel].filter(Boolean).join(" · ")], ["Médico de cabecera", f.cabecera]].filter(x=>x[1]);
+  document.getElementById("ficha-datos").innerHTML = (filas.length ? filas.map(x=>'<div class="ficha-fila"><b>'+x[0]+'</b><span>'+escapar(x[1])+'</span></div>').join("") : '<p class="empty" style="margin:0 0 6px">Aún sin datos. Añade alergias, grupo sanguíneo y un contacto de emergencia.</p>') +
+    '<button type="button" class="btn-mini" onclick="abrirFicha()">✏️ '+(filas.length ? "Editar" : "Añadir datos")+'</button>';
+  const meds = medicacion.filter(m=>m.activa);
+  document.getElementById("ficha-med").innerHTML = meds.length ? meds.map(m=>'<div class="ficha-lin"><span>'+escapar(m.nombre)+(dosisTexto(m) ? " · "+escapar(dosisTexto(m)) : "")+'</span><span class="d">'+escapar([frecTexto(m), (frecDe(m)!=="demanda" && m.horario) ? m.horario : ""].filter(Boolean).join(" · "))+'</span></div>').join("") : '<p class="empty">No hay pastillas activas. Se leen de la pestaña Medicación.</p>';
+  const cit = citasFuturasMed().slice(0,5);
+  document.getElementById("ficha-citas").innerHTML = cit.length ? cit.map(e=>'<div class="ficha-lin"><span>'+(cruzEsp(espInfoDe(e.esp,e.espTxt)) || escapar(e.titulo||"Cita médica"))+'</span><span class="d">'+fechaLegible(e.fecha)+(e.hora ? " · "+escapar(e.hora) : "")+'</span></div>').join("") : '<p class="empty">No hay citas médicas próximas en el Calendario.</p>';
+  const pend = pruebas.filter(p=>p.estado==="pendiente").sort((a,b)=>(a.fecha||"9999").localeCompare(b.fecha||"9999"));
+  const ult = pruebas.filter(p=>p.estado!=="pendiente").sort((a,b)=>(b.fecha||"").localeCompare(a.fecha||"")).slice(0,4);
+  const lineaPrb = p => { const pe = espInfoDe(p.espId,p.espTxt), co = condiciones.find(c=>c.id===p.cond);
+    return '<div class="ficha-lin"><span>'+(p.estado==="pendiente" ? '<span class="prb-pend">⏳</span> ' : "")+escapar(TIPO_ETQ[p.tipo]||"Prueba")+(pe ? ' · '+cruzEsp(pe) : "")+(co ? ' · '+escapar(co.nombre) : "")+'</span><span class="d">'+(p.estado==="pendiente" ? "prevista " : "")+fechaLegible(p.fecha)+'</span></div>'; };
+  document.getElementById("ficha-pruebas").innerHTML = (pend.length || ult.length) ? pend.map(lineaPrb).join("") + ult.map(lineaPrb).join("") : '<p class="empty">Sin pruebas registradas.</p>';
+  const cir = cirugias.slice().sort((a,b)=>(b.fecha||"").localeCompare(a.fecha||"")).slice(0,5);
+  document.getElementById("ficha-cir").innerHTML = cir.length ? cir.map(c=>'<div class="ficha-lin"><span>'+escapar(c.desc)+'</span><span class="d">'+fechaLegible(c.fecha)+'</span></div>').join("") : '<p class="empty">Sin cirugías registradas.</p>';
+}
+
+// ---------- Pruebas: pedida por / para qué condición / pendiente ----------
+function prbPonerUI(item){
+  document.getElementById("prb-estado").value = (item && item.estado === "pendiente") ? "pendiente" : "hecha";
+  espPonerUI("prb-esp", "prb-esp-otro", item ? item.espId : "", item ? item.espTxt : "");
+  const sc = document.getElementById("prb-cond");
+  sc.innerHTML = '<option value="">— Ninguna —</option>' + condiciones.map(c=>'<option value="'+c.id+'">'+escapar(c.nombre)+'</option>').join("");
+  sc.value = (item && item.cond && condiciones.find(c=>c.id===item.cond)) ? item.cond : "";
+  prbEtiquetaFecha();
+}
+function prbEtiquetaFecha(){ const pe = document.getElementById("prb-estado").value === "pendiente"; document.getElementById("prb-fecha-lab").textContent = pe ? "Fecha prevista (opcional)" : "Fecha"; }
+function extraPrb(p){
+  const pe = espInfoDe(p.espId, p.espTxt), co = condiciones.find(c=>c.id===p.cond);
+  return (pe ? '<div class="cond-sub">Pedida por: '+cruzEsp(pe)+'</div>' : "") + (co ? '<div class="cond-sub">Condición: '+escapar(co.nombre)+'</div>' : "") +
+    (p.estado === "pendiente" ? '<button type="button" class="btn-mini" onclick="marcarPruebaHecha(\''+p.id+'\')">✓ Marcar como hecha</button>' : "");
+}
+function marcarPruebaHecha(id){
+  const p = pruebas.find(x=>x.id===id); if(!p) return;
+  p.estado = "hecha"; p.fecha = hoyISO();
+  guardarJSON(clavePruebas(), pruebas); renderPruebas(); renderFicha();
+}
+
+// ---------- Resumen médico en PDF ----------
+document.getElementById("ficha-pdf").onclick = async ()=>{
+  const msg = document.getElementById("ficha-msg"); msg.textContent = "Preparando el PDF…";
+  try{ await arAsegurarPDF(); }catch(e){ msg.textContent = "No se pudo cargar el generador de PDF. Comprueba que el archivo pdflib.js está subido junto a la app."; return; }
+  const nombre = localStorage.getItem("arInfNombreV1_"+perfilActivo) || perfilActivo;
+  const base = arPdfBase("Resumen médico", "Datos clínicos y seguimiento", nombre); const doc = base.doc; let y = base.y;
+  const f = leerFicha();
+  const datos = [["Alergias e intolerancias", f.alergias], ["Grupo sanguíneo", f.sangre], ["Contacto de emergencia", [f.contNombre, f.contTel].filter(Boolean).join(" · ")], ["Médico de cabecera", f.cabecera]].filter(x=>x[1]);
+  if(datos.length){ y = arTitulo(doc, y, "Datos importantes"); y = arTabla(doc, y, ["Dato","Valor"], datos, {columnStyles:{0:{cellWidth:55, fontStyle:"bold"}}}); }
+  if(condiciones.length){
+    y = arTitulo(doc, y, "Condiciones");
+    y = arTabla(doc, y, ["Condición","Estado","Desde","Especialista","Pastillas relacionadas","Notas"], condiciones.map(c=>{ const e = espInfoDe(c.espId,c.espTxt); const ms = (c.meds||[]).map(id=>medicacion.find(m=>m.id===id)).filter(Boolean).map(m=>m.nombre).join(", ");
+      return [c.nombre, ESTADO_COND[c.estado] || "-", c.desde ? fechaLegible(c.desde) : "-", e ? e.nombre : "-", ms || "-", c.notas || "-"]; }),
+      {columnStyles:{0:{cellWidth:34}, 1:{cellWidth:20}, 2:{cellWidth:20}, 3:{cellWidth:28}, 4:{cellWidth:32}}});
+  }
+  const meds = medicacion.filter(m=>m.activa);
+  if(meds.length){ y = arTitulo(doc, y, "Medicación actual"); y = arTabla(doc, y, ["Pastilla","Dosis","Cuándo","Notas"], meds.map(m=>[m.nombre, dosisTexto(m) || "-", [frecTexto(m), (frecDe(m)!=="demanda" && m.horario) ? m.horario : ""].filter(Boolean).join(" · "), m.notas || "-"]), {columnStyles:{0:{cellWidth:46}, 1:{cellWidth:28}, 2:{cellWidth:44}}}); }
+  const prs = pruebas.slice().sort((a,b)=> (a.estado==="pendiente" ? 0 : 1) - (b.estado==="pendiente" ? 0 : 1) || (b.fecha||"").localeCompare(a.fecha||"")).slice(0,15);
+  if(prs.length){ y = arTitulo(doc, y, "Pruebas (pendientes primero)"); y = arTabla(doc, y, ["Fecha","Prueba","Pedida por","Condición","Estado","Resumen"], prs.map(p=>{ const pe = espInfoDe(p.espId,p.espTxt), co = condiciones.find(c=>c.id===p.cond); const r = (p.notas || "").replace(/\s+/g," ");
+      return [p.fecha ? fechaLegible(p.fecha) : "-", TIPO_ETQ[p.tipo] || "Prueba", pe ? pe.nombre : "-", co ? co.nombre : "-", p.estado==="pendiente" ? "Pendiente" : "Hecha", r ? (r.length>110 ? r.slice(0,110)+"…" : r) : "-"]; }),
+      {columnStyles:{0:{cellWidth:22}, 1:{cellWidth:28}, 2:{cellWidth:26}, 3:{cellWidth:26}, 4:{cellWidth:18}}}); }
+  const cir = cirugias.slice().sort((a,b)=>(b.fecha||"").localeCompare(a.fecha||""));
+  if(cir.length){ y = arTitulo(doc, y, "Cirugías"); y = arTabla(doc, y, ["Fecha","Intervención","Notas"], cir.map(c=>[c.fecha ? fechaLegible(c.fecha) : "-", c.desc, c.notas || "-"]), {columnStyles:{0:{cellWidth:24}, 1:{cellWidth:70}}}); }
+  const cit = citasFuturasMed().slice(0,8);
+  if(cit.length){ y = arTitulo(doc, y, "Próximas citas médicas"); y = arTabla(doc, y, ["Fecha","Hora","Especialista"], cit.map(e=>{ const i = espInfoDe(e.esp,e.espTxt); return [fechaLegible(e.fecha), e.hora || "-", i ? i.nombre : (e.titulo || "Cita médica")]; }), {columnStyles:{0:{cellWidth:28}, 1:{cellWidth:22}}}); }
+  if(!datos.length && !condiciones.length && !meds.length && !prs.length && !cir.length && !cit.length){ msg.textContent = "Todavía no hay nada que resumir. Añade datos, condiciones o medicación."; return; }
+  arPdfPies(doc, "Resumen elaborado por el paciente a partir de sus propios registros; no sustituye la historia clínica.");
+  const archivo = "resumen-medico-"+hoyISO()+".pdf";
+  try{ doc.save(archivo); }catch(e){}
+  let enlace = ""; try{ enlace = ' <a href="'+doc.output("bloburl")+'" target="_blank" rel="noopener">Abrir el PDF</a>'; }catch(e){}
+  msg.innerHTML = "✓ Resumen generado ("+escapar(archivo)+")."+enlace;
+};
+
+function guardarCirugia(){
+  const desc = document.getElementById("cir-desc").value.trim();
+  if(!desc) return avisar("Contá qué se hizo.");
+  const id = document.getElementById("cir-id").value || nuevoId();
+  const previo = cirugias.find(x=>x.id===id);
+  const item = { id, fecha: document.getElementById("cir-fecha").value || "", desc, notas: document.getElementById("cir-notas").value.trim(), archivo: previo?.archivo || null, archivoNombre: previo?.archivoNombre || null };
+  leerArchivo(document.getElementById("cir-archivo"), true).then(a=>{
+    const i = cirugias.findIndex(x=>x.id===id);
+    const con = it => { const l = cirugias.slice(); if(i>-1) l[i] = it; else l.push(it); return l; };
+    let aviso = "";
+    if(a){
+      item.archivo = a.datos; item.archivoNombre = a.nombre;
+      if(!archivoCabe(claveCirugias(), con(item))){ item.archivo = previo?.archivo || null; item.archivoNombre = previo?.archivoNombre || null; aviso = MSG_NO_CABE; }
+    }
+    cirugias = con(item);
+    guardarJSON(claveCirugias(), cirugias);
+    cerrarForm("cirugias"); renderCirugias();
+    if(aviso) avisar(aviso);
+  });
+}
+async function borrarCirugia(id){ if(!(await confirmar("¿Borrar esta cirugía?",{si:"Borrar",peligro:true}))) return; cirugias = cirugias.filter(x=>x.id!==id); guardarJSON(claveCirugias(), cirugias); renderCirugias(); }
+function renderCirugias(){
+  const cont = document.getElementById("lista-cirugias");
+  const orden = cirugias.slice().sort((a,b)=> (b.fecha||"").localeCompare(a.fecha||""));
+  if(!orden.length){ cont.innerHTML = '<p class="empty">Sin cirugías registradas todavía.</p>'; return; }
+  cont.innerHTML = orden.map(c => `
+    <div class="tarjeta">
+      <div class="tarjeta-top">
+        <div><div class="tarjeta-nombre">${escapar(c.desc)}</div>
+        <div class="tarjeta-meta">${fechaLegible(c.fecha)}</div></div>
+        <div class="tarjeta-btns">
+          <button onclick='abrirForm("cirugias", ${JSON.stringify({id:c.id,fecha:c.fecha,desc:c.desc,notas:c.notas})})'>✏️</button>
+          <button class="del" onclick="borrarCirugia('${c.id}')">🗑️</button>
+        </div>
+      </div>
+      ${c.notas ? `<div class="tarjeta-notas">${escapar(c.notas)}</div>` : ""}
+      ${c.archivo ? `<a class="archivo-link" href="${c.archivo}" download="${escapar(c.archivoNombre||"archivo")}">📎 ${escapar(c.archivoNombre||"archivo adjunto")}</a>` : ""}
+    </div>`).join("");
+}
+
+const DIAS_SEM = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
+function frecDe(m){ return m.frec || "diaria"; }
+// ¿Le toca a esta pastilla ese día? (las «solo si lo necesito» nunca son obligatorias)
+function tocaEl(m, iso){
+  if(!m || !m.activa) return false;
+  const fr = frecDe(m);
+  if(fr === "demanda") return false;
+  if(fr === "semanal") return new Date(iso+"T00:00:00").getDay() === Number(m.diaSem);
+  return true;
+}
+function frecTexto(m){
+  const fr = frecDe(m);
+  if(fr === "semanal") return "Cada "+DIAS_SEM[Number(m.diaSem)||0];
+  if(fr === "demanda") return "Solo si lo necesito";
+  return "Todos los días";
+}
+function elegirFrec(v){
+  document.getElementById("med-frec").value = v;
+  document.querySelectorAll("#med-frec-opc button").forEach(b=>b.classList.toggle("on", b.dataset.v===v));
+  actualizarCamposFrec();
+}
+function elegirDia(d){
+  document.getElementById("med-diasem").value = String(d);
+  document.querySelectorAll("#med-dias button").forEach(b=>b.classList.toggle("on", b.dataset.d===String(d)));
+  actualizarResumenMed();
+}
+function actualizarCamposFrec(){
+  const fr = document.getElementById("med-frec").value;
+  document.getElementById("med-resto").style.display = fr ? "flex" : "none";
+  document.getElementById("med-sem-cont").style.display = fr==="semanal" ? "" : "none";
+  document.getElementById("med-horario-cont").style.display = fr==="demanda" ? "none" : "";
+  document.getElementById("med-dem-cont").style.display = fr==="demanda" ? "flex" : "none";
+  actualizarResumenMed();
+}
+function actualizarResumenMed(){
+  const g = id => document.getElementById(id).value;
+  const fr = g("med-frec"), el = document.getElementById("med-resumen"); if(!el) return;
+  if(!fr){ el.textContent = ""; return; }
+  const hor = g("med-horario").trim(), cant = g("med-cantidad");
+  const dosis = cant !== "" ? (cant+" "+(UNIDAD_ETQ[g("med-unidad")]||"")).trim() : "";
+  let cuando = "";
+  if(fr==="diaria") cuando = "todos los días" + (hor ? " a las "+hor : "");
+  else if(fr==="semanal") cuando = "cada "+DIAS_SEM[Number(g("med-diasem"))] + (hor ? " a las "+hor : "");
+  else { cuando = "solo si lo necesito"; if(g("med-maxdia")) cuando += ", máximo "+g("med-maxdia")+" al día"; if(g("med-horasmin")) cuando += ", esperando "+g("med-horasmin")+" h entre tomas"; }
+  el.innerHTML = "📋 <b>Quedará así:</b> "+escapar([g("med-nombre").trim() || "(falta el nombre)", dosis, cuando].filter(Boolean).join(" · "));
+}
+document.querySelectorAll("#med-frec-opc button").forEach(b=> b.onclick = ()=> elegirFrec(b.dataset.v));
+document.querySelectorAll("#med-dias button").forEach(b=> b.onclick = ()=> elegirDia(b.dataset.d));
+document.getElementById("form-medicacion").addEventListener("input", actualizarResumenMed);
+document.getElementById("form-medicacion").addEventListener("change", actualizarResumenMed);
+
+function guardarMedicacion(){
+  if(!document.getElementById("med-frec").value) return avisar("Elige cada cuánto la tomas (paso 2).");
+  const nombre = document.getElementById("med-nombre").value.trim();
+  if(!nombre) return avisar("Poné el nombre de la pastilla.");
+  const id = document.getElementById("med-id").value || nuevoId();
+  const cantidad = document.getElementById("med-cantidad").value;
+  const frec = document.getElementById("med-frec").value;
+  const num = v => (v !== "" && !isNaN(Number(v))) ? Number(v) : null;
+  const item = { id, nombre, frec, cantidad: cantidad !== "" ? Number(cantidad) : null, unidad: document.getElementById("med-unidad").value,
+    horario: frec==="demanda" ? "" : document.getElementById("med-horario").value.trim(),
+    notas: document.getElementById("med-notas").value.trim(), activa: document.getElementById("med-activa").checked };
+  if(frec === "semanal") item.diaSem = Number(document.getElementById("med-diasem").value);
+  if(frec === "demanda"){ item.maxDia = num(document.getElementById("med-maxdia").value); item.horasMin = num(document.getElementById("med-horasmin").value); }
+  const i = medicacion.findIndex(x=>x.id===id);
+  if(i>-1) medicacion[i] = item; else medicacion.push(item);
+  guardarJSON(claveMed(), medicacion);
+  aprenderNombreMed(nombre);
+  cerrarForm("medicacion"); renderMedicacion(); renderTomas();
+}
+async function borrarMedicacion(id){ if(!(await confirmar("¿Borrar esta pastilla?",{si:"Borrar",peligro:true}))) return; medicacion = medicacion.filter(x=>x.id!==id); guardarJSON(claveMed(), medicacion); renderMedicacion(); renderTomas(); }
+function renderMedicacion(){
+  renderBancoMed();
+  const cont = document.getElementById("lista-medicacion");
+  if(!medicacion.length){ cont.innerHTML = '<p class="empty">Sin pastillas registradas todavía.</p>'; return; }
+  const tarjeta = m => `
+    <div class="tarjeta">
+      <div class="tarjeta-top">
+        <div><div class="tarjeta-nombre">${escapar(m.nombre)}${m.activa ? "" : " (inactiva)"}</div>
+        <div class="tarjeta-meta">${[dosisTexto(m), m.horario].filter(Boolean).map(escapar).join(" · ")}</div>
+        <span class="tarjeta-frec">${escapar(frecTexto(m))}</span></div>
+        <div class="tarjeta-btns">
+          <button onclick='abrirForm("medicacion", ${JSON.stringify(m)})'>✏️</button>
+          <button class="del" onclick="borrarMedicacion('${m.id}')">🗑️</button>
+        </div>
+      </div>
+      ${m.notas ? `<div class="tarjeta-notas">${escapar(m.notas)}</div>` : ""}
+    </div>`;
+  const grupo = (titulo, lista) => lista.length ? '<div class="grupo-med">'+titulo+'</div>'+lista.map(tarjeta).join("") : "";
+  const diarias = medicacion.filter(m=>frecDe(m)==="diaria");
+  const semanales = medicacion.filter(m=>frecDe(m)==="semanal").sort((a,b)=> ((Number(a.diaSem)+6)%7) - ((Number(b.diaSem)+6)%7));
+  const aDemanda = medicacion.filter(m=>frecDe(m)==="demanda");
+  cont.innerHTML = grupo("Todos los días", diarias) + grupo("Una vez por semana", semanales) + grupo("Solo si lo necesito", aDemanda);
+}
+
+// «Próximas»: las semanales que vienen después del día que estás mirando
+function renderProximas(){
+  const cont = document.getElementById("lista-proximas");
+  const base = new Date(medFechaActual+"T00:00:00");
+  const sem = medicacion.filter(m=>m.activa && frecDe(m)==="semanal").map(m=>{
+    let dias = (Number(m.diaSem) - base.getDay() + 7) % 7; if(dias === 0) dias = 7;
+    return {m, dias};
+  }).sort((a,b)=>a.dias-b.dias);
+  if(!sem.length){ cont.innerHTML = '<p class="empty">No hay pastillas semanales activas.</p>'; return; }
+  cont.innerHTML = sem.map(({m,dias}) => `
+    <div class="toma"><div class="toma-info">
+      <div class="toma-nombre">${escapar(m.nombre)}</div>
+      <div class="toma-meta">${[DIAS_SEM[Number(m.diaSem)], dias===1 ? "mañana" : "en "+dias+" días", dosisTexto(m), m.horario].filter(Boolean).map(escapar).join(" · ")}</div>
+    </div></div>`).join("");
+}
+
+// ---------- Historial en listado (lo principal) ----------
+function nombreDiaLargo(iso){ const p = iso.split("-"); return new Date(+p[0], +p[1]-1, +p[2]).toLocaleDateString("es-ES", {weekday:"long", day:"numeric", month:"long"}); }
+function datosDiaMed(iso){
+  const deben = medicacion.filter(m=>tocaEl(m, iso));
+  const hechas = tomas[iso] || [], horas = (tomas["h:"+iso] || {});
+  const filas = [];
+  hechas.forEach(id => { const m = medPorId(id); filas.push({tipo:"ok", hora:horas[id]||"", texto:[m?m.nombre:"(borrada)", m?dosisTexto(m):""].filter(Boolean).join(" · ")}); });
+  (demanda[iso]||[]).forEach(x => { const m = medPorId(x.id); filas.push({tipo:"dem", hora:x.hora||"", texto:[m?m.nombre:"(borrada)", m?dosisTexto(m):""].filter(Boolean).join(" · ")}); });
+  filas.sort((a,b)=> (a.hora||"99:99").localeCompare(b.hora||"99:99"));
+  const faltan = deben.filter(m=>!hechas.includes(m.id));
+  return {deben, filas, faltan, completo: deben.length>0 && faltan.length===0};
+}
+function renderListaTomas(){
+  const cont = document.getElementById("ht-lista"); if(!cont) return;
+  const hoy = hoyISO();
+  const fSel = document.getElementById("ht-fecha").value;
+  document.getElementById("ht-rango").style.display = fSel ? "none" : "";
+  const fechasConDatos = Object.keys(tomas).filter(f=>/^\d{4}-\d{2}-\d{2}$/.test(f) && (tomas[f]||[]).length).concat(Object.keys(demanda).filter(f=>/^\d{4}-\d{2}-\d{2}$/.test(f) && (demanda[f]||[]).length)).sort();
+  const primera = fechasConDatos[0] || null;
+  const tarjeta = (iso, siempre) => {
+    const d = datosDiaMed(iso);
+    const contable = !!primera && iso >= primera && iso < hoy;   // solo se exige lo fijo en días pasados desde que empezaste a apuntar
+    const faltasVis = (contable || siempre) && iso <= hoy ? d.faltan : [];
+    if(!siempre && !d.filas.length && !faltasVis.length) return "";
+    let estado = "";
+    if(d.deben.length && iso <= hoy){ if(d.completo) estado = '<span class="estado ok">✓ completo</span>'; else if(contable || siempre) estado = '<span class="estado falta">faltó algo</span>'; }
+    let h = '<div class="hl-dia"><span>'+escapar(nombreDiaLargo(iso))+'</span>'+estado+'</div>';
+    h += d.filas.map(r=>'<div class="hl-fila"><span class="h">'+escapar(r.hora||"—")+'</span><span>'+escapar(r.texto)+(r.tipo==="dem" ? ' <em>(si lo necesito)</em>' : '')+'</span></div>').join("");
+    h += faltasVis.map(m=>'<div class="hl-fila falta"><span class="h">✗</span><span>Faltó: '+escapar(m.nombre)+'</span></div>').join("");
+    if(!d.filas.length && !faltasVis.length) h += '<p class="empty" style="margin:4px 0">Ese día no hay tomas apuntadas'+(d.deben.length ? "" : " ni tocaba nada fijo")+'.</p>';
+    h += '<button type="button" class="hl-abrir" onclick="abrirDiaMed(\''+iso+'\')">Abrir este día para añadir o corregir</button>';
+    return h;
+  };
+  const res = document.getElementById("ht-lista-resumen");
+  if(fSel){ cont.innerHTML = tarjeta(fSel, true); res.textContent = ""; return; }
+  const n = parseInt(document.getElementById("ht-rango").value,10) || 0;
+  let inicio;
+  if(n){ const d = new Date(); d.setDate(d.getDate()-n+1); inicio = hoyISO(d); } else inicio = primera || hoy;
+  let html = "", completos = 0, conFalta = 0;
+  for(let d = new Date(hoy+"T00:00:00"); hoyISO(d) >= inicio; d.setDate(d.getDate()-1)){
+    const iso = hoyISO(d); html += tarjeta(iso, false);
+    const dd = datosDiaMed(iso);
+    if(dd.deben.length && primera && iso >= primera && iso < hoy){ if(dd.completo) completos++; else conFalta++; }
+  }
+  cont.innerHTML = html || '<p class="empty">No hay tomas apuntadas en este rango.</p>';
+  const rot = n ? "Últimos "+n+" días" : "Todo el historial";
+  res.textContent = (completos+conFalta) ? rot+": "+completos+(completos===1?" día completo":" días completos")+", "+conFalta+(conFalta===1?" con falta":" con faltas")+" (sin contar hoy)" : rot+".";
+}
+function abrirDiaMed(iso){ medFechaActual = iso; selHora = null; renderTomas(); window.scrollTo(0,0); }
+document.getElementById("ht-fecha").onchange = renderListaTomas;
+document.getElementById("ht-fecha-limpiar").onclick = ()=>{ document.getElementById("ht-fecha").value = ""; renderListaTomas(); };
+document.getElementById("ht-rango").onchange = renderListaTomas;
+document.getElementById("ht-cal-toggle").onclick = ()=>{
+  const c = document.getElementById("ht-cal"), abierto = c.style.display !== "none";
+  c.style.display = abierto ? "none" : ""; document.getElementById("ht-cal-toggle").textContent = abierto ? "📆 Ver calendario" : "📆 Ocultar calendario";
+};
+
+function horasDe(iso){ return tomas["h:"+iso] || {}; }
+function medPorId(id){ return medicacion.find(x=>x.id===id) || null; }
+function horaAhora(){ const d = new Date(); return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); }
+
+// Selector de hora: {k:"fija"|"dem", id, hora, modo:"nueva"|"editar"} — para apuntar con otra hora o corregirla
+let selHora = null;
+function abrirHora(k, id, hora, modo){ selHora = {k, id, hora: hora||"", modo}; renderTomas(); const i = document.getElementById("inp-hora"); if(i && i.focus) i.focus(); }
+function cancelarHora(){ selHora = null; renderTomas(); }
+function esSel(k, id, modo, hora){ return !!selHora && selHora.k===k && selHora.id===id && selHora.modo===modo && (modo==="nueva" || selHora.hora===(hora||"")); }
+function pickerHtml(){
+  const v = (selHora && selHora.hora) || horaAhora();
+  return '<div class="hora-picker"><input type="time" id="inp-hora" value="'+escapar(v)+'"><button type="button" class="ok" onclick="confirmarHora()">OK</button><button type="button" onclick="cancelarHora()">Cancelar</button></div>';
+}
+function confirmarHora(){
+  const v = document.getElementById("inp-hora").value;
+  if(!v) return avisar("Elige una hora.");
+  const sh = selHora; selHora = null;
+  if(sh.k === "fija"){ if(sh.modo === "nueva") marcarToma(sh.id, v); else { editarHoraFija(sh.id, v); } }
+  else { if(sh.modo === "nueva") tomarDemanda(sh.id, v); else editarHoraDemanda(sh.id, sh.hora, v); }
+}
+function editarHoraFija(id, v){
+  const horas = Object.assign({}, horasDe(medFechaActual)); horas[id] = v;
+  tomas["h:"+medFechaActual] = horas; guardarJSON(claveTomas(), tomas); renderTomas();
+}
+function editarHoraDemanda(id, vieja, v){
+  const lista = demanda[medFechaActual] || [];
+  const e = lista.find(x=>x.id===id && (x.hora||"")===vieja);
+  if(e){ e.hora = v; demanda[medFechaActual] = lista; guardarJSON(claveDemanda(), demanda); }
+  renderTomas();
+}
+
+function renderTomas(){
+  renderHistorialTomas();
+  renderListaTomas();
+  const esHoy = medFechaActual === hoyISO();
+  document.getElementById("medFechaLabel").textContent = fechaLegible(medFechaActual) + (esHoy ? " · hoy" : "");
+  document.getElementById("tomado-tit").textContent = esHoy ? "✅ Tomado hoy" : "✅ Tomado ese día";
+  const hechas = tomas[medFechaActual] || [], horas = horasDe(medFechaActual);
+
+  // 1) Lo que realmente tomaste, con su hora (toca la hora para corregirla)
+  const reg = [];
+  hechas.forEach(id => reg.push({k:"fija", id, hora:horas[id]||"", m:medPorId(id)}));
+  (demanda[medFechaActual]||[]).forEach(x => reg.push({k:"dem", id:x.id, hora:x.hora||"", m:medPorId(x.id)}));
+  reg.sort((a,b)=> (a.hora||"99:99").localeCompare(b.hora||"99:99"));
+  document.getElementById("lista-tomado").innerHTML = reg.length ? reg.map(r => {
+    const nombre = r.m ? r.m.nombre : "(borrada)", dosis = r.m ? dosisTexto(r.m) : "";
+    const quitar = r.k==="fija" ? "marcarToma('"+r.id+"')" : "quitarDemanda('"+r.id+"','"+r.hora+"')";
+    const editando = esSel(r.k, r.id, "editar", r.hora);
+    const cab = editando ? pickerHtml() : '<button type="button" class="tomado-h-btn" title="Cambiar la hora" onclick="abrirHora(\''+r.k+'\',\''+r.id+'\',\''+r.hora+'\',\'editar\')">'+escapar(r.hora||"—")+' ✎</button>';
+    return '<div class="tomado-fila">'+(editando ? '' : cab)+'<span class="tomado-n">'+escapar([nombre,dosis].filter(Boolean).join(" · "))+(r.k==="dem" ? ' <em>(si lo necesito)</em>' : '')+(editando ? '<div style="margin-top:6px">'+cab+'</div>' : '')+'</span>'+(editando ? '' : '<button type="button" title="Quitar esta toma" onclick="'+quitar+'">✕</button>')+'</div>';
+  }).join("") : '<p class="empty" style="margin:0;padding:2px 0">'+(esHoy ? "Todavía no tomaste nada hoy." : "No hay tomas registradas ese día.")+'</p>';
+
+  // 2) Lo que falta por tomar (solo fijas que tocan ese día)
+  const deben = medicacion.filter(m=>tocaEl(m, medFechaActual));
+  const pend = deben.filter(m=>!hechas.includes(m.id));
+  const pc = document.getElementById("lista-tomas");
+  if(!deben.length){
+    pc.innerHTML = medicacion.length ? '<p class="empty">'+(medicacion.some(m=>m.activa && frecDe(m)!=="demanda") ? "Este día no toca nada fijo ✓" : "No hay pastillas fijas activas.")+'</p>' : '<p class="empty">Todavía no hay ninguna pastilla creada.</p><button type="button" class="btn-nueva" onclick="abrirForm(\'medicacion\')">+ Añadir mi primera pastilla</button>';
+  } else if(!pend.length){
+    pc.innerHTML = '<p class="empty">Todo lo fijo de este día ya está tomado ✓</p>';
+  } else {
+    pc.innerHTML = pend.map(m => {
+      const sel = esSel("fija", m.id, "nueva");
+      return '<div class="toma"><div class="toma-info"><div class="toma-nombre">'+escapar(m.nombre)+'</div><div class="toma-meta">'+[dosisTexto(m), m.horario, frecDe(m)==="semanal" ? "semanal" : ""].filter(Boolean).map(escapar).join(" · ")+'</div>'+(sel ? '<div style="margin-top:6px;font-size:0.78rem;color:var(--muted)">¿A qué hora la tomaste?</div>'+pickerHtml() : '')+'</div>'+(sel ? '' : '<div class="toma-acc"><button type="button" class="btn-hora" title="Tomada a otra hora" onclick="abrirHora(\'fija\',\''+m.id+'\',\'\',\'nueva\')">🕐</button><button type="button" class="btn-demanda" onclick="marcarToma(\''+m.id+'\')">Tomé</button></div>')+'</div>';
+    }).join("");
+  }
+  renderDemanda();
+  renderProximas();
+}
+// Marca / desmarca una toma fija. Hora automática (ahora) salvo que elijas otra.
+function marcarToma(id, horaElegida){
+  const arr = tomas[medFechaActual] || [];
+  const horas = Object.assign({}, horasDe(medFechaActual));
+  if(arr.includes(id)){ tomas[medFechaActual] = arr.filter(x=>x!==id); delete horas[id]; }
+  else { tomas[medFechaActual] = [...arr, id]; const h = horaElegida || (medFechaActual === hoyISO() ? horaAhora() : ""); if(h) horas[id] = h; }
+  if(Object.keys(horas).length) tomas["h:"+medFechaActual] = horas; else delete tomas["h:"+medFechaActual];
+  guardarJSON(claveTomas(), tomas);
+  renderTomas();
+}
+
+// «Si lo necesito»: «Tomé una» (hora automática) o 🕐 para otra hora
+function renderDemanda(){
+  const cont = document.getElementById("lista-demanda");
+  const lista = medicacion.filter(m=>m.activa && frecDe(m)==="demanda");
+  if(!lista.length){ cont.innerHTML = '<p class="empty">Aquí aparecen las pastillas «solo si lo necesito». Añádelas en «Mis pastillas».</p>'; return; }
+  const dia = demanda[medFechaActual] || [], rotulo = medFechaActual===hoyISO() ? "hoy" : "ese día";
+  cont.innerHTML = lista.map(m => {
+    const mias = dia.filter(x=>x.id===m.id);
+    const ult = mias.map(x=>x.hora).filter(Boolean).sort().pop();
+    const lim = [m.maxDia ? "máx. "+m.maxDia+" al día" : "", m.horasMin ? "esperar "+m.horasMin+" h entre tomas" : ""].filter(Boolean).join(" · ");
+    const uso = mias.length ? rotulo+": "+mias.length+(mias.length===1?" toma":" tomas")+(ult ? " · última "+ult : "") : "ninguna "+rotulo;
+    const sel = esSel("dem", m.id, "nueva");
+    return '<div class="toma"><div class="toma-info"><div class="toma-nombre">'+escapar(m.nombre)+'</div><div class="toma-meta">'+[dosisTexto(m), lim, uso].filter(Boolean).map(escapar).join(" · ")+'</div>'+(sel ? '<div style="margin-top:6px;font-size:0.78rem;color:var(--muted)">¿A qué hora la tomaste?</div>'+pickerHtml() : '')+'</div>'+(sel ? '' : '<div class="toma-acc"><button type="button" class="btn-hora" title="Tomada a otra hora" onclick="abrirHora(\'dem\',\''+m.id+'\',\'\',\'nueva\')">🕐</button><button type="button" class="btn-demanda" onclick="tomarDemanda(\''+m.id+'\')">Tomé una</button></div>')+'</div>';
+  }).join("");
+}
+async function tomarDemanda(id, horaElegida){
+  const m = medPorId(id); if(!m) return;
+  const lista = (demanda[medFechaActual] || []).slice();
+  const mias = lista.filter(x=>x.id===id);
+  const esHoy = medFechaActual === hoyISO();
+  const ref = horaElegida || (esHoy ? horaAhora() : "");
+  const avisos = [];
+  if(m.maxDia && mias.length >= m.maxDia) avisos.push("Ya llevas "+mias.length+" y el máximo que pusiste es "+m.maxDia+" al día.");
+  if(ref && m.horasMin){
+    const mins = h => { const [a,b] = h.split(":").map(Number); return a*60+b; };
+    const cerca = mias.map(x=>x.hora).filter(Boolean).map(h=>Math.abs(mins(ref)-mins(h))/60).sort((a,b)=>a-b)[0];
+    if(cerca != null && cerca < m.horasMin) avisos.push("Hay otra toma a menos de "+(Math.round(cerca*10)/10)+" h y quieres esperar al menos "+m.horasMin+" h.");
+  }
+  if(avisos.length && !(await confirmar(avisos.join(" ")+" ¿Registrar de todos modos?",{si:"Registrar"}))) return;
+  lista.push({id, hora: ref});
+  demanda[medFechaActual] = lista;
+  guardarJSON(claveDemanda(), demanda);
+  renderTomas();
+}
+function quitarDemanda(id, hora){
+  const lista = demanda[medFechaActual] || [];
+  const k = lista.findIndex(x=>x.id===id && (x.hora||"")===hora);
+  if(k>-1) lista.splice(k,1);
+  demanda[medFechaActual] = lista;
+  guardarJSON(claveDemanda(), demanda);
+  renderTomas();
+}
+document.getElementById("medDiaAnterior").onclick = () => { selHora = null; const d=new Date(medFechaActual+"T00:00:00"); d.setDate(d.getDate()-1); medFechaActual = hoyISO(d); renderTomas(); };
+document.getElementById("medDiaSiguiente").onclick = () => { selHora = null; const d=new Date(medFechaActual+"T00:00:00"); d.setDate(d.getDate()+1); medFechaActual = hoyISO(d); renderTomas(); };
+
+function guardarPrueba(){
+  const id = document.getElementById("prb-id").value || nuevoId();
+  const previo = pruebas.find(x=>x.id===id);
+  const item = { id, fecha: document.getElementById("prb-fecha").value || hoyISO(), tipo: document.getElementById("prb-tipo").value, estado: document.getElementById("prb-estado").value, espId: espLeer("prb-esp","prb-esp-otro").espId, espTxt: espLeer("prb-esp","prb-esp-otro").espTxt, cond: document.getElementById("prb-cond").value, notas: document.getElementById("prb-notas").value.trim(), archivo: previo?.archivo || null, archivoNombre: previo?.archivoNombre || null, valores: previo?.valores || null, ia: previo?.ia || null };
+  const esAnalitica = item.tipo === "analitica";
+  // Analíticas: el archivo NO se guarda, solo se lee con la IA. Resto de pruebas: se guarda comprimido (si cabe).
+  leerArchivo(document.getElementById("prb-archivo"), !esAnalitica).then(a=>{
+    const i = pruebas.findIndex(x=>x.id===id);
+    const con = it => { const l = pruebas.slice(); if(i>-1) l[i] = it; else l.push(it); return l; };
+    let aviso = "", leerYa = false;
+    if(a){
+      if(esAnalitica){
+        archivosTemp[id] = { nombre: a.nombre, datos: a.datos };
+        item.archivo = null; item.archivoNombre = a.nombre; leerYa = true;
+      } else {
+        item.archivo = a.datos; item.archivoNombre = a.nombre;
+        if(!archivoCabe(clavePruebas(), con(item))){ item.archivo = previo?.archivo || null; item.archivoNombre = previo?.archivoNombre || null; aviso = MSG_NO_CABE; }
+      }
+    }
+    pruebas = con(item);
+    guardarJSON(clavePruebas(), pruebas);
+    cerrarForm("pruebas"); renderPruebas();
+    if(aviso) avisar(aviso);
+    if(leerYa) leerAnaliticaIA(id);
+  });
+}
+async function borrarPrueba(id){ if(!(await confirmar("¿Borrar este resultado?",{si:"Borrar",peligro:true}))) return; pruebas = pruebas.filter(x=>x.id!==id); guardarJSON(clavePruebas(), pruebas); renderPruebas(); }
+const TIPO_ETQ = {analitica:"Analítica", radiografia:"Radiografía / imagen", ecografia:"Ecografía", otro:"Otro"};
+document.getElementById("filtroTipoPrueba").onchange = renderPruebas;
+function renderPruebas(){
+  const cont = document.getElementById("lista-pruebas");
+  const filtro = document.getElementById("filtroTipoPrueba").value;
+  renderAlertasIA();
+  const orden = pruebas.slice().filter(p=> !filtro || p.tipo===filtro).sort((a,b)=> (b.fecha||"").localeCompare(a.fecha||""));
+  if(!orden.length){ cont.innerHTML = '<p class="empty">Sin resultados registrados todavía.</p>'; return; }
+  cont.innerHTML = orden.map(p => `
+    <div class="tarjeta">
+      <div class="tarjeta-top">
+        <div><div class="tarjeta-nombre">${TIPO_ETQ[p.tipo]||"Otro"}${p.estado==="pendiente" ? ' <span class="prb-pend">⏳ Pendiente</span>' : ""}</div>
+        <div class="tarjeta-meta">${p.estado==="pendiente" ? "Prevista: " : ""}${fechaLegible(p.fecha)}</div>
+        ${extraPrb(p)}</div>
+        <div class="tarjeta-btns">
+          <button onclick='abrirForm("pruebas", ${JSON.stringify({id:p.id,fecha:p.fecha,tipo:p.tipo,notas:p.notas,estado:p.estado,espId:p.espId,espTxt:p.espTxt,cond:p.cond})})'>✏️</button>
+          <button class="del" onclick="borrarPrueba('${p.id}')">🗑️</button>
+        </div>
+      </div>
+      ${p.notas ? `<div class="tarjeta-notas">${escapar(p.notas)}</div>` : ""}
+      ${p.archivo ? `<a class="archivo-link" href="${p.archivo}" download="${escapar(p.archivoNombre||"archivo")}">📎 ${escapar(p.archivoNombre||"archivo adjunto")}</a>` : (p.archivoNombre && p.valores ? `<div class="tarjeta-notas">📄 ${escapar(p.archivoNombre)} · leído con IA (el original no se guarda)</div>` : "")}
+      ${htmlIA(p)}
+    </div>`).join("");
+}
+
+// ---------- Analíticas con IA ----------
+// Gemini lee la foto/PDF (o el texto del resumen) y devuelve los valores con SU rango de referencia.
+// El estado (alto/bajo) lo calcula la app comparando con ese rango; la IA solo redacta la conclusión.
+const IA_AVISO = "saludIAAvisoV1";
+let iaOcupada = false;
+const normK = s => String(s==null?"":s).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim();
+const numOk = v => { if(v==null || v==="") return null; const n = Number(String(v).replace(",",".")); return isFinite(n) ? n : null; };
+const fmtN = n => String(Math.round(n*100)/100).replace(".",",");
+function estadoVal(x){
+  if(x.v!=null){
+    if(x.max!=null && x.v>x.max) return "alto";
+    if(x.min!=null && x.v<x.min) return "bajo";
+    if(x.min!=null || x.max!=null) return "ok";
+  }
+  if(x.e==="alto" || x.e==="bajo") return x.e;
+  if(x.e==="normal") return "ok";
+  return "sin";
+}
+function refTxt(x){
+  if(x.r) return x.r;
+  if(x.min!=null && x.max!=null) return fmtN(x.min)+" – "+fmtN(x.max);
+  if(x.max!=null) return "< "+fmtN(x.max);
+  if(x.min!=null) return "> "+fmtN(x.min);
+  return "";
+}
+function desv(x){
+  if(x.v==null) return 0;
+  if(x.max!=null && x.v>x.max) return (x.v-x.max)/(Math.abs(x.max)||1);
+  if(x.min!=null && x.v<x.min) return (x.min-x.v)/(Math.abs(x.min)||1);
+  return 0;
+}
+function limpiarValores(arr){
+  return (Array.isArray(arr)?arr:[]).slice(0,250).map(o=>{
+    if(!o || !o.nombre) return null;
+    const v = numOk(o.valor);
+    const x = { n:String(o.nombre).slice(0,80), k:normK(o.clave||o.nombre).slice(0,60), v,
+      t: v==null && o.texto ? String(o.texto).slice(0,60) : null, u:String(o.unidad||"").slice(0,20),
+      min:numOk(o.ref_min), max:numOk(o.ref_max), r:String(o.ref_texto||"").slice(0,40),
+      e:["alto","bajo","normal"].includes(o.estado_informe) ? o.estado_informe : "" };
+    return (x.v==null && !x.t) ? null : x;
+  }).filter(Boolean);
+}
+function analiticasConValores(){
+  return pruebas.filter(p=>p.tipo==="analitica" && Array.isArray(p.valores) && p.valores.length).sort((a,b)=>(a.fecha||"").localeCompare(b.fecha||""));
+}
+function anteriorDe(p){
+  const l = analiticasConValores().filter(q=>q.id!==p.id && (q.fecha||"")<=(p.fecha||""));
+  return l.length ? l[l.length-1] : null;
+}
+function comprimirImagen(dataUrl, max, calidad){
+  max = max || 2000; calidad = calidad || 0.85;
+  return new Promise((res,rej)=>{
+    const im = new Image();
+    im.onload = () => { const k = Math.min(1, max/Math.max(im.width,im.height)), c = document.createElement("canvas");
+      c.width = Math.round(im.width*k); c.height = Math.round(im.height*k); c.getContext("2d").drawImage(im,0,0,c.width,c.height); res(c.toDataURL("image/jpeg",calidad)); };
+    im.onerror = () => rej(new Error("No pude abrir la imagen."));
+    im.src = dataUrl;
+  });
+}
+async function parteArchivo(p){
+  const datos = p.archivo || (archivosTemp[p.id] && archivosTemp[p.id].datos);
+  if(!datos) return null;
+  let m = /^data:([^;]+);base64,(.+)$/.exec(datos);
+  if(!m) return null;
+  if(/^image\//.test(m[1])){ m = /^data:([^;]+);base64,(.+)$/.exec(await comprimirImagen(datos)); }
+  else if(m[1] !== "application/pdf") return null;
+  if(m[2].length > 7e6) throw new Error("El archivo es demasiado grande para enviarlo (máx. ≈5 MB). Prueba con una foto más ligera.");
+  return { inline_data: { mime_type: m[1], data: m[2] } };
+}
+function promptAnalitica(p){
+  const ant = anteriorDe(p);
+  const antTxt = ant ? "\nAnalítica anterior ("+ant.fecha+"): "+ant.valores.filter(x=>x.v!=null).slice(0,80).map(x=>x.n+" "+fmtN(x.v)+" "+x.u).join("; ")+"\nSi hay cambios relevantes respecto a la anterior, menciónalos en la conclusión." : "";
+  return "Eres un asistente que lee informes de analíticas de laboratorio (España). Extrae TODOS los parámetros del documento adjunto (o del texto si no hay documento).\n"+
+  "Responde SOLO con JSON válido, sin texto adicional, con este formato:\n"+
+  '{"laboratorio":"","fecha_informe":"YYYY-MM-DD o null","valores":[{"nombre":"nombre tal como aparece","clave":"nombre estándar corto en minúsculas y sin tildes, p. ej. glucosa, colesterol ldl, tsh","valor":número o null,"texto":"solo si el resultado no es numérico (p. ej. negativo), si no null","unidad":"","ref_min":número o null,"ref_max":número o null,"ref_texto":"rango de referencia tal como se imprime","estado_informe":"alto|bajo|normal|desconocido según el propio informe (negrita, asterisco, flecha o columna de fuera de rango)"}],"conclusion":"resumen en español sencillo de 4 a 6 frases, centrado en lo que está fuera de rango y por qué suele importar","preguntas_medico":["hasta 5 preguntas concretas para llevar al médico"]}\n'+
+  "Reglas: copia los números exactamente como aparecen, con punto decimal; si el rango es del tipo «<5» pon ref_max 5; no inventes valores que no estén en el documento; no incluyas datos personales del paciente; no diagnostiques ni indiques medicación."+antTxt;
+}
+async function leerAnaliticaIA(id){
+  const p = pruebas.find(x=>x.id===id);
+  if(!p || iaOcupada) return;
+  if(!window.IAClaves || !IAClaves.tieneGemini()) return avisar("Falta la clave de Gemini. Ponla una vez en ⚙️ Ajustes.");
+  if(!p.archivo && !archivosTemp[id] && !(p.notas||"").trim()) return avisar("Adjunta la foto o el PDF de la analítica (o escribe los valores en el resumen) para poder leerla.");
+  if(p.valores && !(await confirmar("Ya hay una lectura de esta analítica. ¿Volver a leerla? Sustituirá la anterior.",{si:"Volver a leer"}))) return;
+  if(localStorage.getItem(IA_AVISO)!=="1"){
+    if(!(await confirmar("Para leerla se envía la imagen o el PDF a Gemini (Google). Si el informe trae tu nombre o DNI, también viajan. El resultado es una orientación, no un diagnóstico. ¿Continuar?",{si:"Continuar"}))) return;
+    localStorage.setItem(IA_AVISO,"1");
+  }
+  const est = document.getElementById("ia-est-"+id), btn = est && est.previousElementSibling;
+  const di = t => { if(est) est.textContent = t; };
+  iaOcupada = true; if(btn) btn.disabled = true;
+  try{
+    di("Preparando el archivo…");
+    const parte = await parteArchivo(p), partes = [];
+    if(parte) partes.push(parte);
+    if((p.notas||"").trim()) partes.push({ text: "Texto del resumen escrito por el usuario:\n"+p.notas.trim().slice(0,4000) });
+    partes.push({ text: promptAnalitica(p) });
+    di("Leyendo con la IA… puede tardar medio minuto.");
+    const data = await IAClaves.gemini({ contents:[{ parts: partes }], generationConfig:{ responseMimeType:"application/json", temperature:0.1 } });
+    const ps = (((data.candidates||[])[0]||{}).content||{}).parts || [];
+    const t = ps.map(x=>x.text||"").join("").replace(/```json|```/g,"").trim(), a = t.indexOf("{"), b = t.lastIndexOf("}");
+    let j = null; try{ j = JSON.parse(t.slice(a, b+1)); }catch(e){}
+    if(!j) throw new Error("La IA no devolvió un resultado legible. Prueba otra vez o con una foto más nítida.");
+    const vals = limpiarValores(j.valores);
+    if(!vals.length) throw new Error("No encontré valores en el documento. Comprueba que se vea bien la tabla de resultados.");
+    p.valores = vals;
+    p.ia = { fecha: hoyISO(), lab: String(j.laboratorio||"").slice(0,60), conclusion: String(j.conclusion||"").slice(0,1500),
+      preguntas: (Array.isArray(j.preguntas_medico)?j.preguntas_medico:[]).slice(0,6).map(x=>String(x).slice(0,200)) };
+    guardarJSON(clavePruebas(), pruebas);
+    delete archivosTemp[id]; // leído: el original se descarta
+    iaOcupada = false; renderPruebas();
+  }catch(e){
+    iaOcupada = false; if(btn) btn.disabled = false;
+    di("⚠️ "+(e && e.message ? e.message : "No se pudo leer."));
+  }
+}
+function tablaIA(filas, mapAnt){
+  const r = filas.map(o=>{
+    const x = o.x, a = mapAnt[x.k]; let ant = "–";
+    if(a){
+      if(a.v!=null && x.v!=null){ const d = a.v ? (x.v-a.v)/Math.abs(a.v)*100 : 0;
+        ant = fmtN(a.v) + (Math.abs(d)>=1 ? ' <span class="ia-d">'+(d>0?"▲":"▼")+" "+Math.abs(Math.round(d))+"%</span>" : ' <span class="ia-d">=</span>'); }
+      else ant = escapar(a.t || "–");
+    }
+    const val = x.v!=null ? fmtN(x.v) : escapar(x.t);
+    const fl = o.e==="alto" ? " ↑" : o.e==="bajo" ? " ↓" : "";
+    return '<tr class="ia-'+o.e+'"><td>'+escapar(x.n)+'</td><td><b>'+val+'</b>'+fl+' <span class="ia-u">'+escapar(x.u)+'</span></td><td>'+escapar(refTxt(x)||"–")+'</td><td>'+ant+'</td></tr>';
+  }).join("");
+  return '<div class="ia-tab"><table><tr><th>Parámetro</th><th>Resultado</th><th>Referencia</th><th>Anterior</th></tr>'+r+'</table></div>';
+}
+function htmlIA(p){
+  if(p.tipo !== "analitica") return "";
+  const puede = p.archivo || archivosTemp[p.id] || (p.notas||"").trim();
+  const bt = puede ? '<div class="ia-fila"><button type="button" class="ia-btn" onclick="leerAnaliticaIA(\''+p.id+'\')">'+(p.valores?"🔄 Releer con IA":"🤖 Leer con IA")+'</button><span class="ia-est" id="ia-est-'+p.id+'"></span></div>' : "";
+  if(!(p.valores && p.valores.length)) return bt;
+  const ant = anteriorDe(p), mapAnt = {};
+  if(ant) ant.valores.forEach(x=>{ mapAnt[x.k] = x; });
+  const est = p.valores.map(x=>({ x, e: estadoVal(x) }));
+  const fuera = est.filter(o=>o.e==="alto"||o.e==="bajo").sort((a,b)=>desv(b.x)-desv(a.x)), resto = est.filter(o=>o.e!=="alto"&&o.e!=="bajo");
+  const preg = p.ia && p.ia.preguntas && p.ia.preguntas.length ? '<div style="margin-top:8px"><b>Para preguntar al médico</b><ul>'+p.ia.preguntas.map(q=>"<li>"+escapar(q)+"</li>").join("")+"</ul></div>" : "";
+  return '<div class="ia-bloque">'+
+    '<div class="ia-res">'+(fuera.length ? "⚠️ <b>"+fuera.length+"</b> fuera de rango" : "✅ Todo dentro de rango")+" · "+resto.length+" dentro de rango o sin referencia"+(ant ? " · comparado con la del "+fechaLegible(ant.fecha) : "")+'</div>'+
+    (fuera.length ? tablaIA(fuera, mapAnt) : "")+
+    (resto.length ? '<details><summary>Ver los '+resto.length+' valores restantes</summary>'+tablaIA(resto, mapAnt)+'</details>' : "")+
+    (p.ia && p.ia.conclusion ? '<div class="ia-conc"><b>🤖 Conclusión</b><div style="margin-top:4px">'+escapar(p.ia.conclusion)+'</div>'+preg+'</div>' : "")+
+    '<div class="ia-pie">Lectura automática: puede equivocarse. Comprueba las cifras con el original. Es una orientación, no un diagnóstico: coméntalo con tu médico.</div>'+
+    bt+'</div>';
+}
+function renderAlertasIA(){
+  const el = document.getElementById("ia-alertas"); if(!el) return;
+  const l = analiticasConValores();
+  if(!l.length){ el.innerHTML = ""; return; }
+  const u = l[l.length-1], pv = l.length>1 ? l[l.length-2] : null;
+  const fuera = u.valores.filter(x=>{ const e = estadoVal(x); return e==="alto"||e==="bajo"; }).sort((a,b)=>desv(b)-desv(a));
+  const antFuera = {}; if(pv) pv.valores.forEach(x=>{ const e = estadoVal(x); if(e==="alto"||e==="bajo") antFuera[x.k] = e; });
+  const chips = fuera.map(x=>{ const e = estadoVal(x);
+    return '<span class="ia-chip ia-'+e+'">'+escapar(x.n)+" "+(e==="alto"?"↑":"↓")+" "+(x.v!=null?fmtN(x.v):escapar(x.t))+(antFuera[x.k]===e?" · otra vez":"")+'</span>'; }).join("");
+  const por = {};
+  l.forEach(p=>p.valores.forEach(x=>{ if(x.v!=null && x.k) (por[x.k] = por[x.k] || []).push(x); }));
+  const tend = [];
+  Object.keys(por).forEach(k=>{
+    const s = por[k].slice(-3); if(s.length<3) return;
+    const [a,b,c] = s.map(x=>x.v), sube = a<b && b<c, baja = a>b && b>c; if(!sube && !baja) return;
+    const x = s[2], e = estadoVal(x), span = (x.max!=null && x.min!=null) ? x.max-x.min : null;
+    const ya = (sube && e==="alto") || (baja && e==="bajo");
+    const cerca = !ya && span && ((sube ? x.max-x.v : x.v-x.min) <= span*0.15);
+    if(ya || cerca) tend.push("<li><b>"+escapar(x.n)+"</b> "+(sube?"sube":"baja")+" en las últimas 3 analíticas ("+fmtN(a)+" → "+fmtN(b)+" → "+fmtN(c)+") y "+(ya?"ya está fuera de rango":"se acerca al límite")+".</li>");
+  });
+  el.innerHTML = '<div class="ia-ban'+(fuera.length||tend.length ? "" : " ok")+'"><div><b>🩸 Última analítica leída ('+fechaLegible(u.fecha)+')</b>: '+(fuera.length ? fuera.length+" valor"+(fuera.length===1?"":"es")+" fuera de rango" : "todo dentro de rango")+'</div>'+
+    (chips ? '<div class="ia-chips">'+chips+'</div>' : "")+
+    (tend.length ? '<div><b>Tendencias a vigilar</b><ul>'+tend.join("")+'</ul></div>' : "")+
+    '<div class="ia-pie">Orientación automática, no un diagnóstico. Abre la analítica para ver todos los valores.</div></div>';
+}
+
+// Lectura de citas médicas desde el Calendario (calEventosV1, categoría "medico")
+function renderCitas(){
+  const cont = document.getElementById("lista-citas");
+  const datos = leerJSON("calEventosV1", null);
+  const eventos = (datos && Array.isArray(datos.eventos)) ? datos.eventos : [];
+  const propias = eventos.filter(e => e.cat === "medico" && (e.para === perfilActivo || e.para === "Ambas"));
+  if(!propias.length){ cont.innerHTML = '<p class="empty">No hay citas médicas en el Calendario todavía.</p>'; return; }
+  const hoy = hoyISO();
+  const futuras = propias.filter(e => e.fecha >= hoy).sort((a,b)=> a.fecha.localeCompare(b.fecha));
+  const pasadas = propias.filter(e => e.fecha < hoy).sort((a,b)=> b.fecha.localeCompare(a.fecha));
+  const fila = e => `
+    <div class="tarjeta">
+      <div class="tarjeta-nombre">${cruzEsp(espInfoDe(e.esp, e.espTxt)) || escapar(e.titulo)}</div>
+      <div class="tarjeta-meta">${fechaLegible(e.fecha)}${e.hora ? " · "+e.hora : ""}</div>
+      ${e.notas ? `<div class="tarjeta-notas">${escapar(e.notas)}</div>` : ""}
+    </div>`;
+  cont.innerHTML =
+    (futuras.length ? `<div class="cita-grupo-titulo">Próximas</div>${futuras.map(fila).join("")}` : "") +
+    (pasadas.length ? `<div class="cita-grupo-titulo">Anteriores</div>${pasadas.map(fila).join("")}` : "");
+}
+
+function escapar(s){ const d = document.createElement("div"); d.textContent = s==null?"":String(s); return d.innerHTML; }
+
+
+// ---------- Banco de nombres para autocompletar ----------
+function nombresBancoMed(){
+  const vistos = new Set(), lista = [];
+  bancoMed.concat(medicacion.map(m=>m.nombre)).forEach(n=>{
+    const t = String(n||"").trim(); if(!t) return;
+    const k = t.toLowerCase(); if(vistos.has(k)) return;
+    vistos.add(k); lista.push(t);
+  });
+  return lista.sort((a,b)=>a.localeCompare(b,"es"));
+}
+function renderBancoMed(){
+  const dl = document.getElementById("med-banco");
+  if(dl) dl.innerHTML = nombresBancoMed().map(n=>'<option value="'+escapar(n).replace(/"/g,"&quot;")+'"></option>').join("");
+  const ta = document.getElementById("banco-med-texto");
+  if(ta && document.activeElement !== ta) ta.value = bancoMed.join("\n");
+}
+function aprenderNombreMed(nombre){
+  const k = nombre.trim().toLowerCase();
+  if(!k || bancoMed.some(n=>n.trim().toLowerCase()===k)) return;
+  bancoMed.push(nombre.trim());
+  guardarJSON(claveBancoMed(), bancoMed);
+}
+document.getElementById("banco-med-guardar").onclick = () => {
+  const vistos = new Set(), lista = [];
+  document.getElementById("banco-med-texto").value.split("\n").forEach(l=>{
+    const t = l.trim(); if(!t) return;
+    const k = t.toLowerCase(); if(vistos.has(k)) return;
+    vistos.add(k); lista.push(t);
+  });
+  bancoMed = lista;
+  guardarJSON(claveBancoMed(), bancoMed);
+  renderBancoMed();
+  avisar("Banco guardado: " + lista.length + " nombre(s).");
+};
+// Si eliges un nombre que ya usaste, completa dosis y horario si están vacíos
+document.getElementById("med-nombre").addEventListener("change", () => {
+  if(document.getElementById("med-id").value) return;
+  const k = document.getElementById("med-nombre").value.trim().toLowerCase();
+  const previa = medicacion.find(m=>String(m.nombre||"").trim().toLowerCase()===k);
+  if(!previa) return;
+  const c = document.getElementById("med-cantidad"), h = document.getElementById("med-horario");
+  if(c.value === "" && previa.cantidad!=null) { c.value = previa.cantidad; document.getElementById("med-unidad").value = previa.unidad || "mg"; }
+  if(h.value === "" && previa.horario) h.value = previa.horario;
+});
+
+// ---------- Historial de tomas: calendario de días completos / con faltas ----------
+let htMes = null, htFiltro = "todos", htDiaSel = null;
+const HT_MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+function htISO(y, m, d){ return y+"-"+String(m+1).padStart(2,"0")+"-"+String(d).padStart(2,"0"); }
+function renderHistorialTomas(){
+  const grid = document.getElementById("ht-grid"); if(!grid) return;
+  const fijas = medicacion.filter(m=>m.activa && frecDe(m)!=="demanda");
+  const debenEn = iso => medicacion.filter(m=>tocaEl(m, iso));
+  const tomadasEn = iso => { const ids = new Set(debenEn(iso).map(m=>m.id)); return (tomas[iso]||[]).filter(id=>ids.has(id)).length; };
+  const fechas = Object.keys(tomas).filter(f=>/^\d{4}-\d{2}-\d{2}$/.test(f) && (tomas[f]||[]).length).sort();
+  const primera = fechas.length ? fechas[0] : null;
+  const hoy = hoyISO();
+  if(!htMes){ const d=new Date(); htMes = {y:d.getFullYear(), m:d.getMonth()}; }
+  document.getElementById("ht-titulo").textContent = HT_MESES[htMes.m]+" "+htMes.y;
+  const primerDow = (new Date(htMes.y, htMes.m, 1).getDay()+6)%7;
+  const diasMes = new Date(htMes.y, htMes.m+1, 0).getDate();
+  let h = ["L","M","X","J","V","S","D"].map(x=>'<div class="ht-dow">'+x+'</div>').join("");
+  for(let i=0;i<primerDow;i++) h += '<div class="ht-vacio"></div>';
+  let completos = 0, contables = 0;
+  for(let d=1; d<=diasMes; d++){
+    const iso = htISO(htMes.y, htMes.m, d);
+    const total = debenEn(iso).length, n = tomadasEn(iso);
+    const contable = !!primera && !!total && iso >= primera && iso <= hoy;
+    let estado = "";   // completo | parcial | falta | ""
+    if(total && n >= total) estado = "completo";
+    else if(contable && iso < hoy) estado = n > 0 ? "parcial" : "falta";
+    else if(n > 0) estado = "parcial";
+    if(estado === "completo") { completos++; contables++; }
+    else if(estado === "parcial" || estado === "falta") contables++;
+    const usoDem = (demanda[iso]||[]).length > 0;
+    let cls = "ht-dia" + (total ? " toca" : "") + (estado ? " "+estado : "") + (iso===hoy ? " hoy" : "") + (iso===htDiaSel ? " sel" : "");
+    const esFalta = estado === "parcial" || estado === "falta";
+    if((htFiltro==="completos" && estado!=="completo") || (htFiltro==="faltas" && !esFalta)) cls += " tenue";
+    h += '<button type="button" class="'+cls+'" data-f="'+iso+'">'+d+(total ? '<i class="ht-p1"></i>' : '')+(usoDem ? '<i class="ht-p2"></i>' : '')+'</button>';
+  }
+  grid.innerHTML = h;
+  grid.querySelectorAll(".ht-dia").forEach(b=>{ b.onclick = ()=>{ htDiaSel = (htDiaSel===b.dataset.f) ? null : b.dataset.f; renderHistorialTomas(); }; });
+  document.getElementById("ht-resumen").textContent = (primera && fijas.length)
+    ? (completos+" de "+contables+" días con todo lo que tocaba tomado este mes")
+    : "Cuando marques tomas en \"Toma de hoy\", aparecen acá.";
+  const det = document.getElementById("ht-detalle");
+  if(htDiaSel){
+    const tomadas = new Set(tomas[htDiaSel]||[]);
+    const deben = debenEn(htDiaSel);
+    const dem = (demanda[htDiaSel]||[]);
+    const nombreDe = id => { const m = medicacion.find(x=>x.id===id); return m ? m.nombre : "(borrada)"; };
+    det.innerHTML = "<b>"+fechaLegible(htDiaSel)+"</b>" +
+      (deben.length ? "<ul>"+deben.map(m=>"<li>"+(tomadas.has(m.id)?"✓ ":"✗ ")+escapar(m.nombre)+((horasDe(htDiaSel)[m.id]) ? " ("+escapar(horasDe(htDiaSel)[m.id])+")" : "")+"</li>").join("")+"</ul>" : '<div style="color:var(--muted)">Ese día no tocaba ninguna pastilla fija.</div>') +
+      (dem.length ? '<div style="margin-top:6px">Si lo necesito: '+dem.map(x=>escapar(nombreDe(x.id))+(x.hora?" ("+escapar(x.hora)+")":"")).join(", ")+"</div>" : "");
+  } else det.innerHTML = "";
+  // «Si lo necesito»: cuántas veces en el mes (útil para comentarlo con el médico)
+  const pref = htISO(htMes.y, htMes.m, 1).slice(0,8);
+  const cuenta = {};
+  Object.keys(demanda).filter(f=>f.startsWith(pref)).forEach(f=> (demanda[f]||[]).forEach(x=>{ cuenta[x.id] = (cuenta[x.id]||0)+1; }));
+  const filas = Object.keys(cuenta).map(id=>{ const m = medicacion.find(x=>x.id===id); return (m?escapar(m.nombre):"(borrada)")+": "+cuenta[id]+(cuenta[id]===1?" vez":" veces"); });
+  document.getElementById("ht-demanda").innerHTML = filas.length ? "💊 Si lo necesito este mes — "+filas.join(" · ") : "";
+  document.querySelectorAll("#ht-filtros button").forEach(b=>b.classList.toggle("on", b.dataset.f===htFiltro));
+}
+document.getElementById("ht-prev").onclick = () => { if(!htMes) renderHistorialTomas(); htMes.m--; if(htMes.m<0){ htMes.m=11; htMes.y--; } htDiaSel=null; renderHistorialTomas(); };
+document.getElementById("ht-next").onclick = () => { if(!htMes) renderHistorialTomas(); htMes.m++; if(htMes.m>11){ htMes.m=0; htMes.y++; } htDiaSel=null; renderHistorialTomas(); };
+document.querySelectorAll("#ht-filtros button").forEach(b=>{ b.onclick = () => { htFiltro = b.dataset.f; renderHistorialTomas(); }; });
+
+function renderTodo(){
+  renderCondiciones(); renderCirugias(); renderMedicacion(); renderTomas(); renderPruebas(); renderCitas(); if(typeof renderArtic==="function") renderArtic(); if(typeof renderSintomas==="function") renderSintomas();
+}
+// ---------- ARTICULACIONES: mapa corporal por fecha ----------
+const AR_ZONAS = {cabeza:"Cabeza", cuello:"Cuello", hombro:"Hombro", omoplato:"Omóplato", codo:"Codo", muneca:"Muñeca", mano:"Mano y dedos", dorsalalta:"Espalda alta", columna:"Espalda media (dorsal)", lumbar:"Zona lumbar", sacro:"Sacro / sacroilíaca", cadera:"Cadera", muslo:"Muslo (parte posterior)", rodilla:"Rodilla", pantorrilla:"Pantorrilla", tobillo:"Tobillo", pie:"Pie y dedos"};
+const AR_PUNTOS = [ // [zona, x, y, lleva lado?, solo atrás?]
+  ["cabeza",100,44,0],["columna",100,130,0,1],["hombro",62,84,1],["codo",46,150,1],["muneca",34,212,1],["mano",28,242,1],
+  ["cadera",84,200,1],["rodilla",80,290,1],["tobillo",78,366,1],["pie",74,392,1]];
+const AR_ESCALAS = [["dolor","Dolor",10],["infl","Inflamación",3],["rig","Rigidez / movilidad limitada / sensibilidad",3]];
+// "rig" junta lo que antes eran 3 escalas; los registros viejos con mov/sens se leen como el valor más alto.
+function arComb(r){ return Math.max(r.rig||0, r.mov||0, r.sens||0); }
+const AR_FUNC = ["Caminar","Subir escaleras","Vestirse / desvestirse","Aseo personal","Abrir / cerrar objetos","Usar las manos","Tareas domésticas","Trabajo / estudio","Participación social","Relación con otras personas","Concentración / memoria","Sueño / descanso"];
+let arFecha = new Date().toLocaleDateString("sv-SE"), arVista = "ant", arSel = null;
+function claveArtic(){ return "saludArticV1_"+perfilActivo; }
+function arDatos(){ const d = leerJSON(claveArtic(), null); return (d && d.dias) ? d : {v:1, dias:{}}; }
+function arDia(d){ return d.dias[arFecha] || (d.dias[arFecha] = {z:{}, f:{}}); }
+function arGuardar(d){
+  const dia = d.dias[arFecha];
+  if(dia) Object.keys(dia.z).forEach(k=>{ if(!arTiene(dia.z[k])) delete dia.z[k]; });
+  if(dia && !Object.keys(dia.z).length && !Object.keys(dia.f).length) delete d.dias[arFecha];
+  guardarJSON(claveArtic(), d);
+}
+function arNombre(zona, lado){ return AR_ZONAS[zona] + (lado==="D" ? " derecha" : lado==="I" ? " izquierda" : ""); }
+const AR_FOTO_POS = [["cabeza","C",437,120],["cuello","C",437,268],["dorsalalta","C",437,400],["omoplato","I",345,430],["omoplato","D",529,430],["columna","C",437,560],["lumbar","C",437,690],["sacro","C",437,790],["muslo","I",335,1000],["muslo","D",530,1000],["pantorrilla","I",330,1400],["pantorrilla","D",535,1400],["hombro","I",285,355],["hombro","D",598,355],["codo","I",213,607],["codo","D",660,607],["muneca","I",140,795],["muneca","D",742,797],["mano","I",100,880],["mano","D",785,880],["cadera","I",330,835],["cadera","D",545,835],["rodilla","I",338,1197],["rodilla","D",525,1197],["tobillo","I",315,1600],["tobillo","D",560,1600],["pie","I",280,1695],["pie","D",595,1695]];
+function arTiene(r){ return !!r && (r.dolor>0 || r.infl>0 || arComb(r)>0 || !!r.nota); }
+const AR_FOTO = [ // [zona, lado, x, y] sobre la imagen de 887 x 1774 (D = derecha de la persona = izquierda de la imagen)
+  ["cabeza","C",437,140],["cuello","C",437,268],["columna","C",437,560],
+  ["hombro","D",285,355],["hombro","I",582,355],["codo","D",213,607],["codo","I",660,607],
+  ["muneca","D",140,795],["muneca","I",742,797],["mano","D",100,880],["mano","I",785,880],
+  ["cadera","D",325,830],["cadera","I",545,830],["rodilla","D",338,1197],["rodilla","I",525,1197],
+  ["tobillo","D",310,1610],["tobillo","I",562,1610],["pie","D",275,1690],["pie","I",595,1690]];
+function arSVGFoto(dia, vista){
+  const svg = document.getElementById("ar-svg");
+  svg.setAttribute("viewBox","0 0 887 1774");
+  let s = `<defs><radialGradient id="led2"><stop offset="0" stop-color="#ff2b2b" stop-opacity=".95"/><stop offset=".45" stop-color="#ff3b3b" stop-opacity=".45"/><stop offset="1" stop-color="#ff3b3b" stop-opacity="0"/></radialGradient></defs>
+  <image href="${vista==='pos'?'cuerpo-posterior.jpg':'cuerpo-anterior.jpg'}" x="0" y="0" width="887" height="1774"/>`;
+  (vista==='pos' ? AR_FOTO_POS : AR_FOTO).forEach(([zona,l,x,y])=>{
+    const k = zona+"_"+l, r = dia.z[k], on = arSel===k;
+    if(arTiene(r)){ const o = Math.min(1, .55+.045*(r.dolor||0)); s += `<circle cx="${x}" cy="${y}" r="62" style="fill:url(#led2);opacity:${o}"/><circle cx="${x}" cy="${y}" r="17" style="fill:#ff2b2b;stroke:#fff;stroke-width:3"/>`; }
+    else s += `<circle cx="${x}" cy="${y}" r="13" style="fill:#fff;fill-opacity:.5;stroke:#9cc4e8;stroke-width:3"/>`;
+    if(on) s += `<circle cx="${x}" cy="${y}" r="44" style="fill:none;stroke:#35c26a;stroke-width:6;stroke-dasharray:12 8"/>`;
+    s += `<circle cx="${x}" cy="${y}" r="46" data-k="${k}" style="fill:transparent;cursor:pointer"><title>${arNombre(zona,l)}</title></circle>`;
+  });
+  svg.innerHTML = s;
+  document.querySelectorAll("#ar-svg circle[data-k]").forEach(c=> c.onclick = async ()=>{
+    const k = c.dataset.k;
+    if(arSel===k){
+      const dd = arDatos(), z = (dd.dias[arFecha]||{z:{}}).z;
+      if(arTiene(z[k]) && await confirmar("¿Quitar esta zona del día?", {si:"Quitar", peligro:true})){ delete z[k]; arGuardar(dd); }
+      arSel = null;
+    } else arSel = k;
+    renderArtic();
+  });
+}
+function arSVG(){
+  const d = arDatos(), dia = d.dias[arFecha] || {z:{}};
+  arSVGFoto(dia, arVista); return;
+  document.getElementById("ar-svg").setAttribute("viewBox","0 0 200 410");
+  const hueso = "fill:none;stroke:#dfe8f2;stroke-linecap:round;stroke-linejoin:round";
+  let s = `<defs><linearGradient id="cuerpo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3f79ab" stop-opacity=".55"/><stop offset="1" stop-color="#1d4468" stop-opacity=".35"/></linearGradient>
+  <radialGradient id="led"><stop offset="0" stop-color="#ff2b2b" stop-opacity=".95"/><stop offset=".45" stop-color="#ff3b3b" stop-opacity=".45"/><stop offset="1" stop-color="#ff3b3b" stop-opacity="0"/></radialGradient></defs>
+  <g style="fill:url(#cuerpo);stroke:#7fb2dd;stroke-width:1.5;stroke-opacity:.7"><circle cx="100" cy="34" r="25"/><path d="M66 78 Q100 66 134 78 L130 196 Q100 208 70 196Z"/>
+  <path d="M62 86 L46 150 L34 212 L28 240 M138 86 L154 150 L166 212 L172 240" style="fill:none;stroke:url(#cuerpo);stroke-width:18;stroke-linecap:round;stroke-linejoin:round"/>
+  <path d="M84 200 L80 290 L78 370 L74 392 M116 200 L120 290 L122 370 L126 392" style="fill:none;stroke:url(#cuerpo);stroke-width:28;stroke-linecap:round;stroke-linejoin:round"/></g>
+  <ellipse cx="100" cy="30" rx="14" ry="18" style="fill:#e9eef5"/><path d="M92 46 Q100 56 108 46" style="${hueso};stroke-width:3"/>
+  <path d="M100 58 L100 192" style="${hueso};stroke-width:5;stroke-dasharray:6 3"/><path d="M64 84 Q100 74 136 84" style="${hueso};stroke-width:3"/>`;
+  for(let i=0;i<5;i++){ const y=96+i*14; s += `<path d="M100 ${y} Q80 ${y+4} 76 ${y+20} M100 ${y} Q120 ${y+4} 124 ${y+20}" style="${hueso};stroke-width:2.5"/>`; }
+  s += `<path d="M76 194 Q100 178 124 194 Q128 216 112 220 L100 206 L88 220 Q72 216 76 194Z" style="${hueso};stroke-width:3;fill:#dfe8f2;fill-opacity:.25"/>
+  <path d="M62 88 L46 150 L34 212 M138 88 L154 150 L166 212 M84 200 L80 290 L78 370 M116 200 L120 290 L122 370" style="${hueso};stroke-width:5"/>
+  <path d="M34 214 L26 240 M34 214 L32 242 M166 214 L174 240 M166 214 L168 242 M78 372 L72 392 M122 372 L128 392" style="${hueso};stroke-width:3"/>`;
+  if(arVista==="pos") s += `<text x="100" y="404" text-anchor="middle" style="font:10px sans-serif;fill:var(--muted)">vista posterior</text>`;
+  AR_PUNTOS.forEach(([zona,x,y,lado,soloAtras])=>{
+    if(soloAtras && arVista!=="pos") return;
+    const lados = lado ? [[x,arVista==="ant"?"D":"I"],[200-x,arVista==="ant"?"I":"D"]] : [[x,"C"]];
+    lados.forEach(([cx,l])=>{
+      const k = zona+"_"+l, r = dia.z[k], on = arSel===k;
+      if(r){ const o = Math.min(1, .55+.045*(r.dolor||0)); s += `<circle cx="${cx}" cy="${y}" r="17" style="fill:url(#led);opacity:${o}"/><circle cx="${cx}" cy="${y}" r="5.5" style="fill:#ff2b2b;stroke:#fff;stroke-width:1"/>`; }
+      else s += `<circle cx="${cx}" cy="${y}" r="5" style="fill:#fff;fill-opacity:.55;stroke:#9cc4e8;stroke-width:1.2"/>`;
+      if(on) s += `<circle cx="${cx}" cy="${y}" r="14" style="fill:none;stroke:#35c26a;stroke-width:2.5;stroke-dasharray:4 3"/>`;
+      s += `<circle cx="${cx}" cy="${y}" r="15" data-k="${k}" style="fill:transparent;cursor:pointer"><title>${arNombre(zona,l)}</title></circle>`;
+    });
+  });
+  document.getElementById("ar-svg").innerHTML = s;
+  document.querySelectorAll("#ar-svg circle[data-k]").forEach(c=> c.onclick = ()=>{
+    arSel = c.dataset.k; const dd = arDatos(), z = arDia(dd).z; if(!z[arSel]) z[arSel] = {dolor:0}; arGuardar(dd); renderArtic();
+  });
+}
+function arBotones(k, campo, max, valor){
+  let h = `<div style="display:flex;flex-wrap:wrap;gap:4px;margin:4px 0 10px">`;
+  for(let i=0;i<=max;i++) h += `<button type="button" data-ar="${k}|${campo}|${i}" class="${valor===i?"btn-guardar":"btn-cancelar"}" style="min-width:36px;padding:8px 0">${i}</button>`;
+  return h + "</div>";
+}
+function arResumen(){
+  const z = Object.entries((arDatos().dias[arFecha]||{z:{}}).z).filter(([k,r])=>arTiene(r));
+  document.getElementById("ar-resumen").innerHTML = z.length ? '<div class="form-add" style="display:block;margin-top:10px"><b>Zonas marcadas este día</b>' + z.map(([k,r])=>{
+    const [a,b]=k.split("_"), t=[["dolor","dolor"],["infl","inflamación"],["rig","rigidez/movilidad"]].map(([c,n])=>[n,c==="rig"?arComb(r):r[c]]).filter(([n,v])=>v>0).map(([n,v])=>n+" "+v).join(" · ");
+    return `<div data-r="${k}" style="padding:6px 0;border-top:1px solid var(--line);cursor:pointer">${arNombre(a,b)} — ${t||"solo nota"}</div>`; }).join("") + '</div>' : "";
+  document.querySelectorAll("#ar-resumen [data-r]").forEach(e=> e.onclick = ()=>{ arSel = e.dataset.r; arVista = ["hombro","codo","muneca","mano","cadera","rodilla","tobillo","pie"].includes(e.dataset.r.split("_")[0]) ? arVista : arVista; renderArtic(); });
+}
+function arFicha(){
+  const box = document.getElementById("ar-ficha");
+  if(!arSel){ box.innerHTML = ""; return; }
+  const [zona,lado] = arSel.split("_"), r = (arDatos().dias[arFecha]||{z:{}}).z[arSel] || {};
+  let h = `<div class="form-add" style="display:block;margin-top:12px"><b>${arNombre(zona,lado)}</b>
+  <div class="ar-fecha-campo"><label for="ar-fecha-f">Fecha</label><input type="date" id="ar-fecha-f" value="${arFecha}"><small>Puedes cambiarla si marcas el dolor días después.</small></div>`;
+  AR_ESCALAS.forEach(([c,t,m])=> h += `<div style="margin-top:8px;font-size:.85rem;color:var(--muted)">${t} (0–${m})</div>` + arBotones(arSel,c,m,c==="rig"?arComb(r):r[c]));
+  h += `<textarea id="ar-nota" placeholder="Nota (opcional)">${(r.nota||"").replace(/</g,"&lt;")}</textarea>
+  <div class="fila"><button type="button" class="btn-cancelar" id="ar-quitar">Quitar esta zona</button><button type="button" class="btn-guardar" id="ar-cerrar">Cerrar</button></div></div>`;
+  box.innerHTML = h;
+  box.querySelectorAll("[data-ar]").forEach(b=> b.onclick = ()=>{
+    const [k,c,v] = b.dataset.ar.split("|"), d = arDatos(), z = arDia(d).z;
+    z[k] = z[k] || {}; const cur = c==="rig" ? arComb(z[k]) : z[k][c]; z[k][c] = cur===+v ? undefined : +v; if(c==="rig"){ delete z[k].mov; delete z[k].sens; } z[k].dolor = z[k].dolor||0;
+    arGuardar(d); renderArtic();
+  });
+  document.getElementById("ar-fecha-f").onchange = e=>{ if(e.target.value){ arFecha = e.target.value; renderArtic(); } };   // cambia de día sin perder la zona elegida
+  document.getElementById("ar-nota").onchange = e=>{ const d = arDatos(), z = arDia(d).z; z[arSel] = z[arSel]||{dolor:0}; z[arSel].nota = e.target.value.trim(); arGuardar(d); arHist(); };
+  document.getElementById("ar-quitar").onclick = ()=>{ const d = arDatos(); if(d.dias[arFecha]){ delete d.dias[arFecha].z[arSel]; arGuardar(d); } arSel = null; renderArtic(); };
+  document.getElementById("ar-cerrar").onclick = ()=>{ const d = arDatos(), z = (d.dias[arFecha]||{z:{}}).z, r = z[arSel]; if(r && !r.nota && !AR_ESCALAS.some(([c])=> (c==="rig"?arComb(r):r[c])>0)){ delete z[arSel]; arGuardar(d); } arSel = null; renderArtic(); };
+}
+function arFunc(){
+  const dia = arDatos().dias[arFecha] || {f:{}};
+  document.getElementById("ar-func").innerHTML = AR_FUNC.map((t,i)=> `<div style="font-size:.88rem">${t}</div>` + arBotones("f"+i,"f",4,dia.f[i])).join("");
+  document.querySelectorAll("#ar-func [data-ar]").forEach(b=> b.onclick = ()=>{
+    const [k,,v] = b.dataset.ar.split("|"), i = k.slice(1), d = arDatos(), f = arDia(d).f;
+    if(f[i]===+v) delete f[i]; else f[i] = +v;
+    arGuardar(d); arFunc();
+  });
+}
+function arFechaLeg(f){ const p = f.split("-"); return new Date(+p[0], +p[1]-1, +p[2]).toLocaleDateString("es-ES", {weekday:"short", day:"numeric", month:"short", year:"numeric"}); }
+function arHist(){
+  const d = arDatos(), fechas = Object.keys(d.dias).sort().reverse();
+  document.getElementById("ar-hist").innerHTML = fechas.length ? fechas.map(f=>{
+    const z = Object.entries(d.dias[f].z), pico = z.reduce((m,[k,r])=> Math.max(m,r.dolor||0),0);
+    const peor = z.filter(([k,r])=>(r.dolor||0)===pico && pico>0).map(([k])=>{const [a,b]=k.split("_");return arNombre(a,b);}).slice(0,2).join(", ");
+    return `<div class="form-add" style="display:block;margin:6px 0;cursor:pointer" data-f="${f}"><b>${arFechaLeg(f)}</b> — ${z.length} zona(s)${pico?`, dolor máx. ${pico}`:""}${peor?` (${peor})`:""}</div>`;
+  }).join("") : `<p class="aviso">Aún no hay días registrados.</p>`;
+  document.querySelectorAll("#ar-hist [data-f]").forEach(e=> e.onclick = ()=>{ arFecha = e.dataset.f; arSel = null; renderArtic(); window.scrollTo(0,0); });
+}
+function arMover(n){ const t = new Date(arFecha+"T12:00:00"); t.setDate(t.getDate()+n); arFecha = t.toLocaleDateString("sv-SE"); arSel = null; renderArtic(); }
+function arVisibilidad(){
+  const solo = perfilActivo === "Mamy";
+  document.querySelector('[data-sec="articulaciones"]').style.display = solo ? "" : "none";
+  if(!solo && document.getElementById("panel-articulaciones").classList.contains("on")) cambiarSeccion("condiciones");
+}
+function renderArtic(){
+  arVisibilidad();
+  document.getElementById("ar-fecha").value = arFecha;
+  document.getElementById("ar-fecha-g").value = arFecha;
+  document.getElementById("ar-v-ant").classList.toggle("on", arVista==="ant");
+  document.getElementById("ar-v-pos").classList.toggle("on", arVista==="pos");
+  arSVG(); arResumen(); arFicha(); arFunc(); arHist(); arInfDefaults();
+}
+document.getElementById("ar-fecha-g").onchange = e=>{ if(e.target.value){ arFecha = e.target.value; arSel = null; renderArtic(); } };
+document.getElementById("ar-fecha").onchange = e=>{ if(e.target.value){ arFecha = e.target.value; arSel = null; renderArtic(); } };
+document.getElementById("ar-ant").onclick = ()=> arMover(-1);
+document.getElementById("ar-sig").onclick = ()=> arMover(1);
+document.getElementById("ar-hoy").onclick = ()=>{ arFecha = new Date().toLocaleDateString("sv-SE"); arSel = null; renderArtic(); };
+document.getElementById("ar-v-ant").onclick = ()=>{ arVista = "ant"; renderArtic(); };
+document.getElementById("ar-v-pos").onclick = ()=>{ arVista = "pos"; renderArtic(); };
+
+// ================= Informe PDF para el médico (Articulaciones) =================
+const AR_NIV3 = ["ninguna","leve","moderada","grave"], AR_NIV4 = ["ninguna","leve","moderada","grave","extrema"];
+function arFechaLarga(iso){ const p = iso.split("-"); const t = new Date(+p[0], +p[1]-1, +p[2]).toLocaleDateString("es-ES", {weekday:"long", day:"numeric", month:"long", year:"numeric"}); return t.charAt(0).toUpperCase()+t.slice(1); }
+function arFechaCorta(iso){ const p = iso.split("-"); return p[2]+"/"+p[1]+"/"+p[0]; }
+function arMesLargo(ym){ const p = ym.split("-"); const t = new Date(+p[0], +p[1]-1, 1).toLocaleDateString("es-ES", {month:"long", year:"numeric"}); return t.charAt(0).toUpperCase()+t.slice(1); }
+function arCargarScript(src){ return new Promise((ok,ko)=>{ const s = document.createElement("script"); s.src = src; s.onload = ok; s.onerror = ()=> ko(new Error("No se pudo cargar "+src)); document.head.appendChild(s); }); }
+async function arAsegurarPDF(){
+  const listo = () => window.jspdf && window.jspdf.jsPDF && window.jspdf.jsPDF.API && window.jspdf.jsPDF.API.autoTable;
+  if(!listo()) await arCargarScript("pdflib.js");
+  if(!listo()) throw new Error("pdflib.js incompleto");
+}
+function arRegsDia(dia){
+  return Object.entries((dia && dia.z) || {}).map(([k,r])=>{ const [zona,lado] = k.split("_"); return {k, nombre:arNombre(zona,lado), dolor:r.dolor||0, infl:r.infl||0, rig:arComb(r), nota:(r.nota||"").trim()}; });
+}
+function arFuncDia(dia){ const f = (dia && dia.f) || {}; return Object.keys(f).map(i=>({i:+i, v:f[i]})).filter(x=>typeof x.v === "number"); }
+
+function arPdfBase(titulo, sub, nombre){
+  const {jsPDF} = window.jspdf; const doc = new jsPDF({unit:"mm", format:"a4"});
+  doc.setFillColor(25,95,75); doc.rect(0,0,210,28,"F");
+  doc.setTextColor(255,255,255); doc.setFont("helvetica","bold"); doc.setFontSize(16); doc.text(titulo, 15, 13);
+  doc.setFont("helvetica","normal"); doc.setFontSize(10); doc.text(sub, 15, 21);
+  doc.setTextColor(40,40,40); doc.setFontSize(10);
+  doc.text("Paciente: "+nombre, 15, 36);
+  doc.text("Generado el "+arFechaCorta(hoyISO()), 195, 36, {align:"right"});
+  doc.setDrawColor(200); doc.setLineWidth(0.2); doc.line(15, 39, 195, 39);
+  return {doc, y:46};
+}
+function arPdfPies(doc, txt){
+  const n = doc.getNumberOfPages();
+  for(let i=1; i<=n; i++){ doc.setPage(i); doc.setFont("helvetica","normal"); doc.setFontSize(8); doc.setTextColor(120);
+    doc.text(txt || "Registro personal del paciente (autopercepción); no sustituye la valoración clínica.", 15, 289);
+    doc.text("Página "+i+" de "+n, 195, 289, {align:"right"}); }
+}
+function arTitulo(doc, y, txt){
+  if(y > 262){ doc.addPage(); y = 20; }
+  doc.setFont("helvetica","bold"); doc.setFontSize(12); doc.setTextColor(25,95,75); doc.text(txt, 15, y);
+  doc.setTextColor(40,40,40); doc.setFont("helvetica","normal"); doc.setFontSize(10); return y+6;
+}
+function arLineas(doc, y, lineas){
+  doc.setFont("helvetica","normal"); doc.setFontSize(10); doc.setTextColor(40,40,40);
+  lineas.forEach(l=>{ if(y > 280){ doc.addPage(); y = 20; } const partes = doc.splitTextToSize(l, 180); doc.text(partes, 15, y); y += 5.2*partes.length; });
+  return y+2;
+}
+function arTabla(doc, y, head, body, opts){
+  doc.autoTable(Object.assign({startY:y, head:[head], body, theme:"grid", margin:{top:15, left:15, right:15, bottom:18},
+    styles:{font:"helvetica", fontSize:9, cellPadding:1.8, textColor:[40,40,40], lineColor:[210,210,210], lineWidth:0.2, valign:"middle"},
+    headStyles:{fillColor:[25,95,75], textColor:255, fontStyle:"bold"}, alternateRowStyles:{fillColor:[245,248,247]}}, opts || {}));
+  return doc.lastAutoTable.finalY + 6;
+}
+function arLeyenda(doc, y){
+  y = arTitulo(doc, y, "Escalas utilizadas");
+  return arLineas(doc, y, ["Dolor: 0 (nada) a 10 (máximo imaginable).", "Inflamación y rigidez / movilidad limitada / sensibilidad: 0 (ninguna), 1 (leve), 2 (moderada), 3 (grave).", "Dificultad en actividades: 0 (ninguna), 1 (leve), 2 (moderada), 3 (grave), 4 (extrema)."]);
+}
+
+// ---------- Informe de un día ----------
+function arPDFDia(iso, nombre, dia){
+  const base = arPdfBase("Informe diario de articulaciones", arFechaLarga(iso), nombre); const doc = base.doc; let y = base.y;
+  const regs = arRegsDia(dia).sort((a,b)=> b.dolor-a.dolor || b.infl-a.infl || b.rig-a.rig);
+  const fv = arFuncDia(dia);
+  y = arTitulo(doc, y, "Resumen del día");
+  const lin = [];
+  if(regs.length){
+    const conDolor = regs.filter(r=>r.dolor>0);
+    lin.push("Zonas registradas: "+regs.length+" ("+conDolor.length+" con dolor).");
+    if(conDolor.length){ const media = conDolor.reduce((t,r)=>t+r.dolor,0)/conDolor.length; lin.push("Dolor máximo: "+regs[0].dolor+"/10 ("+regs[0].nombre+"). Dolor medio de las zonas con dolor: "+(Math.round(media*10)/10)+"/10."); }
+    else lin.push("Sin dolor en las zonas registradas.");
+    lin.push("Inflamación máxima: "+Math.max.apply(null, regs.map(r=>r.infl))+"/3. Rigidez / movilidad limitada máxima: "+Math.max.apply(null, regs.map(r=>r.rig))+"/3.");
+  } else lin.push("No se registraron zonas dolorosas este día.");
+  if(fv.length){ const suma = fv.reduce((t,x)=>t+x.v,0); lin.push("Dificultad en actividades: suma "+suma+" sobre "+(fv.length*4)+" ("+(Math.round(suma/fv.length*10)/10)+" de media por actividad, escala 0-4)."); }
+  y = arLineas(doc, y, lin);
+  if(regs.length){
+    y = arTitulo(doc, y, "Zonas afectadas");
+    y = arTabla(doc, y, ["Zona","Dolor","Inflamación","Rigidez / movilidad","Nota"],
+      regs.map(r=>[r.nombre, r.dolor+"/10", r.infl+"/3 ("+AR_NIV3[r.infl]+")", r.rig+"/3 ("+AR_NIV3[r.rig]+")", r.nota || "-"]),
+      {columnStyles:{0:{cellWidth:44}, 1:{cellWidth:16, halign:"center"}, 2:{cellWidth:30}, 3:{cellWidth:32}, 4:{cellWidth:"auto"}}});
+  }
+  y = arTitulo(doc, y, "Funcionalidad (dificultad para realizar actividades)");
+  if(fv.length) y = arTabla(doc, y, ["Actividad","Dificultad","Nivel"], fv.sort((a,b)=>a.i-b.i).map(x=>[AR_FUNC[x.i], x.v+"/4", AR_NIV4[x.v]]), {columnStyles:{0:{cellWidth:90}, 1:{cellWidth:30, halign:"center"}}});
+  else y = arLineas(doc, y, ["No se registró la funcionalidad este día."]);
+  arLeyenda(doc, y);
+  arPdfPies(doc);
+  return doc;
+}
+
+// ---------- Gráfico de línea: dolor máximo de cada día ----------
+function arGrafico(doc, x, y, w, h, vals, n){
+  doc.setDrawColor(190); doc.setLineWidth(0.2); doc.rect(x, y, w, h);
+  doc.setFont("helvetica","normal"); doc.setFontSize(7); doc.setTextColor(110);
+  const px = d => x + ((d-1)/Math.max(n-1,1))*w, py = v => y + h - (v/10)*h;
+  for(let v=0; v<=10; v+=2){ doc.setDrawColor(228); doc.line(x, py(v), x+w, py(v)); doc.text(String(v), x-2, py(v)+1, {align:"right"}); }
+  for(let d=1; d<=n; d++){ if(d===1 || d%5===0 || (d===n && n%5>=3)) doc.text(String(d), px(d), y+h+4, {align:"center"}); }
+  doc.setDrawColor(25,95,75); doc.setLineWidth(0.5);
+  for(let d=1; d<n; d++){ if(vals[d] != null && vals[d+1] != null) doc.line(px(d), py(vals[d]), px(d+1), py(vals[d+1])); }
+  for(let d=1; d<=n; d++){ if(vals[d] != null){ const v = vals[d]; if(v >= 7) doc.setFillColor(200,60,50); else if(v >= 4) doc.setFillColor(225,150,40); else doc.setFillColor(25,95,75); doc.circle(px(d), py(vals[d]), 1.2, "F"); } }
+  doc.setLineWidth(0.2); doc.setTextColor(40,40,40);
+}
+
+// ---------- Informe de un mes ----------
+function arPDFMes(ym, nombre, dias){
+  const base = arPdfBase("Informe mensual de articulaciones", arMesLargo(ym), nombre); const doc = base.doc; let y = base.y;
+  const fechas = Object.keys(dias).sort();
+  const [Y,M] = ym.split("-").map(Number), nDias = new Date(Y, M, 0).getDate();
+  const hoy = hoyISO(), limite = (ym === hoy.slice(0,7)) ? +hoy.slice(8,10) : nDias;
+  const porDia = fechas.map(f=>{
+    const regs = arRegsDia(dias[f]), pico = regs.reduce((m,r)=>Math.max(m,r.dolor), 0), fv = arFuncDia(dias[f]);
+    return {f, regs, pico, peores: regs.filter(r=>pico>0 && r.dolor===pico).map(r=>r.nombre), fn:fv.length, fsum: fv.reduce((t,x)=>t+x.v,0), fv};
+  });
+  const conZonas = porDia.filter(d=>d.regs.length);
+  const zonas = {};
+  porDia.forEach(d=> d.regs.forEach(r=>{ const z = zonas[r.nombre] || (zonas[r.nombre] = {nombre:r.nombre, dias:0, diasDolor:0, sum:0, max:0, infl:0, rig:0}); z.dias++; if(r.dolor>0) z.diasDolor++; z.sum += r.dolor; z.max = Math.max(z.max, r.dolor); z.infl = Math.max(z.infl, r.infl); z.rig = Math.max(z.rig, r.rig); }));
+  const listaZonas = Object.values(zonas).sort((a,b)=> b.diasDolor-a.diasDolor || b.max-a.max);
+
+  y = arTitulo(doc, y, "Resumen del mes");
+  const lin = [];
+  lin.push("Días con registro: "+fechas.length+" de "+limite+(ym === hoy.slice(0,7) ? " (hasta hoy)." : "."));
+  if(conZonas.length){
+    const conDolor = conZonas.filter(d=>d.pico>0), picoMes = conZonas.reduce((m,d)=>Math.max(m,d.pico), 0), diaPico = conZonas.find(d=>d.pico===picoMes);
+    lin.push("Días con dolor: "+conDolor.length+" de "+conZonas.length+" con zonas registradas.");
+    if(picoMes > 0) lin.push("Dolor máximo del mes: "+picoMes+"/10 el "+arFechaCorta(diaPico.f)+" ("+diaPico.peores.slice(0,3).join(", ")+").");
+    lin.push("Promedio del dolor máximo diario: "+(Math.round(conZonas.reduce((t,d)=>t+d.pico,0)/conZonas.length*10)/10)+"/10.");
+    lin.push("Zonas distintas afectadas: "+listaZonas.filter(z=>z.diasDolor>0).length+". Inflamación máxima: "+Math.max.apply(null, listaZonas.map(z=>z.infl))+"/3. Rigidez / movilidad limitada máxima: "+Math.max.apply(null, listaZonas.map(z=>z.rig))+"/3.");
+  } else lin.push("No hay zonas dolorosas registradas este mes.");
+  const conFunc = porDia.filter(d=>d.fn>0);
+  if(conFunc.length){ const tot = conFunc.reduce((t,d)=>t+d.fsum,0), cnt = conFunc.reduce((t,d)=>t+d.fn,0); lin.push("Dificultad en actividades: media "+(Math.round(tot/cnt*10)/10)+" (escala 0-4) en "+conFunc.length+" días registrados."); }
+  y = arLineas(doc, y, lin);
+
+  if(conZonas.length){
+    y = arTitulo(doc, y, "Evolución del dolor máximo diario");
+    if(y > 200){ doc.addPage(); y = 20; y = arTitulo(doc, y, "Evolución del dolor máximo diario"); }
+    const vals = {}; conZonas.forEach(d=>{ vals[+d.f.slice(8,10)] = d.pico; });
+    arGrafico(doc, 22, y+2, 168, 55, vals, limite);
+    y += 66;
+    y = arLineas(doc, y, ["Eje vertical: dolor máximo registrado ese día (0-10). Eje horizontal: día del mes. Los días sin registro quedan en blanco."]);
+  }
+  if(listaZonas.length){
+    y = arTitulo(doc, y, "Resumen por zona");
+    y = arTabla(doc, y, ["Zona","Días registrada","Días con dolor","Dolor máx.","Dolor medio","Inflam. máx.","Rigidez máx."],
+      listaZonas.map(z=>[z.nombre, z.dias, z.diasDolor, z.max+"/10", (Math.round(z.sum/z.dias*10)/10)+"/10", z.infl+"/3", z.rig+"/3"]),
+      {columnStyles:{0:{cellWidth:50}, 1:{halign:"center"}, 2:{halign:"center"}, 3:{halign:"center"}, 4:{halign:"center"}, 5:{halign:"center"}, 6:{halign:"center"}}});
+  }
+  if(porDia.length){
+    y = arTitulo(doc, y, "Detalle por día");
+    y = arTabla(doc, y, ["Fecha","Zonas","Dolor máx.","Zonas más afectadas","Actividades (dificultad)"],
+      porDia.map(d=>[arFechaCorta(d.f), d.regs.length || "-", d.regs.length ? d.pico+"/10" : "-", d.peores.length ? d.peores.slice(0,3).join(", ")+(d.peores.length>3 ? "…" : "") : "-", d.fn ? d.fsum+"/"+(d.fn*4) : "-"]),
+      {columnStyles:{0:{cellWidth:24}, 1:{cellWidth:16, halign:"center"}, 2:{cellWidth:22, halign:"center"}, 3:{cellWidth:"auto"}, 4:{cellWidth:36, halign:"center"}}});
+  }
+  if(conFunc.length){
+    y = arTitulo(doc, y, "Actividades: dificultad media del mes");
+    const filas = AR_FUNC.map((t,i)=>{ const v = []; porDia.forEach(d=>{ const x = d.fv.find(q=>q.i===i); if(x) v.push(x.v); }); return v.length ? [t, (Math.round(v.reduce((a,b)=>a+b,0)/v.length*10)/10)+"/4", Math.max.apply(null,v)+"/4", v.length] : null; }).filter(Boolean);
+    y = arTabla(doc, y, ["Actividad","Media","Máxima","Días registrados"], filas, {columnStyles:{0:{cellWidth:90}, 1:{halign:"center"}, 2:{halign:"center"}, 3:{halign:"center"}}});
+  }
+  const notas = []; porDia.forEach(d=> d.regs.filter(r=>r.nota).forEach(r=> notas.push([arFechaCorta(d.f), r.nombre, r.nota])));
+  if(notas.length){ y = arTitulo(doc, y, "Notas del paciente"); y = arTabla(doc, y, ["Fecha","Zona","Nota"], notas, {columnStyles:{0:{cellWidth:24}, 1:{cellWidth:50}}}); }
+  arLeyenda(doc, y);
+  arPdfPies(doc);
+  return doc;
+}
+
+// ---------- Botón y panel ----------
+var arInfModo = "dia", arInfTocado = false;
+function arInfPonerModo(m){
+  arInfModo = m;
+  document.getElementById("inf-t-dia").classList.toggle("on", m==="dia"); document.getElementById("inf-t-mes").classList.toggle("on", m==="mes");
+  document.getElementById("inf-dia").style.display = m==="dia" ? "" : "none"; document.getElementById("inf-mes").style.display = m==="mes" ? "" : "none";
+  document.getElementById("inf-msg").textContent = "";
+}
+function arInfDefaults(){
+  if(!arInfTocado){ document.getElementById("inf-fecha").value = arFecha; document.getElementById("inf-mesinp").value = arFecha.slice(0,7); }
+  const n = document.getElementById("inf-nombre"); if(!n.dataset.listo || n.dataset.perfil !== perfilActivo){ n.value = localStorage.getItem("arInfNombreV1_"+perfilActivo) || perfilActivo; n.dataset.listo = "1"; n.dataset.perfil = perfilActivo; }
+}
+document.getElementById("inf-t-dia").onclick = ()=> arInfPonerModo("dia");
+document.getElementById("inf-t-mes").onclick = ()=> arInfPonerModo("mes");
+document.getElementById("inf-fecha").onchange = ()=>{ arInfTocado = true; };
+document.getElementById("inf-mesinp").onchange = ()=>{ arInfTocado = true; };
+document.getElementById("inf-generar").onclick = async ()=>{
+  const msg = document.getElementById("inf-msg"); msg.textContent = "Preparando el PDF…";
+  try{ await arAsegurarPDF(); }catch(e){ msg.textContent = "No se pudo cargar el generador de PDF. Comprueba que el archivo pdflib.js está subido junto a la app y que tienes conexión la primera vez."; return; }
+  const nombre = document.getElementById("inf-nombre").value.trim() || perfilActivo;
+  try{ localStorage.setItem("arInfNombreV1_"+perfilActivo, nombre); }catch(e){}
+  const datos = arDatos().dias; let doc, archivo;
+  if(arInfModo === "dia"){
+    const f = document.getElementById("inf-fecha").value; if(!f){ msg.textContent = "Elige un día."; return; }
+    const dia = datos[f]; if(!dia || (!Object.keys(dia.z||{}).length && !arFuncDia(dia).length)){ msg.textContent = "No hay nada registrado el "+arFechaCorta(f)+"."; return; }
+    doc = arPDFDia(f, nombre, dia); archivo = "informe-articulaciones-"+f+".pdf";
+  } else {
+    const ym = document.getElementById("inf-mesinp").value; if(!ym){ msg.textContent = "Elige un mes."; return; }
+    const delMes = {}; Object.keys(datos).filter(f=>f.slice(0,7)===ym).forEach(f=>{ const d = datos[f]; if(Object.keys(d.z||{}).length || arFuncDia(d).length) delMes[f] = d; });
+    if(!Object.keys(delMes).length){ msg.textContent = "No hay nada registrado en "+arMesLargo(ym)+"."; return; }
+    doc = arPDFMes(ym, nombre, delMes); archivo = "informe-articulaciones-"+ym+".pdf";
+  }
+  try{ doc.save(archivo); }catch(e){}
+  let enlace = ""; try{ enlace = ' <a href="'+doc.output("bloburl")+'" target="_blank" rel="noopener">Abrir el PDF</a>'; }catch(e){}
+  msg.innerHTML = "✓ Informe generado ("+escapar(archivo)+")."+enlace;
+};
+
+
+// ---------- SÍNTOMAS (texto libre) ----------
+function claveSint(){ return "saludSintomasV1_"+perfilActivo; }
+function siLista(){ const l = leerJSON(claveSint(), []); return Array.isArray(l) ? l : []; }
+let siNivel = null;
+function siPintarNivel(){
+  document.getElementById("si-nivel").innerHTML = Array.from({length:11},(_,i)=> `<button type="button" data-n="${i}" class="${siNivel===i?"btn-guardar":"btn-cancelar"}" style="min-width:36px;padding:8px 0">${i}</button>`).join("");
+  document.querySelectorAll("#si-nivel [data-n]").forEach(b=> b.onclick = ()=>{ siNivel = +b.dataset.n; siPintarNivel(); });
+}
+function siAbrir(it){
+  document.getElementById("si-form").style.display = "block";
+  document.getElementById("si-id").value = it ? it.id : "";
+  document.getElementById("si-nombre").value = it ? it.nombre : "";
+  document.getElementById("si-fecha").value = it ? it.fecha : new Date().toLocaleDateString("sv-SE");
+  document.getElementById("si-hora").value = it ? (it.hora||"") : "";
+  document.getElementById("si-nota").value = it ? (it.nota||"") : "";
+  siNivel = it ? it.nivel : null; siPintarNivel();
+  document.getElementById("si-nombre").focus();
+}
+function siCerrar(){ document.getElementById("si-form").style.display = "none"; }
+function siGuardar(){
+  const nombre = document.getElementById("si-nombre").value.trim();
+  if(!nombre){ avisar("Escribe el nombre del síntoma."); return; }
+  if(siNivel===null){ avisar("Elige el nivel de 0 a 10."); return; }
+  const l = siLista(), id = document.getElementById("si-id").value;
+  const it = {id: id || ("s"+Date.now()), nombre, fecha: document.getElementById("si-fecha").value || new Date().toLocaleDateString("sv-SE"),
+    hora: document.getElementById("si-hora").value, nivel: siNivel, nota: document.getElementById("si-nota").value.trim()};
+  const i = l.findIndex(x=>x.id===it.id); if(i>=0) l[i] = it; else l.push(it);
+  guardarJSON(claveSint(), l); siCerrar(); renderSintomas();
+}
+function renderSintomas(){
+  const l = siLista(), esc = t=> String(t).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  const nombres = [...new Set(l.map(x=>x.nombre))].sort();
+  document.getElementById("si-lista").innerHTML = nombres.map(n=>`<option value="${esc(n)}">`).join("");
+  const fs = document.getElementById("si-filtro"), actual = fs.value;
+  fs.innerHTML = '<option value="">Todos los síntomas</option>' + nombres.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join("");
+  fs.value = nombres.includes(actual) ? actual : "";
+  const v = l.filter(x=> !fs.value || x.nombre===fs.value).sort((a,b)=> (b.fecha+(b.hora||"")).localeCompare(a.fecha+(a.hora||"")));
+  document.getElementById("si-historial").innerHTML = v.length ? v.map(x=>`<div class="form-add" style="display:block;margin:6px 0"><b>${esc(x.nombre)}</b> — nivel <b style="color:${x.nivel>=7?"#d94a4a":x.nivel>=4?"#e0a02c":"var(--accent)"}">${x.nivel}/10</b><div style="font-size:.85rem;color:var(--muted)">${x.fecha}${x.hora?" · "+x.hora:""}</div>${x.nota?`<div style="margin-top:4px">${esc(x.nota)}</div>`:""}<div class="fila" style="margin-top:8px"><button type="button" class="btn-cancelar" data-e="${x.id}">Editar</button><button type="button" class="btn-cancelar" data-b="${x.id}">Borrar</button></div></div>`).join("") : '<p class="aviso">Aún no hay síntomas registrados.</p>';
+  document.querySelectorAll("#si-historial [data-e]").forEach(b=> b.onclick = ()=>{ siAbrir(siLista().find(x=>x.id===b.dataset.e)); window.scrollTo(0,0); });
+  document.querySelectorAll("#si-historial [data-b]").forEach(b=> b.onclick = async ()=>{ if(await confirmar("¿Borrar este registro?", {si:"Borrar", peligro:true})){ guardarJSON(claveSint(), siLista().filter(x=>x.id!==b.dataset.b)); renderSintomas(); } });
+}
+document.getElementById("si-abrir").onclick = ()=> siAbrir(null);
+document.getElementById("si-cancelar").onclick = siCerrar;
+document.getElementById("si-guardar").onclick = siGuardar;
+document.getElementById("si-filtro").onchange = renderSintomas;
+
+pintarTabsPerfil();
+cambiarSeccion("condiciones");
+renderTodo();
+</script>
+<a href="ajustes.html" title="Ajustes y claves" aria-label="Ajustes y claves" style="position:fixed;bottom:14px;right:14px;z-index:50;width:42px;height:42px;border-radius:50%;border:1px solid #2a3242;background:#1b2330;display:flex;align-items:center;justify-content:center;text-decoration:none;font-size:1.2rem">⚙️</a>
+</body>
+</html>

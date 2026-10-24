@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.json">
+<script src="claves.js"></script>
+<script src="tema.js"></script>
+<title>Nutrición</title>
+<link rel="stylesheet" href="nutricion.css">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 512 512%22%3E%3Crect width=%22512%22 height=%22512%22 rx=%22104%22 fill=%22%2310151f%22/%3E%3Csvg x=%2214%22 y=%22150%22 width=%22240%22 height=%22240%22 viewBox=%220 0 48 48%22 xmlns=%22http://www.w3.org/2000/svg%22 aria-hidden=%22true%22%3E%3Cpolygon points=%227%2C26 8%2C9 21%2C17%22 fill=%22%23a9b1bf%22/%3E%3Cpolygon points=%2241%2C26 40%2C9 27%2C17%22 fill=%22%23a9b1bf%22/%3E%3Cpolygon points=%2210%2C23 11%2C13 18%2C18%22 fill=%22%23f2b8c6%22/%3E%3Cpolygon points=%2238%2C23 37%2C13 30%2C18%22 fill=%22%23f2b8c6%22/%3E%3Cellipse cx=%2224%22 cy=%2230%22 rx=%2217%22 ry=%2214%22 fill=%22%23a9b1bf%22/%3E%3Cellipse cx=%2218%22 cy=%2230%22 rx=%222.2%22 ry=%222.6%22 fill=%22%231b1b24%22/%3E%3Cellipse cx=%2230%22 cy=%2230%22 rx=%222.2%22 ry=%222.6%22 fill=%22%231b1b24%22/%3E%3Cpolygon points=%2222%2C34 26%2C34 24%2C36.5%22 fill=%22%23f08aa0%22/%3E%3Cpath d=%22M24 36.5v2M24 38.5q-2.5 2-4.5.5M24 38.5q2.5 2 4.5.5%22 stroke=%22%231b1b24%22 stroke-width=%221.1%22 fill=%22none%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M12 34l-7-1.5M12 37l-7 1.5M36 34l7-1.5M36 37l7 1.5%22 stroke=%22%231b1b24%22 stroke-width=%221%22 opacity=%22.55%22 stroke-linecap=%22round%22/%3E%3Cellipse cx=%2226%22 cy=%2215%22 rx=%2215%22 ry=%226.5%22 transform=%22rotate%28-9 26 15%29%22 fill=%22%23d93b3b%22/%3E%3Crect x=%2221.5%22 y=%226%22 width=%223.4%22 height=%223.8%22 rx=%221.4%22 fill=%22%23d93b3b%22 transform=%22rotate%28-9 23 8%29%22/%3E%3C/svg%3E%3Csvg x=%22258%22 y=%22150%22 width=%22240%22 height=%22240%22 viewBox=%220 0 48 48%22 xmlns=%22http://www.w3.org/2000/svg%22 aria-hidden=%22true%22%3E%3Cpolygon points=%227%2C26 8%2C9 21%2C17%22 fill=%22%23f4e8d4%22/%3E%3Cpolygon points=%2241%2C26 40%2C9 27%2C17%22 fill=%22%23f4e8d4%22/%3E%3Cpolygon points=%2210%2C23 11%2C13 18%2C18%22 fill=%22%23f2b8c6%22/%3E%3Cpolygon points=%2238%2C23 37%2C13 30%2C18%22 fill=%22%23f2b8c6%22/%3E%3Cellipse cx=%2224%22 cy=%2230%22 rx=%2217%22 ry=%2214%22 fill=%22%23f4e8d4%22/%3E%3Cellipse cx=%2218%22 cy=%2230%22 rx=%222.2%22 ry=%222.6%22 fill=%22%231b1b24%22/%3E%3Cellipse cx=%2230%22 cy=%2230%22 rx=%222.2%22 ry=%222.6%22 fill=%22%231b1b24%22/%3E%3Cpolygon points=%2222%2C34 26%2C34 24%2C36.5%22 fill=%22%23f08aa0%22/%3E%3Cpath d=%22M24 36.5v2M24 38.5q-2.5 2-4.5.5M24 38.5q2.5 2 4.5.5%22 stroke=%22%231b1b24%22 stroke-width=%221.1%22 fill=%22none%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M12 34l-7-1.5M12 37l-7 1.5M36 34l7-1.5M36 37l7 1.5%22 stroke=%22%231b1b24%22 stroke-width=%221%22 opacity=%22.55%22 stroke-linecap=%22round%22/%3E%3Cellipse cx=%2226%22 cy=%2215%22 rx=%2215%22 ry=%226.5%22 transform=%22rotate%28-9 26 15%29%22 fill=%22%238f5ae6%22/%3E%3Crect x=%2221.5%22 y=%226%22 width=%223.4%22 height=%223.8%22 rx=%221.4%22 fill=%22%238f5ae6%22 transform=%22rotate%28-9 23 8%29%22/%3E%3C/svg%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="icono.png">
+<meta name="theme-color" content="#10151f">
+<script>(function(){var o=Storage.prototype.setItem;window.__nubeRaw=function(k,v){o.call(localStorage,k,v)};window.__nubeSucias={};window.__nubeOn=false;Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localStorage&&window.__nubeOn){window.__nubeSucias[k]=1;window.dispatchEvent(new Event("nube-cambio"))}};setTimeout(function(){if(!window.__nubeVivo){var d=document.createElement("div");d.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99998;background:#7a1f1f;color:#fff;padding:10px 14px;font:14px system-ui,sans-serif;text-align:center";d.textContent="⚠️ La entrada con Google no cargó: tus datos NO se están guardando en la nube. Recarga la página; si sigue igual, avísame.";(document.body||document.documentElement).appendChild(d)}},6000);})();</script>
+</head>
+<body>
+<button id="btnTema" onclick="alternarTema()" title="Cambiar tema" aria-label="Cambiar entre tema claro y oscuro" style="position:fixed;top:12px;right:12px;z-index:500;width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-size:1rem;cursor:pointer">☀️</button>
+<div class="wrap">
+<nav class="navapp" aria-label="Áreas de la app"><a href="nutricion.html" aria-current="page">NUTRICIÓN</a><a href="ejercicios.html">FITNESS</a><a href="tareas.html">TAREAS</a><a href="calendario.html">CALENDARIO</a><a href="salud.html">SALUD</a><a href="huawei.html">HUAWEI</a><a href="informes.html">INFORMES</a></nav>
+
+  <h1>Nutrición</h1>
+
+  <div class="tabs-perfil" id="tabsPerfil">
+    <button type="button" data-perfil="Mamy">Mamy</button>
+    <button type="button" data-perfil="Filha">Filha</button>
+  </div>
+
+  <div class="navfecha">
+    <button id="diaAnterior">◀</button>
+    <div class="fecha" id="fechaLabel"></div>
+    <input type="date" id="fechaSalto" aria-label="Ir a una fecha" style="width:38px;background:transparent;border:1px solid #2a3242;border-radius:8px;color:inherit">
+    <button id="diaSiguiente">▶</button>
+  </div>
+
+  <div class="semana" id="semana"></div>
+
+  <div class="tabs-sec" id="tabsSec">
+    <button type="button" data-p="dia">Día</button><button type="button" data-p="bus">Buscar</button><button type="button" data-p="seg">Seguimiento</button><button type="button" data-p="ana">Análisis</button><button type="button" data-p="rec">Recetas</button><button type="button" data-p="per">Perfil</button>
+  </div>
+
+  <div class="panel" data-panel="dia">
+  <div class="macros">
+    <div class="macro-col"><div class="macro-label">Grasa</div><div class="macro-val" id="mGrasa">–</div></div>
+    <div class="macro-col"><div class="macro-label">Carbh</div><div class="macro-val" id="mCarbh">–</div></div>
+    <div class="macro-col"><div class="macro-label">Prot</div><div class="macro-val" id="mProt">–</div></div>
+    <div class="macro-col"><div class="macro-label">Cals</div><div class="macro-val" id="mCals">0</div></div>
+  </div>
+
+  <div class="resumen">
+    <h2>Resumen</h2>
+    <div class="resumen-fila"><span>Meta diaria</span><span id="rMeta">–</span></div>
+    <div class="resumen-fila"><span>Calorías consumidas</span><span id="rConsumidas">0</span></div>
+    <div class="resumen-fila"><span>Calorías quemadas (Fitness + extra)</span><span id="rQuemadas">0</span></div>
+      <div class="quemadas" style="margin:8px 0 0;padding:10px 12px;background:var(--panel-alt,#1b2330)">
+    <label for="quemadasInput">➕ Extra manual (opcional)</label>
+    <input type="number" id="quemadasInput" placeholder="0">
+    <div class="q-sub" id="qSub"></div>
+  </div>
+    <div class="resumen-fila total"><span>Calorías restantes</span><span class="num" id="rRestantes">–</span></div>
+  </div>
+
+  <div class="prog-sec prog-mini">
+    <h2><span>🟩 Progreso del día<button type="button" class="ayu" data-t="Cada cuadradito es el 10% del objetivo del día. Se pone naranja si te pasás del 110%." title="Cada cuadradito es el 10% del objetivo del día. Se pone naranja si te pasás del 110%." aria-label="Más información" aria-expanded="false">i</button></span></h2>
+    <div id="progreso"></div>
+  </div>
+
+  <div id="comidas"></div>
+
+  <div class="agua-sec">
+    <h2><span>💧 Agua</span><span class="agua-total" id="aguaTotal">0 ml</span></h2>
+    <div id="aguaBarra"></div>
+    <div class="agua-botones">
+      <button type="button" data-ml="100">+100</button>
+      <button type="button" data-ml="250">+250</button>
+      <button type="button" data-ml="330">+330</button>
+      <button type="button" data-ml="500">+500</button>
+      <button type="button" data-ml="750">+750</button>
+    </div>
+    <div class="agua-fila">
+      <input type="number" id="aguaCustom" min="1" max="5000" placeholder="otra (ml)">
+      <button type="button" class="sumar" id="aguaSumarCustom">+ ml</button>
+      <button type="button" id="aguaDeshacer">↩ Deshacer último</button>
+    </div>
+    <div class="agua-fila">
+      <label for="aguaMeta">Meta diaria (ml)</label>
+      <input type="number" id="aguaMeta" min="0" placeholder="2000">
+    </div>
+    <div class="agua-log" id="aguaLog"></div>
+  </div>
+
+  <div class="agua-sec" id="pesoHoySec">
+    <h2><span>⚖️ Peso <small style="font-weight:400;color:var(--muted)">(opcional)</small></span><span id="pesoHoyEstado" style="font-weight:400;font-size:0.8rem;color:var(--muted)"></span></h2>
+    <div class="pd-grid" id="pdPrincipales"></div>
+    <details class="ia-foto" id="pdMas">
+      <summary>Composición corporal (datos de la báscula)</summary>
+      <div class="pd-grid" id="pdExtra" style="margin-top:8px"></div>
+    </details>
+    <label for="pdFoto" style="font-size:0.78rem;color:var(--muted)">Foto de la báscula<button type="button" class="ayu" data-t="App OKOK: la IA lee la foto y completa los datos." title="App OKOK: la IA lee la foto y completa los datos." aria-label="Más información" aria-expanded="false">i</button></label>
+    <input type="file" id="pdFoto" accept="image/*">
+    <label class="pd-check" for="pdGuardarFoto"><input type="checkbox" id="pdGuardarFoto"><span>Guardar también la foto en este navegador<button type="button" class="ayu" data-t="Si no la marcas, solo se lee y no se guarda." title="Si no la marcas, solo se lee y no se guarda." aria-label="Más información" aria-expanded="false">i</button></span></label>
+    <div class="pd-grid" style="margin-top:8px"><div style="grid-column:1/-1"><label for="pdEnlace">Enlace al informe (opcional)</label><input type="text" id="pdEnlace" placeholder="https://..."></div></div>
+    <div class="pd-acciones">
+      <button type="button" id="pdLeer">📷 Leer foto con IA</button>
+      <button type="button" id="pdVerInforme" style="display:none">Ver informe</button>
+      <button type="button" class="btn-primario" id="pesoHoyGuardar" style="margin-top:0">Guardar peso</button>
+      <button type="button" id="pesoHoyQuitar" style="padding:8px 12px">Quitar</button>
+    </div>
+    <div class="rep-nota" id="pdIaEstado" style="margin-top:6px"></div>
+    <div class="rep-nota" id="pdFechaNota" style="margin-top:6px"></div>
+    <div class="rep-nota" id="pesoHoyNota" style="margin-top:6px"></div>
+  </div>
+
+  <div class="agua-sec" id="medidasHoySec">
+    <h2><span>📏 Medidas <small style="font-weight:400;color:var(--muted)">(opcional)</small></span><span id="medHoyEstado" style="font-weight:400;font-size:0.8rem;color:var(--muted)"></span></h2>
+    <details class="ia-foto" id="mdDia">
+      <summary>Abrir medidas con cinta (cm)<button type="button" class="ayu" data-t="Con cinta flexible y siempre en el mismo punto de cada zona." title="Con cinta flexible y siempre en el mismo punto de cada zona." aria-label="Más información" aria-expanded="false">i</button></summary>
+      <div class="pd-grid" id="pdMedidas" style="margin-top:8px"></div>
+      <div class="pd-acciones">
+        <button type="button" class="btn-primario" id="medHoyGuardar" style="margin-top:0">Guardar medidas</button>
+        <button type="button" id="medHoyQuitar" style="padding:8px 12px">Quitar</button>
+      </div>
+    </details>
+  </div>
+
+  </div>
+
+  <div class="panel" data-panel="bus" hidden></div>
+
+  <div class="panel" data-panel="seg">
+  <div class="heat-sec">
+    <h2><span>🗓️ Últimas 4 semanas</span></h2>
+    <div class="chips" id="heatChips">
+      <button type="button" data-m="kcal" class="on">Calorías</button>
+      <button type="button" data-m="carbh">Carbohidratos</button>
+      <button type="button" data-m="prot">Proteínas</button>
+      <button type="button" data-m="grasa">Grasas</button>
+    </div>
+    <div class="heat-dias"><span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
+    <div class="heat-grid" id="heatGrid"></div>
+    <div class="heat-leyenda" id="heatLeyenda"></div>
+  </div>
+
+  <div class="heat-sec">
+    <h2><span>📈 Progreso</span></h2>
+    <label for="graficoMetrica">Qué mostrar</label>
+    <select id="graficoMetrica"></select>
+    <div class="chips" id="graficoGranularidad" style="margin-top:8px">
+      <button type="button" data-g="sem" class="on">Semana</button>
+      <button type="button" data-g="mes">Mes</button>
+      <button type="button" data-g="anio">Año</button>
+      <button type="button" data-g="todo">Todo</button>
+    </div>
+    <div id="graficoProgreso" style="margin-top:10px"></div>
+  </div>
+
+  <div class="heat-sec" id="medProgSec">
+    <h2><span>📏 Medidas con cinta</span></h2>
+    <div class="rep-nota" style="margin:0 0 6px">Elige una, dos o todas las medidas.</div>
+    <div class="chips" id="medChips"></div>
+    <div class="chips" id="medRango" style="margin-top:8px">
+      <button type="button" data-r="mes">Mes</button>
+      <button type="button" data-r="3m">3 meses</button>
+      <button type="button" data-r="anio">Año</button>
+      <button type="button" data-r="todo" class="on">Todo</button>
+    </div>
+    <div id="medGrafico" style="margin-top:10px"></div>
+    <div id="medTabla" style="overflow-x:auto"></div>
+  </div>
+
+  <div class="heat-sec" id="refSec">
+    <h2><span>📏 Dónde estás</span></h2>
+    <div class="ref-bloque"><h3>IMC</h3><div id="barraIMC"></div></div>
+    <div class="ref-bloque" style="margin-bottom:0"><h3>Grasa corporal (promedio de 7 días)</h3><div id="barraGrasa"></div></div>
+  </div>
+
+<div class="heat-sec" id="calMesSec" style="margin-top:18px">
+  <h2><span>📅 Calendario del mes</span></h2>
+  <div style="display:flex;gap:6px;align-items:center;justify-content:space-between;margin-bottom:8px">
+    <button type="button" id="cmAnt" aria-label="Mes anterior" style="padding:6px 12px">◀</button>
+    <input type="month" id="cmSalto" style="flex:1;max-width:220px;padding:6px" aria-label="Ir a mes y año">
+    <button type="button" id="cmSig" aria-label="Mes siguiente" style="padding:6px 12px">▶</button>
+    <button type="button" id="cmHoy" style="padding:6px 12px">Hoy</button>
+  </div>
+  <div style="display:flex;gap:6px;margin-bottom:6px">
+    <button type="button" id="cmModoGrid" style="flex:1;padding:8px;font-size:0.95rem">📅 Cuadrícula</button>
+    <button type="button" id="cmModoLista" style="flex:1;padding:8px;font-size:0.95rem">📋 Lista del mes</button>
+  </div>
+  <div class="heat-dias" style="gap:4px;margin-top:6px"><span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
+  <div id="cmLista" style="display:none"></div>
+  <div id="cmGrid" style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin-top:5px"></div>
+  <div class="heat-leyenda"><span>Blanco: kcal comidas</span><span style="color:#ffb454">Naranja: kcal quemadas</span><span style="color:#8fc5ff">Azul: peso (tenue = último conocido)</span></div>
+  <div id="cmDetalle" class="rep-nota" style="margin-top:8px"></div>
+  <div id="cmResumen" class="rep-nota" style="margin-top:6px"></div>
+</div>
+  </div>
+
+  <div class="panel" data-panel="ana" hidden>
+    <div id="anaRoot"></div>
+  </div>
+
+  <div class="panel" data-panel="rec">
+  <div class="recetas-sec">
+    <h2><span>🔎 Buscar recetas</span>
+      <span style="display:flex;gap:8px">
+        <button class="btn-nueva-receta" id="btnNuevaReceta">✍️ Mi receta</button>
+        <button class="btn-nueva-receta" id="btnBuscarRecetas" style="background:transparent;border:1px solid var(--accent);color:var(--accent)">🔎 Abrir buscador</button>
+      </span>
+    </h2>
+    <div id="builderContainer"></div>
+    <div id="iaRecetaContainer"></div>
+    <div id="realRecetaContainer"></div>
+  </div>
+
+  <div class="recetas-sec">
+    <h2><span>📖 Recetas guardadas</span></h2>
+    <label for="filtroTipoRecetas" style="margin-top:2px">Filtrar por tipo de comida</label>
+    <select id="filtroTipoRecetas" style="margin-bottom:8px"></select>
+    <div id="listaRecetas"></div>
+  </div>
+
+  <div class="recetas-sec">
+    <h2><span>🍽️ Comidas guardadas<button type="button" class="ayu" data-t="Para combos que repetís tal cual (ej. «mi desayuno de siempre»): se agregan al diario de una sola vez, con todos sus alimentos." title="Para combos que repetís tal cual (ej. «mi desayuno de siempre»): se agregan al diario de una sola vez, con todos sus alimentos." aria-label="Más información" aria-expanded="false">i</button></span>
+      <button class="btn-nueva-receta" id="btnNuevaComidaGuardada">+ Nueva</button>
+    </h2>
+    <div id="listaComidasGuardadas"></div>
+    <div id="builderComidaGuardadaContainer"></div>
+  </div>
+  </div>
+
+  <div class="panel" data-panel="per">
+  <details class="perfil-sec" id="perfilSec">
+    <summary>👤 Perfil</summary>
+    <div class="perfil-cuerpo">
+      <div class="pf-grid">
+        <div><label for="pfNombre">Nombre</label><input type="text" id="pfNombre" autocomplete="off"></div>
+        <div><label for="pfGenero">Género</label>
+          <select id="pfGenero">
+            <option value="">—</option>
+            <option value="Mujer">Mujer</option>
+            <option value="Hombre">Hombre</option>
+            <option value="Otro">Otro</option>
+          </select>
+        </div>
+        <div><label for="pfEdad">Edad</label><input type="number" id="pfEdad" min="1" max="120"></div>
+        <div><label for="pfAltura">Altura (cm)</label><input type="number" id="pfAltura" min="50" max="250"></div>
+      </div>
+
+      <div class="rep-nota">Se anotan en la pestaña Día.</div>
+
+      <h3>Historial de peso y medidas</h3>
+      <div id="listaMedidas"></div>
+    </div>
+  </details>
+
+  <details class="perfil-sec" id="objetivosSec">
+    <summary>🎯 Objetivos: meta diaria y reparto de macros</summary>
+    <div class="perfil-cuerpo">
+    <div class="meta-fila">
+      <label for="metaInput" style="color:var(--muted);font-size:0.85rem;">Meta diaria</label>
+      <input type="number" id="metaInput" placeholder="ej. 2000">
+    </div>
+  <div class="reparto-sec">
+    <h2>🎯 Reparto de macros<button type="button" class="ayu" data-t="Tú eliges los porcentajes. La app calcula los gramos diarios a partir de tu meta de calorías." title="Tú eliges los porcentajes. La app calcula los gramos diarios a partir de tu meta de calorías." aria-label="Más información" aria-expanded="false">i</button></h2>
+    <div class="reparto-fila">
+      <div class="rep-col"><label>% Carbohidratos</label><input type="number" id="repCarb" min="0" max="100"></div>
+      <div class="rep-col"><label>% Proteínas</label><input type="number" id="repProt" min="0" max="100"></div>
+      <div class="rep-col"><label>% Grasas</label><input type="number" id="repGrasa" min="0" max="100"></div>
+    </div>
+    <div class="rep-suma" id="repSuma"></div>
+    <div class="rep-limites" id="repLimites" style="display:none">
+      <div class="rl-col"><div class="rl-label">Carbos/día</div><div class="rl-val" id="rlCarb">–</div></div>
+      <div class="rl-col"><div class="rl-label">Proteína/día</div><div class="rl-val" id="rlProt">–</div></div>
+      <div class="rl-col"><div class="rl-label">Grasa/día</div><div class="rl-val" id="rlGrasa">–</div></div>
+    </div>
+    <div class="rep-nota" id="repNota"></div>
+  </div>
+    </div>
+  </details>
+
+
+  </div>
+</div><!-- /wrap -->
+
+<div class="modal" id="modalInforme" hidden>
+  <div class="modal-caja">
+    <div class="modal-cab"><b id="miTitulo">Informe</b><button type="button" id="miCerrar" aria-label="Cerrar">✕</button></div>
+    <div class="modal-cuerpo" id="miCuerpo"></div>
+  </div>
+</div>
+
+<div class="modal" id="modalEscaner" hidden>
+  <div class="modal-caja">
+    <div class="modal-cab"><b>📷 Escanear código de barras</b><button type="button" id="escCerrar" aria-label="Cerrar">✕</button></div>
+    <div class="modal-cuerpo">
+      <video id="escVideo" autoplay playsinline muted style="width:100%;border-radius:8px;background:#000"></video>
+      <div id="escEstado" class="rep-nota" style="margin-top:8px">Apuntá al código de barras del producto.</div>
+    </div>
+  </div>
+</div>
+
+<script src="nutricion.js"></script>
+<script src="buscar.js"></script>
+<script src="analisis.js"></script>
+<script type="module" src="nube.js" onerror="var d=document.createElement('div');d.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99998;background:#7a1f1f;color:#fff;padding:10px 14px;font:14px system-ui,sans-serif;text-align:center';d.textContent='⚠️ El archivo nube.js no se pudo descargar (revisa que esté subido a GitHub con ese nombre exacto).';document.body.appendChild(d)"></script>
+<a href="ajustes.html" title="Ajustes y claves" aria-label="Ajustes y claves" style="position:fixed;bottom:14px;right:14px;z-index:50;width:42px;height:42px;border-radius:50%;border:1px solid #2a3242;background:#1b2330;display:flex;align-items:center;justify-content:center;text-decoration:none;font-size:1.2rem">⚙️</a>
+</body>
+</html>
