@@ -460,3 +460,6 @@
   .foto-etiqueta{margin-top:6px;}
   .rec-fila{display:flex;justify-content:space-between;align-items:center;gap:8px;border-top:1px solid var(--line);padding:8px 0;font-size:0.9rem;}
   .rec-fila small{display:block;color:var(--muted);font-size:0.76rem;}
+
+  .fh-mi{margin-top:10px;border-top:1px solid var(--line);padding-top:8px;}
+  .fh-mi-tit{font-size:0.82rem;font-weight:700;margin:6px 0 2px;}

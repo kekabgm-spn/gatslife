@@ -15,7 +15,7 @@ function montar(nut, genericos){
     if(g && (nom == null || norm(g.nombre) === nom)) porId_++;
     else if(nom != null && porNom[nom]){ g = porNom[nom]; porNom_++; }
     else return;
-    var e = { id:r[0], nombre:g.nombre, v:r[1], peq:r[2] === 1 }; e.rac = racionDe(g.nombre, e.peq);
+    var e = { id:r[0], nombre:g.nombre, v:r[1], peq:r[2] === 1, dud:r[4] === 1 }; e.rac = racionDe(g.nombre, e.peq);
     lista.push(e); if(!porNombre[norm(g.nombre)]) porNombre[norm(g.nombre)] = e;
   });
   montaje = { total:total, emparejados:lista.length, porNumero:porId_, porNombre:porNom_ };
@@ -84,6 +84,29 @@ window.NutBedca = {
   lista: function(){ return lista; },
   porNombre: function(n){ return porNombre[norm(n)] || null; },
   val: val, o3: o3,
+  // Busca en BEDCA el alimento más parecido a un texto libre («pechuga de pollo»): si no sale con todas las palabras, prueba con menos.
+  parecido: function(texto){
+    var B = window.BuscadorBase; if(!B || !B.genericos) return null;
+    var STOP = { "con":1, "sin":1, "del":1, "las":1, "los":1, "una":1, "para":1 };
+    var sing = function(w){ return /(ones|ores|nes|les|ces)$/.test(w) ? w.slice(0, -2) : (/s$/.test(w) && w.length > 3 ? w.slice(0, -1) : w); };
+    var toks = function(t){ return norm(t).split(" ").filter(function(w){ return w.length >= 3 && !STOP[w]; }).map(sing); };
+    var q = toks(texto); if(!q.length) return null;
+    // una sola palabra («cebolla», «huevos»): el alimento cuyo nombre empieza por ella, el más corto
+    if(q.length === 1){
+      var mejor = null; lista.forEach(function(e){ var t = toks(e.nombre); if(t[0] === q[0] && !e.dud && (!mejor || e.nombre.length < mejor.nombre.length)) mejor = e; });
+      if(mejor) return mejor;
+    }
+    var pal = String(texto || "").split(/\s+/).filter(Boolean);
+    for(var n = pal.length; n >= 1; n--){
+      try{
+        var r = B.buscar(pal.slice(0, n).join(" "), ""), g = (r.gen || [])[0];
+        if(g){ var e2 = porNombre[norm(g.nombre)], tg = toks(g.nombre);
+          // solo vale si comparte alguna palabra ENTERA con lo pedido («limón» no vale para «limonada»)
+          if(e2 && q.some(function(w){ return tg.indexOf(w) >= 0; })) return e2; }
+      }catch(err){}
+    }
+    return null;
+  },
   // Lo mismo que la estimación de IA del Análisis (por 100 g), pero con datos reales de BEDCA. Faltantes → _sd[id] = true.
   comoEstimacion: function(nombre, ids){
     var e = porNombre[norm(nombre)]; if(!e) return null;

@@ -156,7 +156,7 @@
     cand.sort(function(a, b){ return (b.score - a.score) || ((b.f.veces || 0) - (a.f.veces || 0)); });
     return cand.slice(0, 3);
   }
-  function renderFaltaHoy(){
+  function renderFaltaHoyBase(){
     var cont = $("faltaHoy"); if(!cont) return;
     if(fechaActual !== hoyISO()){ cont.innerHTML = ""; cont.hidden = true; return; }
     cont.hidden = false;
@@ -201,6 +201,31 @@
     });
   }
 
+
+  // Ideas para los nutrientes que van cortos hoy: alimentos de BEDCA con una ración típica (aproximada), sin gastar IA.
+  function ideasMicro(){
+    var cont = $("faltaHoy"); if(!cont || cont.hidden) return;
+    var res = cont.querySelector(".fh-res"); if(!res || !/Te quedan/.test(res.textContent)) return;
+    var mi = { lista:[] }; try{ mi = AnalisisNut.faltantes(fechaActual); }catch(e){}
+    if(!mi.lista.length || !window.AnalisisNut || !AnalisisNut.ideasPara) return;
+    var kcalRest = estado.meta - totalesDelDia(fechaActual).kcal + quemadasTotales(fechaActual).total, destino = comidaSegunHora();
+    var caja = document.createElement("div"); caja.className = "fh-mi";
+    mi.lista.slice().sort(function(a, b){ return (b.falta / b.meta) - (a.falta / a.meta); }).slice(0, 2).forEach(function(m){
+      var l = AnalisisNut.ideasPara(m.id, kcalRest, 3); if(!l.length) return;
+      var t = document.createElement("div"); t.className = "fh-mi-tit"; t.textContent = "Para tu " + m.n.toLowerCase() + " (te faltan ≈ " + nf(m.falta) + " " + m.u + "):"; caja.appendChild(t);
+      l.forEach(function(s){
+        var fila = document.createElement("div"); fila.className = "fh-fila";
+        fila.innerHTML = '<div><b>' + esc(s.nombre) + "</b><small>" + Math.round(s.g) + " g · " + Math.round(s.kcal) + " kcal → " + nf(s.val) + " " + esc(s.u) + " de " + esc(m.n.toLowerCase()) + '</small></div><button type="button">+ ' + esc(nombreComida(destino)) + "</button>";
+        fila.querySelector("button").onclick = function(){
+          diaDe(fechaActual).comidas[destino].push({ nombre:s.nombre, gramos:s.g, kcal:s.kcal, grasa:s.grasa, carbh:s.carbh, prot:s.prot });
+          guardarEstado(); render(); aviso("✔ Añadido a " + nombreComida(destino).toLowerCase() + ": " + s.nombre);
+        };
+        caja.appendChild(fila);
+      });
+    });
+    if(caja.firstChild){ var n = document.createElement("div"); n.className = "rep-nota"; n.textContent = "Raciones típicas aproximadas, con valores de BEDCA. Te faltan estos nutrientes según lo que ya anotaste hoy."; caja.appendChild(n); cont.appendChild(caja); }
+  }
+  function renderFaltaHoy(){ renderFaltaHoyBase(); try{ ideasMicro(); }catch(e){} }
 
   // ---------- utilidades de IA ----------
   function textoDe(data){
