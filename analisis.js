@@ -63,7 +63,7 @@ const hoy = () => iso(new Date());
 const suma = (f, n) => { const d = new Date(f + "T00:00:00"); d.setDate(d.getDate() + n); return iso(d); };
 const lunesDe = f => suma(f, -((new Date(f + "T00:00:00").getDay() + 6) % 7));
 let semana = lunesDe(hoy()), chip = null, ocupado = false, msgEst = "";
-let exG = 100, exQ = "", exEsp = false, exModo = "alim", exVer = 30;
+let exG = 0, exQ = "", exEsp = false, exModo = "alim", exVer = 30, exOrden = "racion";
 
 function metas(){
   const m = lj("nutriMetasMicroV1_" + perfilActivo, {}), o = {};
@@ -189,25 +189,26 @@ function sugerencias(bajos, pr){
   const out = [];
   bajos.forEach(x => {
     if(pr.noSubir[x.id]) return;
-    const real = bedcaListo() ? ranking(defExp(x.id), false).out.slice(0, 4).map(r => [r.e.nombre, nf(r.v)]) : null, al = ALIM[x.id];
+    const real = bedcaListo() ? ranking(defExp(x.id), false, "racion").out.slice(0, 4).map(r => [r.e.nombre + " ≈" + r.e.rac.g + " g", nf(r.r)]) : null, al = ALIM[x.id];
     if(!real && !al) return;
     out.push('<li><b>' + esc(x.n) + (pr.prio[x.id] ? " ⭐" : "") + ":</b> " + (real || al.l.slice(0, 4)).map(a => esc(a[0]) + " (" + a[1] + ")").join(", ") + ' <a href="#" data-act="chip" data-id="' + x.id + '" style="color:var(--accent)">ver más</a></li>');
   });
-  return out.length ? '<ul style="margin:6px 0 0 18px;padding:0;font-size:0.85rem">' + out.join("") + '</ul><div class="pie" style="font-size:0.74rem;color:var(--muted);margin-top:4px">' + (bedcaListo() ? "Valores de BEDCA por 100 g (sin especias)." : "Valores aproximados por 100 g (lista hecha a mano: no se pudo cargar BEDCA).") + "</div>" : "";
+  return out.length ? '<ul style="margin:6px 0 0 18px;padding:0;font-size:0.85rem">' + out.join("") + '</ul><div class="pie" style="font-size:0.74rem;color:var(--muted);margin-top:4px">' + (bedcaListo() ? "Valores de BEDCA por ración típica aproximada (sin especias)." : "Valores aproximados por 100 g (lista hecha a mano: no se pudo cargar BEDCA).") + "</div>" : "";
 }
 const bedcaListo = () => !!(window.NutBedca && NutBedca.estado().listo);
 const defExp = id => EXP.find(x => x.id === id);
 const valorExp = (e, x) => x.id === "o3" ? NutBedca.o3(e) : NutBedca.val(e, clave(x));
 const fmt = (v, u) => (v >= 100 ? Math.round(v) : v >= 10 ? Math.round(v * 10) / 10 : Math.round(v * 100) / 100).toString().replace(".", ",") + " " + u;
 // Ranking de alimentos por nutriente (por 100 g). Los que no tienen el dato NO aparecen (nunca se cuentan como 0): solo se cuentan aparte.
-function ranking(x, conEsp){
+function ranking(x, conEsp, orden){
   const out = []; let sin = 0; const q = norm(exQ);
   NutBedca.lista().forEach(e => {
     if(!conEsp && e.peq) return;
     if(q && !(" " + norm(e.nombre) + " ").includes(" " + q) && !norm(e.nombre).includes(q)) return;
-    const v = valorExp(e, x); if(v == null){ sin++; return; } out.push({ e, v });
+    const v = valorExp(e, x); if(v == null){ sin++; return; } out.push({ e, v, r: v * e.rac.g / 100 });
   });
-  out.sort((a, b) => b.v - a.v); return { out, sin };
+  const por = (orden || exOrden) === "100" ? "v" : "r";
+  out.sort((a, b) => b[por] - a[por]); return { out, sin };
 }
 function nutReceta(r, x){
   if(!Array.isArray(r.ingredientes) || !r.ingredientes.length || typeof r.ingredientes[0] !== "object") return null;
@@ -233,14 +234,17 @@ function filasExplorador(){
     if(sinDesglose) h += '<div style="font-size:0.76rem;color:var(--muted);margin-top:6px">' + sinDesglose + " receta(s) sin ingredientes con gramos no entran en la lista.</div>";
     return h;
   }
-  const R = ranking(x, exEsp), g = exG > 0 ? exG : 100;
+  const R = ranking(x, exEsp), g = exG > 0 ? exG : 0;
   if(!R.out.length) return '<div style="color:var(--muted);font-size:0.84rem;padding:8px 0">No hay alimentos con ese filtro.</div>';
-  h += R.out.slice(0, exVer).map(o => { const cant = o.v * g / 100, pct = meta ? cant / meta * 100 : 0, para = !x.lim && o.v > 0 && meta ? meta / o.v * 100 : 0;
+  const lin = (et, cant, pct, fuerte) => '<div style="' + (fuerte ? "" : "color:var(--muted);") + '"><small>' + et + '</small> <b>' + fmt(cant, x.u) + "</b>" + (meta ? ' <small style="color:var(--muted)">(' + Math.round(pct) + " %)</small>" : "") + "</div>";
+  h += '<div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--muted);padding-bottom:3px;border-bottom:1px solid var(--line)"><span>Alimento</span><span>' + (x.lim ? "% del límite diario" : "% de tu objetivo diario") + "</span></div>";
+  h += R.out.slice(0, exVer).map(o => { const rg = o.e.rac.g, por = o.e.rac.def ? "≈" + rg + " g" : "100 g*", para = !x.lim && o.v > 0 && meta ? meta / o.v * 100 : 0;
     let extra = "";
-    if(x.id === "o3"){ const a = NutBedca.val(o.e, "epa"), b = NutBedca.val(o.e, "dha"); extra = "EPA " + (a == null ? "sin dato" : fmt(a * g / 100, "g")) + " · DHA " + (b == null ? "sin dato" : fmt(b * g / 100, "g")); }
-    return '<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)"><span>' + esc(o.e.nombre) + (extra ? '<small style="display:block;color:var(--muted)">' + extra + "</small>" : "") + '</span><span style="text-align:right;white-space:nowrap"><b>' + fmt(cant, x.u) + '</b><small style="display:block;color:var(--muted)">' + (meta ? Math.round(pct) + " % " + (x.lim ? "del límite" : "del objetivo") : "") + (para && para < 3000 ? (meta ? " · " : "") + "objetivo con ≈ " + Math.round(para) + " g" : "") + "</small></span></div>"; }).join("");
+    if(x.id === "o3"){ const a = NutBedca.val(o.e, "epa"), b = NutBedca.val(o.e, "dha"); extra = "por 100 g: EPA " + (a == null ? "sin dato" : fmt(a, "g")) + " · DHA " + (b == null ? "sin dato" : fmt(b, "g")); }
+    return '<div style="display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--line)"><span>' + esc(o.e.nombre) + (extra ? '<small style="display:block;color:var(--muted)">' + extra + "</small>" : "") + (para && para < 3000 ? '<small style="display:block;color:var(--muted)">objetivo diario con ≈ ' + Math.round(para) + " g</small>" : "") + '</span><span style="text-align:right;white-space:nowrap">' +
+      lin("ración " + por + ":", o.r, meta ? o.r / meta * 100 : 0, exOrden === "racion") + lin("100 g:", o.v, meta ? o.v / meta * 100 : 0, exOrden === "100") + (g ? lin(g + " g:", o.v * g / 100, meta ? o.v * g / 100 / meta * 100 : 0, false) : "") + "</span></div>"; }).join("");
   if(R.out.length > exVer) h += '<button type="button" data-act="mas" style="margin-top:8px;padding:7px 12px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer">Ver más (' + (R.out.length - exVer) + ')</button>';
-  h += '<div style="font-size:0.76rem;color:var(--muted);margin-top:8px">' + R.sin + " alimentos de BEDCA no tienen este dato y no aparecen (no es lo mismo que «0»)." + (x.id === "o3" ? " BEDCA solo trae EPA/DHA de unos pocos pescados." : "") + (x.id === "o3" || true ? " Alimentos emparejados con la base de la app: " + NutBedca.montaje().emparejados + " de " + NutBedca.montaje().total + "." : "") + (x.id === "ala" ? " Es el dato «18:3» de BEDCA, que en la práctica es casi todo ALA, pero no lo separa." : "") + "</div>";
+  h += '<div style="font-size:0.76rem;color:var(--muted);margin-top:8px">' + R.sin + " alimentos de BEDCA no tienen este dato y no aparecen (no es lo mismo que «0»). La ración es una estimación mía por tipo de alimento (aprox.); * = sin ración definida, se usan 100 g." + (x.id === "o3" ? " BEDCA solo trae EPA/DHA de unos pocos pescados." : "") + (x.id === "o3" || true ? " Alimentos emparejados con la base de la app: " + NutBedca.montaje().emparejados + " de " + NutBedca.montaje().total + "." : "") + (x.id === "ala" ? " Es el dato «18:3» de BEDCA, que en la práctica es casi todo ALA, pero no lo separa." : "") + "</div>";
   return h;
 }
 function buscador(pr){
@@ -256,7 +260,7 @@ function buscador(pr){
     const sp = 'padding:6px 11px;border-radius:8px;border:1px solid ';
     h += '<div style="display:flex;gap:6px;margin-bottom:8px"><button type="button" data-act="modo" data-m="alim" style="' + sp + (exModo === "alim" ? "var(--accent);background:var(--accent-soft);color:var(--accent)" : "var(--line);background:var(--panel);color:var(--ink)") + ';cursor:pointer;font-size:0.82rem">🥦 Alimentos</button><button type="button" data-act="modo" data-m="rec" style="' + sp + (exModo === "rec" ? "var(--accent);background:var(--accent-soft);color:var(--accent)" : "var(--line);background:var(--panel);color:var(--ink)") + ';cursor:pointer;font-size:0.82rem">📖 Mis recetas</button></div>' +
       '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px;font-size:0.82rem"><input type="text" data-exp="q" placeholder="Filtrar por nombre (ej.: pescado)" value="' + esc(exQ) + '" style="flex:1 1 150px;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--panel-alt);color:var(--ink)">' +
-      (exModo === "alim" ? '<label style="display:flex;gap:5px;align-items:center;color:var(--muted)">Cantidad <input type="number" data-exp="g" min="1" step="any" value="' + exG + '" style="width:72px;padding:7px;border-radius:8px;border:1px solid var(--line);background:var(--panel-alt);color:var(--ink)"> g</label><label style="display:flex;gap:5px;align-items:center;color:var(--muted)"><input type="checkbox" data-exp="esp" ' + (exEsp ? "checked" : "") + '> incluir especias y hierbas secas</label>' : "") + '</div>' +
+      (exModo === "alim" ? '<label style="display:flex;gap:5px;align-items:center;color:var(--muted)">Ordenar por <select data-exp="orden" style="padding:7px;border-radius:8px;border:1px solid var(--line);background:var(--panel-alt);color:var(--ink)"><option value="racion"' + (exOrden === "racion" ? " selected" : "") + '>ración típica</option><option value="100"' + (exOrden === "100" ? " selected" : "") + '>100 g</option></select></label><label style="display:flex;gap:5px;align-items:center;color:var(--muted)">Otra cantidad <input type="number" data-exp="g" min="1" step="any" placeholder="opcional" value="' + (exG || "") + '" style="width:84px;padding:7px;border-radius:8px;border:1px solid var(--line);background:var(--panel-alt);color:var(--ink)"> g</label><label style="display:flex;gap:5px;align-items:center;color:var(--muted)"><input type="checkbox" data-exp="esp" ' + (exEsp ? "checked" : "") + '> incluir especias y hierbas secas</label>' : "") + '</div>' +
       '<div id="anaLista" style="font-size:0.84rem">' + filasExplorador() + '</div>' +
       '<div style="font-size:0.74rem;color:var(--muted);margin-top:6px">' + (x.id === "o3" ? "Omega 3 = EPA + DHA. " : "") + "El objetivo diario es una referencia habitual para un adulto (puedes cambiarla en «Ajustar metas»), no una recomendación personal. Datos de BEDCA (AESAN) por 100 g.</div>";
   } else if(chip && ALIM[chip] && (!ok || chip === "col")){
@@ -359,11 +363,12 @@ document.addEventListener("click", async ev => {
 // Filtro y cantidad del explorador: solo se repinta la lista (para no perder el cursor al escribir)
 document.addEventListener("input", ev => {
   const i = ev.target; if(!i || !i.dataset || !i.dataset.exp) return;
-  if(i.dataset.exp === "q") exQ = i.value; else if(i.dataset.exp === "g") exG = num(i.value) > 0 ? num(i.value) : 100; else return;
+  if(i.dataset.exp === "q") exQ = i.value; else if(i.dataset.exp === "g") exG = num(i.value) > 0 ? num(i.value) : 0; else return;
   exVer = 30; const l = $("anaLista"); if(l && chip && chip !== "col") l.innerHTML = filasExplorador();
 });
 document.addEventListener("change", ev => {
-  const e = ev.target; if(e && e.dataset && e.dataset.exp === "esp"){ exEsp = e.checked; exVer = 30; const l = $("anaLista"); if(l) l.innerHTML = filasExplorador(); return; }
+  const e = ev.target; if(e && e.dataset && e.dataset.exp === "orden"){ exOrden = e.value === "100" ? "100" : "racion"; exVer = 30; const l = $("anaLista"); if(l) l.innerHTML = filasExplorador(); return; }
+  if(e && e.dataset && e.dataset.exp === "esp"){ exEsp = e.checked; exVer = 30; const l = $("anaLista"); if(l) l.innerHTML = filasExplorador(); return; }
   const i = ev.target; if(!i || !i.dataset || !i.dataset.meta) return;
   const m = lj("nutriMetasMicroV1_" + perfilActivo, {}), v = parseFloat(String(i.value).replace(",", "."));
   if(isFinite(v) && v >= 0){ m[i.dataset.meta] = v; sj("nutriMetasMicroV1_" + perfilActivo, m); render(); }
