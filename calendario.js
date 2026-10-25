@@ -119,6 +119,26 @@ function escribirJSON(clave, valor){
 function esc(s){
   return String(s==null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 }
+// Convierte las notas en HTML seguro: los enlaces (http, https o www.) se abren con un toque y llevan un botón para copiarlos
+function linkear(txt){
+  const re = /(https?:\/\/[^\s<>"']+|www\.[^\s<>"']+)/gi;
+  let out = "", ult = 0, m;
+  txt = String(txt == null ? "" : txt);
+  while((m = re.exec(txt)) !== null){
+    let url = m[0], cola = "";
+    const t = url.match(/[.,;:!?)\]}]+$/); if(t){ cola = t[0]; url = url.slice(0, url.length - cola.length); }
+    out += esc(txt.slice(ult, m.index));
+    const href = /^www\./i.test(url) ? "https://" + url : url;
+    let vis = url.replace(/^https?:\/\//i, "").replace(/^www\./i, ""); if(vis.length > 42) vis = vis.slice(0, 41) + "…";
+    out += `<a class="lnk" href="${esc(href)}" target="_blank" rel="noopener noreferrer">${esc(vis)}</a><button type="button" class="lnk-cp" data-acc="copiar-url" data-u="${esc(href)}" title="Copiar enlace" aria-label="Copiar enlace">📋</button>` + esc(cola);
+    ult = m.index + m[0].length;
+  }
+  return out + esc(txt.slice(ult));
+}
+function copiarTexto(txt, ok){
+  const respaldo = () => { const ta = document.createElement("textarea"); ta.value = txt; ta.style.cssText = "position:fixed;opacity:0;"; document.body.appendChild(ta); ta.select(); try{ document.execCommand("copy"); ok(); }catch(e){} ta.remove(); };
+  if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(ok).catch(respaldo); else respaldo();
+}
 const pad = n => String(n).padStart(2,"0");
 function fechaISO(d){ return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); }
 function hoyISO(){ return fechaISO(new Date()); }
@@ -505,7 +525,7 @@ function htmlEvento(e, f){
     <div class="ev-txt">
       <div class="ev-t">${e.hora ? `<span class="hora">${esc(e.hora)}</span>` : ""}${esc(e.titulo)}</div>
       <div class="ev-m">${meta.join(" · ")}</div>
-      ${e.notas ? `<div class="ev-n">${esc(e.notas)}</div>` : ""}
+      ${e.notas ? `<div class="ev-n">${linkear(e.notas)}</div>` : ""}
     </div>
     <button type="button" class="ico" data-acc="editar" data-id="${e.id}" aria-label="Editar ${esc(e.titulo)}">✎</button>
   </div>`;
@@ -977,6 +997,7 @@ document.addEventListener("click", ev => {
       guardarEventos(); pintarBtnHecho(); render(); break;
     }
     case "f-para": formPara = b.dataset.p; paraTocado = true; pintarChipsForm(); refrescarSelectEsp(); break;
+    case "copiar-url": { const bt = b; copiarTexto(bt.dataset.u, () => { bt.textContent = "✓"; setTimeout(() => { bt.textContent = "📋"; }, 1500); }); break; }
     case "guardar": guardarForm(); break;
     case "cancelar": cerrarForm(); break;
     case "eliminar": {

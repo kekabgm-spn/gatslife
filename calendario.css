@@ -141,7 +141,9 @@
   .ev-t .hora{color:var(--muted);font-weight:600;margin-right:4px;font-variant-numeric:tabular-nums;}
   .ev-m{font-size:0.78rem;color:var(--muted);margin-top:3px;}
   .ev-m .esp{color:var(--c);font-weight:700;}
-  .ev-n{font-size:0.8rem;color:var(--ink);opacity:0.85;margin-top:5px;overflow-wrap:anywhere;}
+  .ev-n{font-size:0.8rem;color:var(--ink);opacity:0.85;margin-top:5px;overflow-wrap:anywhere;white-space:pre-wrap;}
+  .ev-n .lnk{color:var(--accent);text-decoration:underline;word-break:break-all;}
+  .ev-n .lnk-cp{background:none;border:1px solid var(--line);border-radius:6px;padding:0 5px;margin:0 3px 0 4px;font-size:0.75rem;cursor:pointer;line-height:1.5;vertical-align:baseline;}
   .ico{
     flex:none;background:transparent;border:1px solid var(--line);color:var(--muted);
     border-radius:7px;width:30px;height:30px;cursor:pointer;padding:0;
