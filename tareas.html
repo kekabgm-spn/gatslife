@@ -102,6 +102,17 @@
     padding:13px;font-size:0.95rem;font-weight:700;cursor:pointer;margin-top:6px;
   }
 
+  .rv-cab{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 8px;}
+  .rv-cab select{flex:1;min-width:170px;padding:8px;}
+  .rv-info{font-size:0.8rem;color:var(--muted);line-height:1.45;margin:0 0 10px;}
+  .rv-zona{font-size:0.78rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700;margin:14px 0 4px;}
+  .rv-fila{display:flex;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line);}
+  .rv-fila .rv-txt{flex:1;min-width:0;}
+  .rv-fila .rv-txt b{font-size:0.88rem;font-weight:600;display:block;overflow-wrap:anywhere;}
+  .rv-fila .rv-txt small{display:block;color:var(--muted);font-size:0.74rem;margin-top:2px;overflow-wrap:anywhere;}
+  .rv-fila select{width:128px;flex-shrink:0;padding:7px;font-size:0.82rem;}
+  .rv-fila.cambiada{background:var(--accent-soft);border-radius:8px;padding-left:6px;padding-right:6px;}
+  .rv-fila.cambiada .rv-txt b::after{content:" ✓";color:var(--accent);}
   .form-tarea{
     background:var(--panel-alt);border:1px solid var(--line);border-radius:10px;
     padding:16px;margin-top:10px;
@@ -201,6 +212,8 @@
     </select>
   </div>
 
+  <button type="button" class="btn-nueva" id="btnRevisar" style="background:transparent;border:1px solid var(--accent);color:var(--accent);margin:0 0 10px">🔁 Revisar frecuencias</button>
+  <div class="form-tarea" id="panelRevisar" style="display:none;margin-bottom:14px"></div>
   <div class="filtro-zona" id="filtroZonaCont" style="display:none">
     <label for="filtroZona">Zona:</label>
     <select id="filtroZona"></select>
@@ -777,7 +790,60 @@ function render(){
       cont.innerHTML = `<div class="empty-franja">Nada para mostrar con estos filtros. Si la lista está vacía, agregá una tarea con el botón de abajo.</div>`;
     }
   }
+  renderRevisar();
 }
+
+// ---------- Revisar frecuencias: cambiar de golpe cada cuánto se repite cada tarea ----------
+let revisarAbierto = false, revisarSolo = "diaria", revLista = null;
+const cambiadasRev = new Set();
+function partirNombre(n){ n = String(n || ""); const i = n.indexOf(" ("); return i > 0 ? {t:n.slice(0,i), d:n.slice(i+1)} : {t:n, d:""}; }
+function escRev(x){ return String(x == null ? "" : x).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function renderRevisar(){
+  const p = document.getElementById("panelRevisar"), b = document.getElementById("btnRevisar");
+  if(!p || !b) return;
+  const permitido = listaActiva !== "invitadas";
+  b.style.display = permitido ? "block" : "none";
+  b.textContent = revisarAbierto ? "✕ Cerrar la revisión" : "🔁 Revisar frecuencias";
+  if(!revisarAbierto || !permitido){ p.style.display = "none"; return; }
+  if(revLista !== listaActiva){ cambiadasRev.clear(); revLista = listaActiva; }
+  const todas = estado.tareas.filter(t => t.lista === listaActiva && t.tipo === "repetitiva");
+  const nDiarias = todas.filter(t => t.frecuencia === "diaria").length;
+  const ts = revisarSolo === "diaria" ? todas.filter(t => t.frecuencia === "diaria" || cambiadasRev.has(t.id)) : todas;
+  p.style.display = "block";
+  let h = '<div class="rv-cab"><b style="flex:1">Revisar frecuencias · '+(listaActiva === "casa" ? "Casa" : escRev(listaActiva))+'</b>'
+    + '<select id="rvFiltro"><option value="diaria"'+(revisarSolo === "diaria" ? " selected" : "")+'>Solo las diarias ('+nDiarias+')</option><option value="todas"'+(revisarSolo === "todas" ? " selected" : "")+'>Todas las que se repiten ('+todas.length+')</option></select></div>'
+    + '<p class="rv-info">Elige con el desplegable cada cuánto se hace de verdad cada tarea. Se guarda al momento y también se actualiza para la otra persona. <span id="rvContador"></span></p>';
+  if(!ts.length) h += '<p class="rv-info">No hay tareas que se repitan en esta lista.</p>';
+  const grupos = {};
+  ts.forEach(t => { const z = listaActiva === "casa" ? (t.zona || "Sin zona") : "Tus tareas"; (grupos[z] = grupos[z] || []).push(t); });
+  const orden = ZONAS.concat(["Sin zona","Tus tareas"]);
+  Object.keys(grupos).sort((a,b) => orden.indexOf(a) - orden.indexOf(b)).forEach(z => {
+    if(listaActiva === "casa") h += '<div class="rv-zona">'+escRev(z)+'</div>';
+    grupos[z].forEach(t => {
+      const n = partirNombre(t.nombre);
+      h += '<div class="rv-fila'+(cambiadasRev.has(t.id) ? " cambiada" : "")+'" data-id="'+escRev(t.id)+'"><div class="rv-txt"><b>'+escRev(n.t)+(t.modo === "congelada" ? " ❄️" : "")+'</b>'+(n.d ? '<small>'+escRev(n.d)+'</small>' : "")+'</div>'
+        + '<select class="rv-sel" aria-label="Frecuencia de '+escRev(n.t)+'">'+FREC_OPCIONES.map(o => '<option value="'+o[0]+'"'+(t.frecuencia === o[0] ? " selected" : "")+'>'+o[1]+'</option>').join("")+'</select></div>';
+    });
+  });
+  p.innerHTML = h;
+  actualizarContadorRev();
+}
+function actualizarContadorRev(){ const c = document.getElementById("rvContador"); if(c) c.textContent = cambiadasRev.size ? "Has cambiado "+cambiadasRev.size+(cambiadasRev.size === 1 ? " tarea." : " tareas.") : ""; }
+document.getElementById("btnRevisar").onclick = () => {
+  revisarAbierto = !revisarAbierto;
+  if(!revisarAbierto){ cambiadasRev.clear(); render(); } else renderRevisar();
+  if(revisarAbierto){ const p = document.getElementById("panelRevisar"); if(p.scrollIntoView) p.scrollIntoView({behavior:"smooth", block:"start"}); }
+};
+document.getElementById("panelRevisar").addEventListener("change", e => {
+  if(e.target.id === "rvFiltro"){ revisarSolo = e.target.value; renderRevisar(); return; }
+  if(!e.target.classList.contains("rv-sel")) return;
+  const fila = e.target.closest(".rv-fila"), t = estado.tareas.find(x => String(x.id) === fila.dataset.id);
+  if(!t) return;
+  t.frecuencia = e.target.value;
+  cambiadasRev.add(t.id); fila.classList.add("cambiada");
+  guardarEstado();
+  actualizarContadorRev();
+});
 
 document.querySelectorAll("#tabsLista button").forEach(b=>{
   b.onclick = ()=>{ listaActiva = b.dataset.lista; render(); };
