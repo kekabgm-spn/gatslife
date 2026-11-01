@@ -203,6 +203,23 @@
   .cond-sub{font-size:0.82rem;margin-top:6px;}
   .prb-pend{color:#e0a02c;font-weight:700;font-size:0.78rem;margin-left:6px;}
   .btn-mini{background:transparent;border:1px solid var(--accent);color:var(--accent);border-radius:8px;padding:4px 10px;font-size:0.78rem;font-weight:700;cursor:pointer;margin-top:6px;}
+  .ar-det{margin-top:22px;}
+  .ar-det > summary{display:flex;justify-content:space-between;align-items:baseline;gap:10px;cursor:pointer;font-weight:700;font-size:1.05rem;padding:4px 0;list-style:none;}
+  .ar-det > summary::-webkit-details-marker{display:none;}
+  .ar-det > summary::before{content:"▸";margin-right:8px;color:var(--muted);}
+  .ar-det[open] > summary::before{content:"▾";}
+  .ar-det > summary span{flex:1;}
+  .ar-det > summary small{font-weight:600;font-size:0.76rem;color:var(--muted);}
+  .zs-resumen{font-size:0.85rem;line-height:1.55;margin:6px 0 8px;}
+  .zs-lista{max-height:270px;overflow:auto;border-top:1px solid var(--line);}
+  .zs-fila{display:grid;grid-template-columns:78px 1fr 44px;gap:2px 8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);font-size:0.82rem;cursor:pointer;}
+  .zs-fila .zs-s{grid-column:1/-1;color:var(--muted);font-size:0.76rem;}
+  .zs-fila .zs-v{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;}
+  .zs-barra{height:8px;background:var(--bg);border-radius:4px;overflow:hidden;display:block;}
+  .zs-barra i{display:block;height:100%;}
+  .zs-top-tit{font-size:0.78rem;color:var(--muted);margin:10px 0 6px;}
+  .zs-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;}
+  .zs-chip{background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:5px 11px;color:var(--ink);font-size:0.8rem;cursor:pointer;font-family:inherit;}
   .tomado-card{background:var(--panel);border:1px solid var(--accent);border-radius:12px;padding:10px 14px;margin-bottom:14px;}
   .tomado-tit{font-weight:700;font-size:0.9rem;color:var(--accent);margin-bottom:6px;}
   .tomado-fila{display:flex;align-items:center;gap:10px;padding:6px 0;border-top:1px solid var(--line);font-size:0.9rem;}
@@ -311,12 +328,25 @@
   <svg id="ar-svg" viewBox="0 0 200 410" style="width:100%;max-width:340px;display:block;margin:0 auto"></svg>
   <div id="ar-resumen"></div>
   <div id="ar-ficha"></div>
-  <h2 style="margin-top:22px">Funcionalidad del día</h2>
-  <div class="ar-fecha-campo"><label for="ar-fecha-g">Fecha</label><input type="date" id="ar-fecha-g"><small>Puedes cambiarla si lo apuntas días después.</small></div>
-  <p class="aviso" style="margin:0 0 8px">Dificultad: 0 ninguna · 1 leve · 2 moderada · 3 grave · 4 extrema.</p>
-  <div id="ar-func"></div>
+  <details id="ar-func-det" class="ar-det">
+    <summary><span>Funcionalidad del día</span><small id="ar-func-estado"></small></summary>
+    <div class="ar-fecha-campo"><label for="ar-fecha-g">Fecha</label><input type="date" id="ar-fecha-g"><small>Puedes cambiarla si lo apuntas días después.</small></div>
+    <p class="aviso" style="margin:0 0 8px">Dificultad: 0 ninguna · 1 leve · 2 moderada · 3 grave · 4 extrema.</p>
+    <div id="ar-func"></div>
+  </details>
   <h2 style="margin-top:22px">Días registrados</h2>
   <div id="ar-hist"></div>
+
+  <h2 style="margin-top:22px">Buscar por zona</h2>
+  <div class="ar-fecha-campo"><label for="zs-q">Zona</label><input type="text" id="zs-q" list="zs-lista" placeholder="Ej. hombro derecho, rodilla, lumbar…" autocomplete="off"><datalist id="zs-lista"></datalist></div>
+  <select id="zs-rango" class="hist-sel" style="margin-top:6px">
+    <option value="30">Últimos 30 días</option>
+    <option value="90" selected>Últimos 90 días</option>
+    <option value="365">Último año</option>
+    <option value="0">Todo</option>
+  </select>
+  <div id="zs-top"></div>
+  <div id="zs-res"></div>
 
   <h2 style="margin-top:22px">Informe para el médico</h2>
   <div class="form-add" style="display:block">
@@ -1617,7 +1647,8 @@ function arGuardar(d){
   if(dia && !Object.keys(dia.z).length && !Object.keys(dia.f).length) delete d.dias[arFecha];
   guardarJSON(claveArtic(), d);
 }
-function arNombre(zona, lado){ return AR_ZONAS[zona] + (lado==="D" ? " derecha" : lado==="I" ? " izquierda" : ""); }
+const AR_FEM = ["muneca","mano","cadera","rodilla","pantorrilla"];   // zonas femeninas: «muñeca derecha», pero «hombro derecho»
+function arNombre(zona, lado){ const fem = AR_FEM.indexOf(zona) >= 0; return AR_ZONAS[zona] + (lado==="D" ? (fem ? " derecha" : " derecho") : lado==="I" ? (fem ? " izquierda" : " izquierdo") : ""); }
 const AR_FOTO_POS = [["cabeza","C",437,120],["cuello","C",437,268],["dorsalalta","C",437,400],["omoplato","I",345,430],["omoplato","D",529,430],["columna","C",437,560],["lumbar","C",437,690],["sacro","C",437,790],["muslo","I",335,1000],["muslo","D",530,1000],["pantorrilla","I",330,1400],["pantorrilla","D",535,1400],["hombro","I",285,355],["hombro","D",598,355],["codo","I",213,607],["codo","D",660,607],["muneca","I",140,795],["muneca","D",742,797],["mano","I",100,880],["mano","D",785,880],["cadera","I",330,835],["cadera","D",545,835],["rodilla","I",338,1197],["rodilla","D",525,1197],["tobillo","I",315,1600],["tobillo","D",560,1600],["pie","I",280,1695],["pie","D",595,1695]];
 function arTiene(r){ return !!r && (r.dolor>0 || r.infl>0 || arComb(r)>0 || !!r.nota); }
 const AR_FOTO = [ // [zona, lado, x, y] sobre la imagen de 887 x 1774 (D = derecha de la persona = izquierda de la imagen)
@@ -1722,7 +1753,58 @@ function arFunc(){
     if(f[i]===+v) delete f[i]; else f[i] = +v;
     arGuardar(d); arFunc();
   });
+  const _n = AR_FUNC.filter((t,i)=> typeof dia.f[i] === "number").length;
+  document.getElementById("ar-func-estado").textContent = _n ? _n+" de "+AR_FUNC.length+" respondidas" : "sin rellenar";
 }
+// ---------- Buscar por zona: cuántas veces duele y cuánto ----------
+function zsNorm(t){ return String(t||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/derech[oa]/g,"derech").replace(/izquierd[oa]/g,"izquierd").replace(/[^a-z0-9]+/g," ").trim(); }
+function zsZonas(){
+  const m = new Map();
+  AR_FOTO.concat(AR_FOTO_POS).forEach(p=>{ const k = p[0]+"_"+p[1]; if(!m.has(k)) m.set(k, arNombre(p[0],p[1])); });
+  return Array.from(m, ([k,n])=>({k, n, nn: zsNorm(n)}));
+}
+function zsDesde(){ const n = parseInt(document.getElementById("zs-rango").value,10)||0; if(!n) return ""; const d = new Date(); d.setDate(d.getDate()-n+1); return d.toLocaleDateString("sv-SE"); }
+function zsFilas(k, desde){
+  const dias = arDatos().dias, out = [];
+  Object.keys(dias).sort().forEach(f=>{ if(desde && f < desde) return; const r = ((dias[f]||{}).z||{})[k]; if(r) out.push({f, dolor:r.dolor||0, infl:r.infl||0, rig:arComb(r), nota:(r.nota||"").trim()}); });
+  return out;
+}
+function zsColor(v){ return v>=7 ? "#e5484d" : v>=4 ? "#e0a02c" : "#35c26a"; }
+function zsTarjeta(z, desde){
+  const filas = zsFilas(z.k, desde), conDolor = filas.filter(x=>x.dolor>0);
+  if(!filas.length) return '<div class="form-add" style="display:block;margin:8px 0"><b>'+escapar(z.n)+'</b><p class="empty" style="margin:6px 0 0">Sin registros de esta zona en este periodo.</p></div>';
+  const pico = filas.reduce((a,x)=> x.dolor>a.dolor ? x : a, filas[0]);
+  const media = conDolor.length ? Math.round(conDolor.reduce((t,x)=>t+x.dolor,0)/conDolor.length*10)/10 : 0;
+  const ult = conDolor.length ? conDolor[conDolor.length-1].f : null;
+  const conInfl = filas.filter(x=>x.infl>0).length, inflMax = Math.max.apply(null, filas.map(x=>x.infl)), rigMax = Math.max.apply(null, filas.map(x=>x.rig));
+  let h = '<div class="form-add" style="display:block;margin:8px 0"><b>'+escapar(z.n)+'</b><div class="zs-resumen">';
+  h += '<div>Dolió en <b>'+conDolor.length+'</b> '+(conDolor.length===1?"día":"días")+' de los '+filas.length+' en que la apuntaste.</div>';
+  if(conDolor.length) h += '<div>Dolor máximo <b>'+pico.dolor+'/10</b> ('+arFechaCorta(pico.f)+') · medio <b>'+media+'/10</b> · última vez con dolor: '+arFechaCorta(ult)+'.</div>';
+  h += '<div>Inflamación: '+(conInfl ? conInfl+' '+(conInfl===1?"día":"días")+', máx. '+inflMax+'/3' : 'ninguna')+' · Rigidez máx.: '+rigMax+'/3.</div></div>';
+  h += '<div class="zs-lista">'+filas.slice().reverse().map(x=>'<div class="zs-fila" onclick="zsIrDia(\''+x.f+'\',\''+z.k+'\')"><span class="zs-f">'+arFechaCorta(x.f)+'</span><span class="zs-barra"><i style="width:'+(x.dolor*10)+'%;background:'+zsColor(x.dolor)+'"></i></span><span class="zs-v">'+x.dolor+'/10</span><span class="zs-s">inflamación '+x.infl+' · rigidez '+x.rig+(x.nota ? ' · '+escapar(x.nota) : '')+'</span></div>').join("")+'</div></div>';
+  return h;
+}
+function arZonaBuscar(){
+  const cont = document.getElementById("zs-res"); if(!cont) return;
+  const desde = zsDesde(), q = zsNorm(document.getElementById("zs-q").value), zonas = zsZonas();
+  const dl = document.getElementById("zs-lista"); if(!dl.children.length) dl.innerHTML = zonas.map(z=>'<option value="'+escapar(z.n)+'"></option>').join("");
+  const cuenta = zonas.map(z=>({z, n: zsFilas(z.k, desde).filter(x=>x.dolor>0).length})).filter(x=>x.n>0).sort((a,b)=>b.n-a.n).slice(0,6);
+  document.getElementById("zs-top").innerHTML = cuenta.length ? '<div class="zs-top-tit">Zonas con más días de dolor en este periodo</div><div class="zs-chips">'+cuenta.map(x=>'<button type="button" class="zs-chip" onclick="zsElegir(\''+x.z.k+'\')">'+escapar(x.z.n)+' · '+x.n+' '+(x.n===1?"día":"días")+'</button>').join("")+'</div>' : "";
+  if(!q){ cont.innerHTML = '<p class="empty">Escribe una zona (hombro, rodilla, lumbar…) o toca una de arriba para ver cuántas veces duele y cuánto.</p>'; return; }
+  let m = zonas.filter(z=>z.nn===q);
+  if(!m.length){ const tok = q.split(" "); m = zonas.filter(z=>tok.every(t=>z.nn.indexOf(t)>=0)); }
+  cont.innerHTML = m.length ? m.slice(0,6).map(z=>zsTarjeta(z, desde)).join("") : '<p class="empty">No encuentro esa zona. Prueba con otra palabra (hombro, codo, rodilla…).</p>';
+}
+function zsElegir(k){ const z = zsZonas().find(x=>x.k===k); document.getElementById("zs-q").value = z ? z.n : ""; arZonaBuscar(); }
+function zsIrDia(f, k){
+  const enVista = (arVista==="pos" ? AR_FOTO_POS : AR_FOTO).some(p=>p[0]+"_"+p[1]===k);
+  if(!enVista) arVista = arVista==="pos" ? "ant" : "pos";
+  arFecha = f; arSel = k; renderArtic(); window.scrollTo(0,0);
+}
+document.getElementById("zs-q").oninput = arZonaBuscar;
+document.getElementById("zs-rango").onchange = arZonaBuscar;
+(function(){ const det = document.getElementById("ar-func-det"); if(localStorage.getItem("arFuncAbiertoV1")==="1") det.open = true; det.addEventListener("toggle", ()=>{ try{ localStorage.setItem("arFuncAbiertoV1", det.open ? "1" : "0"); }catch(e){} }); })();
+
 function arFechaLeg(f){ const p = f.split("-"); return new Date(+p[0], +p[1]-1, +p[2]).toLocaleDateString("es-ES", {weekday:"short", day:"numeric", month:"short", year:"numeric"}); }
 function arHist(){
   const d = arDatos(), fechas = Object.keys(d.dias).sort().reverse();
@@ -1745,7 +1827,7 @@ function renderArtic(){
   document.getElementById("ar-fecha-g").value = arFecha;
   document.getElementById("ar-v-ant").classList.toggle("on", arVista==="ant");
   document.getElementById("ar-v-pos").classList.toggle("on", arVista==="pos");
-  arSVG(); arResumen(); arFicha(); arFunc(); arHist(); arInfDefaults();
+  arSVG(); arResumen(); arFicha(); arFunc(); arHist(); arInfDefaults(); arZonaBuscar();
 }
 document.getElementById("ar-fecha-g").onchange = e=>{ if(e.target.value){ arFecha = e.target.value; arSel = null; renderArtic(); } };
 document.getElementById("ar-fecha").onchange = e=>{ if(e.target.value){ arFecha = e.target.value; arSel = null; renderArtic(); } };
