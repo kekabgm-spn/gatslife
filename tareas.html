@@ -110,11 +110,15 @@
   .rv-fila .rv-txt{flex:1 1 0;min-width:0;}
   .rv-fila .rv-txt b{font-size:0.88rem;font-weight:600;display:block;overflow-wrap:anywhere;}
   .rv-fila .rv-txt small{display:block;color:var(--muted);font-size:0.74rem;margin-top:2px;overflow-wrap:anywhere;}
+  .rv-ctl{display:flex;gap:6px;align-items:center;flex-shrink:0;}
   .form-tarea .rv-fila select{width:140px;flex:0 0 140px;padding:7px;font-size:0.82rem;}
+  .rv-ctl .rv-n{width:64px;padding:7px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font-size:0.85rem;}
+  .rv-ctl .rv-d{font-size:0.8rem;color:var(--muted);}
   @media (max-width:520px){
     .rv-fila{flex-wrap:wrap;}
     .rv-fila .rv-txt{flex:1 1 100%;}
-    .form-tarea .rv-fila select{width:100%;flex:1 1 100%;}
+    .rv-ctl{width:100%;}
+    .form-tarea .rv-fila select{width:auto;flex:1 1 0;}
   }
   .rv-fila.cambiada{background:var(--accent-soft);border-radius:8px;padding-left:6px;padding-right:6px;}
   .rv-fila.cambiada .rv-txt b::after{content:" ✓";color:var(--accent);}
@@ -196,6 +200,7 @@
       <option value="trimestral">Trimestrales</option>
       <option value="semestral">Semestrales</option>
       <option value="anual">Anuales</option>
+      <option value="cada">Cada N días</option>
       <option value="necesidad">Según necesidad</option>
     </select>
   </div>
@@ -472,6 +477,12 @@ function periodoActual(t){
     case "trimestral": return anio+"-T"+Math.ceil(mes/3);
     case "semestral": return anio+"-S"+Math.ceil(mes/6);
     case "anual": return String(anio);
+    case "cada": {   // tramos de N días contados desde el día en que se eligió
+      const n = Math.max(2, parseInt(t.cadaDias,10) || 2), pa = new Date((t.cadaDesde || hoy)+"T00:00:00");
+      const dd = Math.round((Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()) - Date.UTC(pa.getFullYear(),pa.getMonth(),pa.getDate()))/86400000);
+      const ini = new Date(pa.getFullYear(), pa.getMonth(), pa.getDate() + Math.floor(dd/n)*n);
+      return ini.getFullYear()+"-"+String(ini.getMonth()+1).padStart(2,"0")+"-"+String(ini.getDate()).padStart(2,"0");
+    }
     default: return hoy; // diaria
   }
 }
@@ -572,8 +583,12 @@ function cambiarModo(t, modo){
   posponerAbiertoEn = null;
   guardarEstado(); render();
 }
+function aplicarFrecuencia(t, v){
+  t.frecuencia = v;
+  if(v === "cada"){ t.cadaDias = Math.max(2, parseInt(t.cadaDias,10) || 2); if(!t.cadaDesde) t.cadaDesde = hoyISO(); }
+}
 function cambiarFrecuencia(t, f){
-  t.frecuencia = f;
+  aplicarFrecuencia(t, f);
   posponerAbiertoEn = null;
   guardarEstado(); render();
 }
@@ -632,13 +647,14 @@ const FRECUENCIA_LABEL = {
   trimestral: "Repite cada 3 meses",
   semestral: "Repite cada 6 meses",
   anual: "Repite cada año",
+  cada: "Repite cada varios días",
   necesidad: "Según necesidad"
 };
-const FREC_OPCIONES = [["diaria","Cada día"],["semanal","Cada semana"],["quincenal","Cada 15 días"],["mensual","Cada mes"],["trimestral","Cada 3 meses"],["semestral","Cada 6 meses"],["anual","Cada año"],["necesidad","Según necesidad"]];
+const FREC_OPCIONES = [["diaria","Cada día"],["semanal","Cada semana"],["quincenal","Cada 15 días"],["mensual","Cada mes"],["trimestral","Cada 3 meses"],["semestral","Cada 6 meses"],["anual","Cada año"],["cada","Cada … días (tú eliges)"],["necesidad","Según necesidad"]];
 function metaTexto(t){
   const partes = [];
   if(t.tipo==="repetitiva"){
-    partes.push(FRECUENCIA_LABEL[t.frecuencia] || "Se repite");
+    partes.push(t.frecuencia==="cada" ? "Repite cada "+(t.cadaDias||2)+" días" : (FRECUENCIA_LABEL[t.frecuencia] || "Se repite"));
     if(t.frecuencia==="necesidad") partes.push("se anota cuando la haces");
     else partes.push(t.reseteo==="auto" ? "se resetea sola" : "la desmarcás a mano");
     if(t.unaBasta) partes.push("basta con una de las dos");
@@ -827,7 +843,8 @@ function renderRevisar(){
     grupos[z].forEach(t => {
       const n = partirNombre(t.nombre);
       h += '<div class="rv-fila'+(cambiadasRev.has(t.id) ? " cambiada" : "")+'" data-id="'+escRev(t.id)+'"><div class="rv-txt"><b>'+escRev(n.t)+(t.modo === "congelada" ? " ❄️" : "")+'</b>'+(n.d ? '<small>'+escRev(n.d)+'</small>' : "")+'</div>'
-        + '<select class="rv-sel" aria-label="Frecuencia de '+escRev(n.t)+'">'+FREC_OPCIONES.map(o => '<option value="'+o[0]+'"'+(t.frecuencia === o[0] ? " selected" : "")+'>'+o[1]+'</option>').join("")+'</select></div>';
+        + '<div class="rv-ctl"><select class="rv-sel" aria-label="Frecuencia de '+escRev(n.t)+'">'+FREC_OPCIONES.map(o => '<option value="'+o[0]+'"'+(t.frecuencia === o[0] ? " selected" : "")+'>'+o[1]+'</option>').join("")+'</select>'
+        + (t.frecuencia === "cada" ? '<input type="number" class="rv-n" min="1" max="365" value="'+(t.cadaDias || 2)+'" aria-label="Cada cuántos días"><span class="rv-d">días</span>' : "") + '</div></div>';
     });
   });
   p.innerHTML = h;
@@ -841,13 +858,15 @@ document.getElementById("btnRevisar").onclick = () => {
 };
 document.getElementById("panelRevisar").addEventListener("change", e => {
   if(e.target.id === "rvFiltro"){ revisarSolo = e.target.value; renderRevisar(); return; }
-  if(!e.target.classList.contains("rv-sel")) return;
+  const esSel = e.target.classList.contains("rv-sel"), esN = e.target.classList.contains("rv-n");
+  if(!esSel && !esN) return;
   const fila = e.target.closest(".rv-fila"), t = estado.tareas.find(x => String(x.id) === fila.dataset.id);
   if(!t) return;
-  t.frecuencia = e.target.value;
-  cambiadasRev.add(t.id); fila.classList.add("cambiada");
+  if(esSel) aplicarFrecuencia(t, e.target.value);
+  else { const n = parseInt(e.target.value,10); if(!n || n < 1){ e.target.value = t.cadaDias || 2; return; } if(n === 1) t.frecuencia = "diaria"; else t.cadaDias = Math.min(365, n); }
+  cambiadasRev.add(t.id);
   guardarEstado();
-  actualizarContadorRev();
+  renderRevisar();
 });
 
 document.querySelectorAll("#tabsLista button").forEach(b=>{
@@ -913,7 +932,7 @@ function formularioHTML(){
 
     <div class="sub-opcion" id="subRepetitiva">
       <label>¿Cada cuánto se repite?</label>
-      <select id="fFrecuencia">
+      <select id="fFrecuencia" onchange="document.getElementById('fCadaWrap').style.display = this.value==='cada' ? 'block' : 'none'">
         <option value="diaria">Todos los días</option>
         <option value="semanal">Una vez por semana</option>
         <option value="quincenal">Una vez cada 15 días</option>
@@ -921,8 +940,10 @@ function formularioHTML(){
         <option value="trimestral">Una vez cada 3 meses</option>
         <option value="semestral">Una vez cada 6 meses</option>
         <option value="anual">Una vez por año</option>
+        <option value="cada">Una vez cada … días (tú eliges)</option>
         <option value="necesidad">Según necesidad (no sale en pendientes)</option>
       </select>
+      <div id="fCadaWrap" style="display:none;margin-top:6px"><input type="number" id="fCadaDias" min="2" max="365" value="3" style="width:90px;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)"> días</div>
       <label>¿Cómo se marca de nuevo como pendiente?</label>
       <div class="grupo-radio" id="fReseteo">
         <button type="button" data-v="auto" class="on">Se resetea sola</button>
@@ -990,6 +1011,7 @@ function guardarNuevaTarea(){
     completada: false,
     historial: []
   };
+  if(nueva.frecuencia === "cada"){ nueva.cadaDias = Math.min(365, Math.max(2, parseInt(document.getElementById("fCadaDias").value,10) || 2)); nueva.cadaDesde = hoyISO(); }
   estado.tareas.push(nueva);
   guardarEstado();
   listaActiva = nueva.lista;

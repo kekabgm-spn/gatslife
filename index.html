@@ -143,6 +143,7 @@
       case "trimestral": return d.y+"-T"+Math.ceil(d.m/3);
       case "semestral": return d.y+"-S"+Math.ceil(d.m/6);
       case "anual": return String(d.y);
+      case "cada": { var nn = Math.max(2, parseInt(t.cadaDias,10) || 2), pa = parseF(t.cadaDesde || f); var dd = Math.round((Date.UTC(d.y,d.m-1,d.d) - Date.UTC(pa.y,pa.m-1,pa.d))/86400000); return iso(new Date(pa.y, pa.m-1, pa.d + Math.floor(dd/nn)*nn)); }
       default: return f;
     }
   }
@@ -165,7 +166,7 @@
     var hoy = [], largo = 0;
     mias.concat(compartidas).forEach(function(t){
       if(!pendienteParaMi(t, p, f)) return;
-      if(t.tipo !== "repetitiva" || t.frecuencia === "diaria") hoy.push(t); else largo++;
+      if(t.tipo !== "repetitiva" || (t.frecuencia === "diaria" || t.frecuencia === "cada")) hoy.push(t); else largo++;
     });
     return { hoy: hoy, largo: largo };
   }
