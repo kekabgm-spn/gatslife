@@ -752,11 +752,11 @@ function renderBuscaCitas(){
   selC.innerHTML = '<option value="">Todas las categorías</option>' + catsPerfil().map(k=>`<option value="${k.id}">${esc(k.nombre||k.id)}</option>`).join("");
   selC.value = catsPerfil().some(k=>k.id===actual) ? actual : "";
   const q = bcNorm(document.getElementById("bcTexto").value.trim()), cat = selC.value, per = document.getElementById("bcPer").value;
-  const pasado = per === "pas" || per === "pasT", n = per === "pas" ? 90 : per === "pasT" ? 3650 : per === "todas" ? 1825 : parseInt(per,10), lista = [];
-  for(let i=0; i<=n && lista.length<500; i++){
+  const pasado = per === "pas", n = pasado ? 90 : parseInt(per,10), lista = [];
+  for(let i=0; i<=n && lista.length<80; i++){
     const f = sumarDias(hoy, pasado ? -i : i);
     eventos.forEach(e=>{
-      if(lista.length>=500) return;
+      if(lista.length>=80) return;
       if(!(e.para === "Ambas" || e.para === perfil) || !PERFIL_CATS[perfil].includes(e.cat)) return;
       if(cat && e.cat !== cat) return;
       if(q && !bcNorm(e.titulo+" "+(e.nota||"")+" "+(e.sub||"")+" "+(catDe(e.cat).nombre||"")).includes(q)) return;
@@ -770,7 +770,7 @@ function renderBuscaCitas(){
   document.getElementById("bcRes").innerHTML = lista.length ? mostrar.map(({e,f})=>{
     const p = parseF(f), dia = new Date(p.y,p.m-1,p.d).toLocaleDateString("es-ES",{weekday:"short", day:"numeric", month:"short", year:"numeric"});
     return `<button type="button" class="prox" data-acc="ir-fecha" data-f="${f}"><span class="pto ${catDe(e.cat).indicativo?"ind":""}" style="--c:${colorDe(e)}"></span><span class="p-t">${e.hora ? esc(e.hora)+" · " : ""}${esc(e.titulo)}<small style="display:block;opacity:.7">${esc(catDe(e.cat).nombre||"")}</small></span><span class="p-c">${esc(dia)}</span></button>`;
-  }).join("") + (bcAbierto && lista.length>=500 ? '<p class="vacio">Mostrando las primeras 500. Afina la búsqueda para ver menos.</p>' : "") + botonVerMas("ver-bc", bcAbierto, totalBc) : '<p class="vacio">No se encontraron citas con ese filtro.</p>';
+  }).join("") + (bcAbierto && lista.length>=80 ? '<p class="vacio">Mostrando las primeras 80. Afina la búsqueda para ver menos.</p>' : "") + botonVerMas("ver-bc", bcAbierto, totalBc) : '<p class="vacio">No se encontraron citas con ese filtro.</p>';
 }
 ["bcTexto","bcCat","bcPer"].forEach(id=>{ const el = document.getElementById(id); el.addEventListener(id==="bcTexto"?"input":"change", renderBuscaCitas); });
 
