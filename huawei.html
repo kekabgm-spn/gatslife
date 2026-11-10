@@ -43,7 +43,7 @@ Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localS
 <p class="sub">Datos del reloj que Health Sync deja en tu Google Drive. Solo se leen; no se borra ni se cambia nada. Datos de <b id="quien">Mamy</b>.</p>
 
 <div class="card">
-  <button class="go" id="sync">⌚ Sincronizar Huawei</button><a href="#" class="mini" id="s90">traer 90 días</a><a href="#" class="mini" id="s365">traer 1 año</a>
+  <button class="go" id="sync">⌚ Sincronizar Huawei</button><a href="#" class="mini" id="s90">traer 90 días</a><a href="#" class="mini" id="s365">traer 1 año</a><a href="#" class="mini" id="sTodo">traer todo</a>
   <div id="estado" class="nota" style="margin-top:8px"></div>
   <details id="detalles" class="nota" style="margin-top:6px;display:none">
     <summary style="cursor:pointer">Ver detalles</summary>
@@ -120,9 +120,13 @@ function procesar(txt){
   const hF = cubos(sF, 5, 288), hO = cubos(sO, 10, 144), hP = cubos(sP, 60, 24, true);
   Object.keys(hF).forEach(f => { S(f).fc = hF[f]; }); Object.keys(hO).forEach(f => { S(f).sp = hO[f]; }); Object.keys(hP).forEach(f => { S(f).ph = hP[f]; });
   // Sueño: se juntan todas las filas, se agrupan en sesiones (hueco > 60 min = otra sesión) y cuentan en el día en que te despiertas.
-  const filas = {}; (txt.sueno || []).forEach(t => objs(parseCSV(t)).forEach(o => { const p = dt(get(o, "fecha")), dur = parseFloat(get(o, "duracion")), et = norm(get(o, "etapa")).trim();
-    if(p && dur > 0 && et) filas[p.min] = { ini: p.min, fin: p.min + dur / 60, et }; }));
-  const ord = Object.keys(filas).map(Number).sort((a, b) => a - b).map(k => filas[k]);
+  // Health Sync puede dejar la misma noche varias veces (una versión resumida y otra detallada) con horas de inicio distintas.
+  // Se pinta minuto a minuto: los tramos más cortos (más detallados) mandan sobre los largos, así no se suma dos veces ni depende del orden de los archivos.
+  const crudas = {}; (txt.sueno || []).forEach(t => objs(parseCSV(t)).forEach(o => { const p = dt(get(o, "fecha")), dur = parseFloat(get(o, "duracion")), et = norm(get(o, "etapa")).trim();
+    if(p && dur > 0 && et) crudas[p.min + "|" + dur + "|" + et] = { ini: p.min, fin: p.min + Math.max(1, Math.round(dur / 60)), et }; }));
+  const pintado = {}; Object.keys(crudas).map(k => crudas[k]).sort((a, b) => (b.fin - b.ini) - (a.fin - a.ini) || a.ini - b.ini).forEach(r => { for(let m = r.ini; m < r.fin; m++) pintado[m] = r.et; });
+  const ord = []; Object.keys(pintado).map(Number).sort((a, b) => a - b).forEach(m => { const u = ord[ord.length - 1];
+    if(u && u.fin === m && u.et === pintado[m]) u.fin = m + 1; else ord.push({ ini: m, fin: m + 1, et: pintado[m] }); });
   const ses = []; ord.forEach(r => { const s = ses[ses.length - 1]; if(s && r.ini - s.fin <= 60){ s.filas.push(r); s.fin = Math.max(s.fin, r.fin); } else ses.push({ ini: r.ini, fin: r.fin, filas: [r] }); });
   ses.forEach(s => { const f = dia(s.fin), d = D(f), t = { deep: 0, light: 0, rem: 0, awake: 0 };
     s.filas.forEach(r => { if(t[r.et] != null) t[r.et] += r.fin - r.ini; });
@@ -181,6 +185,10 @@ async function bajar(t, f){
   return api("files/" + f.id + "/export?mimeType=" + (f.mimeType.indexOf("spreadsheet") >= 0 ? "text/csv" : "text/plain"), t, true);
 }
 
+// Curvas detalladas: se guardan en IndexedDB (sin el tope pequeño de localStorage) y sin límite de días
+function idbSerie(){ return new Promise((ok, no) => { const q = indexedDB.open("gatslifeSeries", 1); q.onupgradeneeded = () => q.result.createObjectStore("s"); q.onsuccess = () => ok(q.result); q.onerror = () => no(q.error); }); }
+async function leerSerie(p){ try{ const db = await idbSerie(); return await new Promise(ok => { const r = db.transaction("s").objectStore("s").get(p); r.onsuccess = () => ok(r.result || {}); r.onerror = () => ok({}); }); }catch(e){ return {}; } }
+async function guardarSerie(p, v){ const db = await idbSerie(); return new Promise((ok, no) => { const t = db.transaction("s", "readwrite"); t.objectStore("s").put(v, p); t.oncomplete = ok; t.onerror = () => no(t.error); }); }
 async function sincronizar(perfil, dias, progreso, quiet){
   progreso = progreso || (() => {});
   progreso("Pidiendo permiso a Google…"); const t = await token(quiet);
@@ -206,15 +214,13 @@ async function sincronizar(perfil, dias, progreso, quiet){
   // Guardar resúmenes por día (solo pisa las medidas que llegaron)
   const guardados = lj(KD(perfil), {}); let nDias = 0;
   Object.keys(r.dias).forEach(f => { if(f < desde && !r.dias[f].sueno) return; guardados[f] = Object.assign(guardados[f] || {}, r.dias[f]); nDias++; });
-  const lim = sumaDias(hoy(), -800); Object.keys(guardados).forEach(f => { if(f < lim) delete guardados[f]; });
   localStorage.setItem(KD(perfil), JSON.stringify(guardados));
   // Series con hora de los últimos 60 días: solo en este aparato (no se sincronizan, pesan mucho)
-  const ser = lj(KS(perfil), {}), limS = sumaDias(hoy(), -60);
-  Object.keys(r.series || {}).forEach(f => { if(f < limS || (f < desde && !(r.series[f].sg && r.series[f].sg.length))) return; const x = r.series[f], o = {};
+  const ser = Object.assign({}, lj(KS(perfil), {}), await leerSerie(perfil));
+  Object.keys(r.series || {}).forEach(f => { if((f < desde && !(r.series[f].sg && r.series[f].sg.length))) return; const x = r.series[f], o = {};
     ["fc", "sp", "ph"].forEach(k => { if(x[k] && x[k].some(v => v > 0)) o[k] = x[k]; }); if(x.sg && x.sg.length) o.sg = x.sg;
     if(Object.keys(o).length) ser[f] = Object.assign(ser[f] || {}, o); });
-  Object.keys(ser).forEach(f => { if(f < limS) delete ser[f]; });
-  try{ localStorage.setItem(KS(perfil), JSON.stringify(ser)); }catch(e){}
+  try{ await guardarSerie(perfil, ser); localStorage.removeItem(KS(perfil)); }catch(e){}
   // Actividades al historial de Fitness (sin repetir)
   const hist = lj(KH(perfil), []); const vistos = {}; hist.forEach(h => { if(h && h.hid) vistos[h.hid] = 1; });
   let nuevas = 0; r.acts.forEach(a => { if(!vistos[a.hid]){ hist.push(a); vistos[a.hid] = 1; nuevas++; } });
@@ -295,7 +301,7 @@ function render(){
   const av = (fn) => { const v = lista.map(g => fn(d[g])).filter(n => n != null && isFinite(n)); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null; };
   const t = lista.map(g => { const y = d[g]; return "<tr><td>" + g.slice(8) + "/" + g.slice(5, 7) + (ver === "14" ? "" : "/" + g.slice(2, 4)) + "</td><td>" + (y.pasos != null ? y.pasos : "–") + "</td><td>" + (y.sueno ? H.fmtH(y.sueno.min) : "–") + "</td><td>" + (y.fc ? y.fc.med : "–") + "</td><td>" + (y.spo2 ? H.NF(y.spo2.med) + "%" : "–") + "</td></tr>"; }).join("");
   const mp = av(y => y.pasos), ms = av(y => y.sueno ? y.sueno.min : null), mf = av(y => y.fc ? y.fc.med : null), mo = av(y => y.spo2 ? y.spo2.med : null);
-  const media = lista.length > 1 ? "<tr style='font-weight:700'><td>Media</td><td>" + (mp != null ? Math.round(mp) : "–") + "</td><td>" + (ms != null ? H.fmtH(ms) : "–") + "</td><td>" + (mf != null ? Math.round(mf) : "–") + "</td><td>" + (mo != null ? H.NF(mo) + "%" : "–") + "</td></tr>" : "";
+  const media = lista.length > 1 ? "<tr style='font-weight:700'><td>Media</td><td>" + (mp != null ? Math.round(mp) : "–") + "</td><td>" + (ms != null ? H.fmtH(ms) : "–") + "</td><td>" + (mf != null ? Math.round(mf) : "–") + "</td><td>" + (mo != null ? H.NF(Math.round(mo * 10) / 10) + "%" : "–") + "</td></tr>" : "";
   $("tabla").innerHTML = t ? "<table><tr><th>Día</th><th>👣 Pasos</th><th>😴 Sueño</th><th>❤️ Pulso</th><th>🫁 SpO₂</th></tr>" + media + t + "</table>" : '<div class="nota">Aún no hay días guardados.</div>';
 }
 function lanzar(dias, quiet){ const est = $("estado"); ocupado = true; $("sync").disabled = true; est.style.color = "";
@@ -305,6 +311,7 @@ function lanzar(dias, quiet){ const est = $("estado"); ocupado = true; $("sync")
 $("sync").onclick = () => lanzar(0);
 $("s90").onclick = ev => { ev.preventDefault(); lanzar(90); };
 $("s365").onclick = ev => { ev.preventDefault(); lanzar(365); };
+$("sTodo").onclick = ev => { ev.preventDefault(); lanzar(7300); };
 $("chkPasos").onchange = ev => { localStorage.setItem(H.KP(perfil), ev.target.checked ? "1" : "0"); H.aplicarPasos(perfil); render(); };
 window.elegirPerfil = p => { perfil = p; render(); };
 let ultAuto = 0;
