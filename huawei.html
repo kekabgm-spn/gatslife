@@ -18,6 +18,11 @@ Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localS
   :root{--bg:#10151f;--card:#1b2330;--line:#2a3242;--ink:#e8ecf2;--mut:#8a94a3;--accent:#35c26a;color-scheme:dark;}
   :root[data-theme="light"]{--bg:#f4f6f8;--card:#fff;--line:#d7dce3;--ink:#1b2330;--mut:#5d6877;--accent:#1f9d52;color-scheme:light;}
   *{box-sizing:border-box;}
+  #gH h3{font-size:.9rem;margin:12px 0 2px;}
+  svg.gr{width:100%;height:auto;display:block;} svg.gr text{fill:var(--mut);font-size:9px;}
+  .rdG{font-size:.8rem;line-height:1.4;white-space:pre-line;background:rgba(128,128,128,.14);border-radius:8px;padding:5px 9px;margin:6px 0 2px;}
+  svg.gr[data-tip]{touch-action:pan-y;cursor:crosshair;-webkit-user-select:none;user-select:none;}
+  #tipGr{position:fixed;z-index:9999;pointer-events:none;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 9px;font-size:.78rem;line-height:1.35;white-space:pre-line;box-shadow:0 4px 14px rgba(0,0,0,.35);display:none;max-width:70vw;}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;padding:20px 14px 80px;}
   .wrap{max-width:900px;margin:0 auto;}
   .navapp{display:flex;gap:4px;margin:0 0 14px;background:#1b2330;border:1px solid #2a3242;border-radius:10px;padding:4px;}
@@ -43,7 +48,7 @@ Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localS
 <p class="sub">Datos del reloj que Health Sync deja en tu Google Drive. Solo se leen; no se borra ni se cambia nada. Datos de <b id="quien">Mamy</b>.</p>
 
 <div class="card">
-  <button class="go" id="sync">⌚ Sincronizar Huawei</button><a href="#" class="mini" id="s90">traer 90 días</a><a href="#" class="mini" id="s365">traer 1 año</a>
+  <button class="go" id="sync">⌚ Sincronizar Huawei</button><a href="#" class="mini" id="s90">traer 90 días</a><a href="#" class="mini" id="s365">traer 1 año</a><a href="#" class="mini" id="sTodo">traer todo</a>
   <div id="estado" class="nota" style="margin-top:8px"></div>
   <details id="detalles" class="nota" style="margin-top:6px;display:none">
     <summary style="cursor:pointer">Ver detalles</summary>
@@ -71,7 +76,7 @@ Storage.prototype.setItem=function(k,v){o.apply(this,arguments);if(this===localS
   </details>
 </div>
 
-<div class="card"><h2 style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">Historial <select id="hVer" aria-label="Periodo del historial" style="background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:.85rem"></select></h2><div style="overflow-x:auto" id="tabla"></div></div>
+<div class="card"><h2 style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">Historial <select id="hVer" aria-label="Periodo del historial" style="background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:.85rem"></select></h2><div id="gH"></div><div style="overflow-x:auto" id="tabla"></div></div>
 </div>
 <script>
 // huawei.js — Importa los CSV que Health Sync deja en Google Drive (solo lectura) y los guarda en la app.
@@ -107,10 +112,10 @@ const dia = min => new Date(min * 60000).toISOString().slice(0, 10);
 // txt = { pasos:[texto..], fc:[..], spo2:[..], sueno:[..], act:[..] }
 function procesar(txt){
   const dias = {}, D = f => dias[f] || (dias[f] = {}); let ultPaso = 0;
-  const serie = (lista, needle) => { const m = {}; (lista || []).forEach(t => objs(parseCSV(t)).forEach(o => {
-    const p = dt(get(o, "fecha")), v = parseFloat(get(o, needle)); if(p && isFinite(v)) m[p.k] = [p.f, v]; })); return m; };
+  const serie = (lista, needle, maximo) => { const m = {}; (lista || []).forEach(t => objs(parseCSV(t)).forEach(o => {
+    const p = dt(get(o, "fecha")), v = parseFloat(get(o, needle)); if(p && isFinite(v)) m[p.k] = [p.f, maximo && m[p.k] ? Math.max(m[p.k][1], v) : v]; })); return m; };
   const porDia = m => { const g = {}; Object.keys(m).forEach(k => { const [f, v] = m[k]; (g[f] || (g[f] = [])).push(v); }); return g; };
-  const sP = serie(txt.pasos, "pasos"); Object.keys(sP).forEach(k => { const q = dt(k); if(q && sP[k][1] > 0 && q.min > ultPaso) ultPaso = q.min; }); const g1 = porDia(sP); Object.keys(g1).forEach(f => D(f).pasos = g1[f].reduce((a, b) => a + b, 0));
+  const sP = serie(txt.pasos, "pasos", true); Object.keys(sP).forEach(k => { const q = dt(k); if(q && sP[k][1] > 0 && q.min > ultPaso) ultPaso = q.min; }); const g1 = porDia(sP); Object.keys(g1).forEach(f => D(f).pasos = g1[f].reduce((a, b) => a + b, 0));
   const sF = serie(txt.fc, "frecuencia"), g2 = porDia(sF); Object.keys(g2).forEach(f => { const v = g2[f]; D(f).fc = { med: Math.round(v.reduce((a, b) => a + b, 0) / v.length), min: Math.min(...v), max: Math.max(...v), n: v.length }; });
   const sO = serie(txt.spo2, "saturacion"), g3 = porDia(sO); Object.keys(g3).forEach(f => { const v = g3[f]; D(f).spo2 = { med: Math.round(v.reduce((a, b) => a + b, 0) / v.length * 10) / 10, min: Math.min(...v), max: Math.max(...v), n: v.length }; });
   // Series con hora (solo para el Informe): pulso cada 5 min, oxígeno cada 10 min, pasos por hora, tramos de sueño
@@ -119,13 +124,30 @@ function procesar(txt){
     Object.keys(o).forEach(f => { const d = o[f]; o[f] = d.s.map((x, i) => d.c[i] ? (sumar ? Math.round(x) : Math.round(x / d.c[i])) : 0); }); return o; };
   const hF = cubos(sF, 5, 288), hO = cubos(sO, 10, 144), hP = cubos(sP, 60, 24, true);
   Object.keys(hF).forEach(f => { S(f).fc = hF[f]; }); Object.keys(hO).forEach(f => { S(f).sp = hO[f]; }); Object.keys(hP).forEach(f => { S(f).ph = hP[f]; });
-  // Sueño: se juntan todas las filas, se agrupan en sesiones (hueco > 60 min = otra sesión) y cuentan en el día en que te despiertas.
+  // Sueño. Health Sync deja varios archivos que SE SOLAPAN (uno grande de 56 min y otro con el detalle de esos mismos minutos).
+  // Antes, según el orden en que Drive devolvía los archivos, ganaba uno u otro y se contaban minutos de más.
+  // Ahora: cada minuto lo manda la fila más corta (la más detallada). Se cuentan los minutos una sola vez.
   const filas = {}; (txt.sueno || []).forEach(t => objs(parseCSV(t)).forEach(o => { const p = dt(get(o, "fecha")), dur = parseFloat(get(o, "duracion")), et = norm(get(o, "etapa")).trim();
-    if(p && dur > 0 && et) filas[p.min] = { ini: p.min, fin: p.min + dur / 60, et }; }));
-  const ord = Object.keys(filas).map(Number).sort((a, b) => a - b).map(k => filas[k]);
+    if(p && dur > 0 && et) filas[p.min + "|" + Math.round(dur) + "|" + et] = { ini: p.min, fin: p.min + dur / 60, et, dur }; }));
+  const todas = Object.keys(filas).map(k => filas[k]);
+  const ord = []; if(todas.length){
+    const a = Math.floor(Math.min(...todas.map(r => r.ini))), b = Math.ceil(Math.max(...todas.map(r => r.fin))), mejor = new Array(b - a).fill(null);
+    todas.forEach(r => { for(let m = Math.floor(r.ini); m < Math.ceil(r.fin); m++){ const c = mejor[m - a]; if(!c || r.dur < c.dur || (r.dur === c.dur && r.et !== "light" && c.et === "light")) mejor[m - a] = r; } });
+    let cur = null; for(let i = 0; i <= mejor.length; i++){ const r = i < mejor.length ? mejor[i] : null;
+      if(cur && r === cur.r){ cur.fin = a + i + 1; continue; }
+      if(cur) ord.push({ ini: cur.ini, fin: cur.fin, et: cur.r.et });
+      cur = r ? { r, ini: a + i, fin: a + i + 1 } : null; }
+  }
   const ses = []; ord.forEach(r => { const s = ses[ses.length - 1]; if(s && r.ini - s.fin <= 60){ s.filas.push(r); s.fin = Math.max(s.fin, r.fin); } else ses.push({ ini: r.ini, fin: r.fin, filas: [r] }); });
+  // Huawei no cuenta como "despierto" lo que queda al principio o al final de la sesión (su captura: te despertaste a las 9:03).
+  for(let i = ses.length - 1; i >= 0; i--){ const f = ses[i].filas; while(f.length && f[f.length - 1].et === "awake") f.pop(); while(f.length && f[0].et === "awake") f.shift();
+    if(!f.length) ses.splice(i, 1); else { ses[i].ini = f[0].ini; ses[i].fin = f[f.length - 1].fin; } }
+  // Siesta = sueño corto que empieza entre las 10:00 y las 20:00. No se suma al sueño de la noche; se muestra aparte.
+  const minDia = m => ((m % 1440) + 1440) % 1440;
   ses.forEach(s => { const f = dia(s.fin), d = D(f), t = { deep: 0, light: 0, rem: 0, awake: 0 };
     s.filas.forEach(r => { if(t[r.et] != null) t[r.et] += r.fin - r.ini; });
+    const dorm = t.deep + t.light + t.rem, ini = minDia(s.ini), siesta = dorm < 180 && ini >= 600 && ini < 1200;
+    if(siesta){ const q = d.siesta || { min: 0, ini: hhmm(s.ini), fin: hhmm(s.fin) }; d.siesta = { min: Math.round(q.min + dorm), ini: q.ini, fin: hhmm(s.fin) }; return; }
     S(f).sg = (S(f).sg || []).concat(s.filas.filter(r => t[r.et] != null).map(r => [Math.round(r.ini - dia0(f)), Math.round(r.fin - dia0(f)), SC[r.et]]));
     const prev = d.sueno || { min: 0, deep: 0, light: 0, rem: 0, awake: 0 };
     d.sueno = { min: Math.round(prev.min + t.deep + t.light + t.rem), deep: Math.round(prev.deep + t.deep), light: Math.round(prev.light + t.light), rem: Math.round(prev.rem + t.rem), awake: Math.round(prev.awake + t.awake), ini: prev.ini || hhmm(s.ini), fin: hhmm(s.fin) }; });
@@ -164,14 +186,27 @@ const sumaDias = (iso, n) => { const d = new Date(iso + "T00:00:00Z"); d.setUTCD
 const hoy = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
 const CARPETAS = [["actividad", "act"], ["frecuencia", "fc"], ["pasos", "pasos"], ["sueno", "sueno"], ["saturacion", "spo2"]];
 
+// Health Sync guarda: un archivo por día (foto del momento en que sincronizó; puede quedarse corto), y luego, más tarde,
+// resúmenes semanales («45-2026», semana de lunes a domingo) y mensuales («octubre 2026») con los datos completos.
+// Hay que leer los tres y quedarse con la unión. Devuelve {ini, fin} del periodo que cubre el nombre, o null.
+const MESES_ES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+function periodoNombre(nombre){
+  const n = norm(nombre), r = /(\d{4})[._\-\s](\d{2})[._\-\s](\d{2})(?:\s*-\s*(\d{4})[._\-\s](\d{2})[._\-\s](\d{2}))?/.exec(n);
+  if(r) return { ini: r[1] + "-" + r[2] + "-" + r[3], fin: r[4] ? r[4] + "-" + r[5] + "-" + r[6] : r[1] + "-" + r[2] + "-" + r[3], dia: !r[4] };
+  const w = /\s(\d{1,2})-(20\d\d)\s/.exec(n);
+  if(w){ const y = +w[2], j4 = new Date(Date.UTC(y, 0, 4)), lun = new Date(j4.getTime() - ((j4.getUTCDay() + 6) % 7) * 86400000 + (+w[1] - 1) * 7 * 86400000), ini = lun.toISOString().slice(0, 10); return { ini, fin: sumaDias(ini, 6), dia: false }; }
+  const mm = new RegExp("\\s(" + MESES_ES.join("|") + ")\\s(20\\d\\d)\\s").exec(n);
+  if(mm){ const mes = MESES_ES.indexOf(mm[1]) + 1, y = +mm[2], ini = y + "-" + String(mes).padStart(2, "0") + "-01", fin = new Date(Date.UTC(y, mes, 0)).toISOString().slice(0, 10); return { ini, fin, dia: false }; }
+  return null;
+}
 async function listarArchivos(t, carpetaId, desde, info){
   const out = []; let pg = "", vistos = 0, ultima = ""; const ej = [];
   do{ const q = encodeURIComponent("'" + carpetaId + "' in parents and trashed=false");
     const j = await api("files?q=" + q + "&pageSize=1000&fields=nextPageToken,files(id,name,mimeType)" + (pg ? "&pageToken=" + pg : ""), t);
     (j.files || []).forEach(f => { vistos++; if(ej.length < 2) ej.push(f.name);
-      const m = /(\d{4})[._\-\s](\d{2})[._\-\s](\d{2})/.exec(f.name); if(m){ const d0 = m[1] + "-" + m[2] + "-" + m[3]; if(d0 > ultima) ultima = d0; }
-      if(!m || /\.(fit|tcx|gpx|kml)$/i.test(f.name)) return;
-      if(m[1] + "-" + m[2] + "-" + m[3] >= desde) out.push(f); });
+      const per = periodoNombre(f.name); if(per && per.dia && per.ini > ultima) ultima = per.ini;
+      if(!per || /\.(fit|tcx|gpx|kml)$/i.test(f.name)) return;
+      if(per.fin >= desde) out.push(f); });
     pg = j.nextPageToken || ""; } while(pg);
   if(info) info(vistos, out.length, ej, ultima);
   return out;
@@ -181,16 +216,24 @@ async function bajar(t, f){
   return api("files/" + f.id + "/export?mimeType=" + (f.mimeType.indexOf("spreadsheet") >= 0 ? "text/csv" : "text/plain"), t, true);
 }
 
+// Curvas del día (pulso, oxígeno, fases del sueño, pasos por hora): IndexedDB de este aparato, sin límite de días.
+const SerieDB = (function(){ let pr = null;
+  function abrir(){ if(pr) return pr; pr = new Promise((res, rej) => { try{ const q = indexedDB.open("gatslifeSeriesV1", 1); q.onupgradeneeded = () => q.result.createObjectStore("s"); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); }catch(e){ rej(e); } }); return pr; }
+  async function tx(modo, fn){ const db = await abrir(); return new Promise((res, rej) => { const t = db.transaction("s", modo), r = fn(t.objectStore("s")); t.oncomplete = () => res(r && r.result); t.onerror = () => rej(t.error); }); }
+  return { get: k => tx("readonly", st => st.get(k)), setMany: pares => tx("readwrite", st => { pares.forEach(q => st.put(q[1], q[0])); }) };
+})();
+
 async function sincronizar(perfil, dias, progreso, quiet){
   progreso = progreso || (() => {});
   progreso("Pidiendo permiso a Google…"); const t = await token(quiet);
-  const ult = localStorage.getItem(KU(perfil));
-  const desde = dias ? sumaDias(hoy(), -dias) : (ult ? sumaDias(ult, -2) : sumaDias(hoy(), -30));
+  const ult = localStorage.getItem(KU(perfil)), REV = "2";
+  if(!dias && (!ult || localStorage.getItem("huaweiRevV1_" + perfil) !== REV)) dias = 36500; // primera vez o versión nueva del lector: se relee todo
+  const desde = dias ? sumaDias(hoy(), -dias) : sumaDias(ult, -2);
   progreso("Buscando las carpetas de Health Sync…");
   const q = encodeURIComponent("mimeType='application/vnd.google-apps.folder' and trashed=false and name contains 'Health Sync'");
   const carp = (await api("files?q=" + q + "&pageSize=100&fields=files(id,name)", t)).files || [];
   if(!carp.length) throw new Error("No encontré carpetas «Health Sync …» en este Google Drive. ¿Entraste con la misma cuenta de Health Sync?");
-  const txt = { pasos: [], fc: [], spo2: [], sueno: [], act: [] }; let total = 0, hechos = 0; const lotes = [];
+  const txt = { pasos: [], fc: [], spo2: [], sueno: [], act: [] }, txtHC = { pasos: [], fc: [], spo2: [], sueno: [], act: [] }; let total = 0, hechos = 0; const lotes = [];
   const diag = [], ultimas = {};
   for(const [needle, clave] of CARPETAS){ const c = carp.find(x => norm(x.name).indexOf(needle) >= 0); if(!c){ diag.push("sin carpeta «" + needle + "»"); continue; }
     const arch = await listarArchivos(t, c.id, clave === "sueno" ? sumaDias(desde, -1) : desde, (v, ok, ej, ul) => { diag.push(c.name + ": " + v + " archivos, " + ok + " recientes" + (ej.length ? " (ej: " + ej.join(" / ") + ")" : "")); ultimas[clave] = ul || null; });
@@ -199,27 +242,30 @@ async function sincronizar(perfil, dias, progreso, quiet){
   if(!total) throw new Error("No encontré archivos desde " + desde + ". Detalle → " + diag.join(" | "));
   for(const [clave, arch] of lotes){
     for(let i = 0; i < arch.length; i += 6){
-      const parte = await Promise.all(arch.slice(i, i + 6).map(f => bajar(t, f).catch(e => { if(e.status === 401 || e.status === 403) throw e; return ""; })));
-      parte.forEach(x => { if(x) txt[clave].push(x); }); hechos += parte.length; progreso("Leyendo archivos… " + hechos + " de " + total); } }
+      const trozo = arch.slice(i, i + 6), parte = await Promise.all(trozo.map(f => bajar(t, f).catch(e => { if(e.status === 401 || e.status === 403) throw e; return ""; })));
+      parte.forEach((x, j) => { if(x) (/health connect/i.test(trozo[j].name) ? txtHC : txt)[clave].push(x); }); hechos += parte.length; progreso("Leyendo archivos… " + hechos + " de " + total); } }
   const r = procesar(txt);
+  // Health Connect solo rellena días en los que Huawei Health no trae esa medida (nunca se suman las dos fuentes).
+  { const rc = procesar(txtHC); Object.keys(rc.dias).forEach(f => { const a = r.dias[f] || (r.dias[f] = {}), b = rc.dias[f]; ["pasos", "fc", "spo2", "sueno", "siesta"].forEach(k => { if(a[k] == null && b[k] != null) a[k] = b[k]; }); }); }
   if(r.ultPaso){ const prev = lj(KL(perfil), null); if(!prev || r.ultPaso > prev.min) localStorage.setItem(KL(perfil), JSON.stringify({ min: r.ultPaso })); }
   // Guardar resúmenes por día (solo pisa las medidas que llegaron)
   const guardados = lj(KD(perfil), {}); let nDias = 0;
-  Object.keys(r.dias).forEach(f => { if(f < desde && !r.dias[f].sueno) return; guardados[f] = Object.assign(guardados[f] || {}, r.dias[f]); nDias++; });
-  const lim = sumaDias(hoy(), -800); Object.keys(guardados).forEach(f => { if(f < lim) delete guardados[f]; });
+  Object.keys(r.dias).forEach(f => { if(f < desde && !r.dias[f].sueno && !r.dias[f].siesta) return; guardados[f] = Object.assign(guardados[f] || {}, r.dias[f]); nDias++; });
   localStorage.setItem(KD(perfil), JSON.stringify(guardados));
-  // Series con hora de los últimos 60 días: solo en este aparato (no se sincronizan, pesan mucho)
-  const ser = lj(KS(perfil), {}), limS = sumaDias(hoy(), -60);
-  Object.keys(r.series || {}).forEach(f => { if(f < limS || (f < desde && !(r.series[f].sg && r.series[f].sg.length))) return; const x = r.series[f], o = {};
-    ["fc", "sp", "ph"].forEach(k => { if(x[k] && x[k].some(v => v > 0)) o[k] = x[k]; }); if(x.sg && x.sg.length) o.sg = x.sg;
-    if(Object.keys(o).length) ser[f] = Object.assign(ser[f] || {}, o); });
-  Object.keys(ser).forEach(f => { if(f < limS) delete ser[f]; });
-  try{ localStorage.setItem(KS(perfil), JSON.stringify(ser)); }catch(e){}
+  // Curvas del día: IndexedDB de este aparato, todos los días que haya (antes: solo 60). Lo que hubiera en localStorage se traslada.
+  try{
+    const todas = lj(KS(perfil), {});
+    Object.keys(r.series || {}).forEach(f => { if(f < desde && !(r.series[f].sg && r.series[f].sg.length)) return; const x = r.series[f], o = {};
+      ["fc", "sp", "ph"].forEach(k => { if(x[k] && x[k].some(v => v > 0)) o[k] = x[k]; }); if(x.sg && x.sg.length) o.sg = x.sg;
+      if(Object.keys(o).length) todas[f] = Object.assign(todas[f] || {}, o); });
+    const fechas = Object.keys(todas), previos = await Promise.all(fechas.map(f => SerieDB.get(perfil + "|" + f).catch(() => null)));
+    if(fechas.length){ await SerieDB.setMany(fechas.map((f, k) => [perfil + "|" + f, Object.assign({}, previos[k] || {}, todas[f])])); localStorage.removeItem(KS(perfil)); }
+  }catch(e){ /* sin IndexedDB solo faltan las curvas del día; los resúmenes ya están guardados */ }
   // Actividades al historial de Fitness (sin repetir)
   const hist = lj(KH(perfil), []); const vistos = {}; hist.forEach(h => { if(h && h.hid) vistos[h.hid] = 1; });
   let nuevas = 0; r.acts.forEach(a => { if(!vistos[a.hid]){ hist.push(a); vistos[a.hid] = 1; nuevas++; } });
   if(nuevas) localStorage.setItem(KH(perfil), JSON.stringify(hist));
-  localStorage.setItem(KU(perfil), hoy()); localStorage.setItem(KT(perfil), String(Date.now()));
+  localStorage.setItem(KU(perfil), hoy()); localStorage.setItem(KT(perfil), String(Date.now())); if(dias >= 3650) localStorage.setItem("huaweiRevV1_" + perfil, REV);
   const pk = aplicarPasos(perfil);
   return { sinPeso: pk.sinPeso, dias: nDias, nuevas, archivos: total };
 }
@@ -241,7 +287,7 @@ function mensaje(e){
   return m;
 }
 window.Huawei = { KS, KL, cargarGIS, sincronizar, procesar, aplicarPasos, pesoDe, kcalPasosDe, fmtH, NF, mensaje, KD, KU, KH, KP, KT, KC, lj, hoy };
-if(typeof module !== "undefined") module.exports = { procesar, parseCSV };
+if(typeof module !== "undefined") module.exports = { procesar, parseCSV, periodoNombre };
 })();
 
 (function(){
@@ -269,6 +315,44 @@ function avisoCarpetas(){
   if(c.pasos && (!c.act || dias(c.act, c.pasos) >= 3)){ txt += ". Actividades va atrasada respecto a Pasos: en Health Sync toca la fila «Actividades» y sincroniza (si no hiciste ejercicio, es normal)."; el.style.color = "#ff9b6b"; }
   el.textContent = txt;
 }
+
+// ---------- Gráficos del historial (con cursor) ----------
+const MSn = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"], GW = 320, GH = 110, gpl = 4, gpr = 4, gpt = 12, gpb = 14;
+function conTip(s, items){ return items.length ? s.replace('<svg class="gr"', '<svg class="gr" data-tip="' + JSON.stringify(items).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;") + '"') : s; }
+function bloquesH(lista, d){
+  const asc = lista.slice().reverse();
+  if(asc.length <= 62) return asc.map(g => ({ nom: g.slice(8) + "/" + g.slice(5, 7) + "/" + g.slice(0, 4), etq: g.slice(8), dias: [d[g]] }));
+  const m = {}; asc.forEach(g => (m[g.slice(0, 7)] = m[g.slice(0, 7)] || []).push(d[g]));
+  return Object.keys(m).map(k => ({ nom: MSn[+k.slice(5) - 1] + " " + k.slice(0, 4) + " (media diaria)", etq: MSn[+k.slice(5) - 1] + (k.slice(5) === "01" ? " " + k.slice(2, 4) : ""), dias: m[k] }));
+}
+const mediaH = a => { a = a.filter(x => x != null && isFinite(x)); return a.length ? a.reduce((s, x) => s + x, 0) / a.length : null; };
+function etqH(bl, bw){ let s = ""; const paso = Math.max(1, Math.ceil(bl.length / 8)); bl.forEach((b, i) => { if(i % paso === 0) s += '<text x="' + (gpl + i * bw + bw / 2).toFixed(1) + '" y="' + (GH - 2) + '" text-anchor="middle">' + b.etq + "</text>"; }); return s; }
+function gBarras(bl, val, txt, col){ // val(b) -> número, o lista de partes [..]; txt(v) -> texto
+  const n = bl.length, bw = (GW - gpl - gpr) / n, vs = bl.map(val), tot = v => Array.isArray(v) ? v.reduce((a, x) => a + x, 0) : v, mx = Math.max(1, ...vs.filter(v => v != null).map(tot)), hh = GH - gpt - gpb, tips = [];
+  let s = '<svg class="gr" viewBox="0 0 ' + GW + " " + GH + '" role="img">';
+  vs.forEach((v, i) => { if(v == null) return; const x = gpl + i * bw + bw * 0.12, w = Math.max(1, bw * 0.76); let y = GH - gpb;
+    (Array.isArray(v) ? v : [v]).forEach((q, k) => { const h = q / mx * hh; y -= h; s += '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + h.toFixed(1) + '" fill="' + (Array.isArray(col) ? col[k] : col) + '"/>'; });
+    tips.push({ x: +(gpl + i * bw + bw / 2).toFixed(1), t: bl[i].nom + "\n" + (Array.isArray(v) ? ["Profundo", "Ligero", "REM"].map((nn, k) => nn + ": " + txt(v[k])).join("\n") + "\nDormido: " + txt(tot(v)) : txt(v)) }); });
+  return conTip(s + etqH(bl, bw) + '<text x="2" y="9">' + txt(mx) + "</text></svg>", tips);
+}
+function gRango(bl, k, u, dec){
+  const a = bl.map(b => { const z = b.dias.filter(x => x && x[k]); return z.length ? { min: Math.min(...z.map(x => x[k].min)), max: Math.max(...z.map(x => x[k].max != null ? x[k].max : x[k].med)), med: mediaH(z.map(x => x[k].med)) } : null; });
+  const ok = a.filter(Boolean); if(!ok.length) return ""; const lo = Math.min(...ok.map(x => x.min)), hi = Math.max(...ok.map(x => x.max)), sp = Math.max(1, hi - lo), n = bl.length, bw = (GW - gpl - gpr) / n, hh = GH - gpt - gpb, Y = v => GH - gpb - (v - lo) / sp * hh, f = v => (dec ? String(Math.round(v * 10) / 10).replace(".", ",") : Math.round(v)) + u, tips = [];
+  let s = '<svg class="gr" viewBox="0 0 ' + GW + " " + GH + '" role="img">';
+  a.forEach((x, i) => { if(!x) return; const cx = gpl + i * bw + bw / 2; s += '<line x1="' + cx.toFixed(1) + '" x2="' + cx.toFixed(1) + '" y1="' + Y(x.max).toFixed(1) + '" y2="' + Y(x.min).toFixed(1) + '" stroke="#e0567a" stroke-width="' + Math.max(1.5, Math.min(5, bw * 0.5)).toFixed(1) + '" stroke-linecap="round" opacity=".55"/><circle cx="' + cx.toFixed(1) + '" cy="' + Y(x.med).toFixed(1) + '" r="1.8" fill="#e0567a"/>';
+    tips.push({ x: +cx.toFixed(1), t: bl[i].nom + "\nMín " + f(x.min) + " · Máx " + f(x.max) + "\nMedia " + f(x.med) }); });
+  return conTip(s + etqH(bl, bw) + '<text x="2" y="9">' + f(hi) + '</text><text x="2" y="' + (GH - gpb - 2) + '">' + f(lo) + "</text></svg>", tips);
+}
+function graficosH(lista, d){
+  if(!lista.length) return ""; const bl = bloquesH(lista, d), fh = H.fmtH, ni = v => Math.round(v).toLocaleString("es-ES");
+  const sub = bl.length && bl[0].nom.indexOf("media") >= 0 ? " (media diaria por mes)" : "";
+  const bs = (id) => bl.map(b => mediaH(b.dias.map(x => x && x[id] != null ? x[id] : null)));
+  const sue = bl.map(b => { const z = b.dias.filter(x => x && x.sueno); return z.length ? [mediaH(z.map(x => x.sueno.deep)), mediaH(z.map(x => x.sueno.light)), mediaH(z.map(x => x.sueno.rem))] : null; });
+  const pas = bs("pasos"), idx = bl.map((b, i) => i);
+  return '<h3>👣 Pasos' + sub + "</h3>" + gBarras(bl, b => { const v = mediaH(b.dias.map(x => x && x.pasos != null ? x.pasos : null)); return v; }, v => ni(v) + " pasos", "#35c26a") +
+    "<h3>😴 Sueño" + sub + "</h3>" + gBarras(bl, (b, i) => sue[bl.indexOf(b)], v => fh(v), ["#5b6bd6", "#8fb4ff", "#c08bf0"]) +
+    "<h3>❤️ Pulso" + sub + "</h3>" + gRango(bl, "fc", " ppm", false) + "<h3>🫁 Oxígeno (SpO₂)" + sub + "</h3>" + gRango(bl, "spo2", " %", true);
+}
 function render(){
   if(ocupado) return; $("quien").textContent = perfil; avisoDatos(); avisoCarpetas();
   const d = H.lj(H.KD(perfil), {}), ks = Object.keys(d).sort(), f = ks[ks.length - 1], x = f ? d[f] : {}, u = localStorage.getItem(H.KU(perfil));
@@ -279,7 +363,7 @@ function render(){
   $("detalles").style.display = ($("aviso").textContent || $("carpetas").textContent) ? "" : "none"; // los detalles (fechas de Drive y avisos) quedan plegados
   $("hTit").textContent = f ? (f === H.hoy() ? "Hoy" : "Último día con datos: " + f.slice(8) + "/" + f.slice(5, 7)) : "Sin datos todavía";
   $("hoy").innerHTML = f ? m("👣 Pasos", x.pasos != null ? x.pasos.toLocaleString("es") : "–", x.actPasos ? x.actPasos + " en actividades" : "") +
-    m("😴 Sueño", x.sueno ? H.fmtH(x.sueno.min) : "–", x.sueno ? "profundo " + H.fmtH(x.sueno.deep) + " · REM " + H.fmtH(x.sueno.rem) : "") +
+    m("😴 Sueño", x.sueno ? H.fmtH(x.sueno.min) : "–", (x.sueno ? "profundo " + H.fmtH(x.sueno.deep) + " · REM " + H.fmtH(x.sueno.rem) : "") + (x.siesta ? " · + siesta " + H.fmtH(x.siesta.min) : "")) +
     m("❤️ Pulso medio", x.fc ? x.fc.med + " ppm" : "–", x.fc ? "mín " + x.fc.min + " · máx " + x.fc.max : "") +
     m("🫁 Oxígeno (SpO₂)", x.spo2 ? H.NF(x.spo2.med) + " %" : "–", x.spo2 ? "mínimo " + H.NF(x.spo2.min) + " %" : "") : '<div class="nota">Cuando sincronices aparecerán aquí tus datos.</div>';
   const on = localStorage.getItem(H.KP(perfil)) === "1"; $("chkPasos").checked = on;
@@ -296,6 +380,7 @@ function render(){
   const t = lista.map(g => { const y = d[g]; return "<tr><td>" + g.slice(8) + "/" + g.slice(5, 7) + (ver === "14" ? "" : "/" + g.slice(2, 4)) + "</td><td>" + (y.pasos != null ? y.pasos : "–") + "</td><td>" + (y.sueno ? H.fmtH(y.sueno.min) : "–") + "</td><td>" + (y.fc ? y.fc.med : "–") + "</td><td>" + (y.spo2 ? H.NF(y.spo2.med) + "%" : "–") + "</td></tr>"; }).join("");
   const mp = av(y => y.pasos), ms = av(y => y.sueno ? y.sueno.min : null), mf = av(y => y.fc ? y.fc.med : null), mo = av(y => y.spo2 ? y.spo2.med : null);
   const media = lista.length > 1 ? "<tr style='font-weight:700'><td>Media</td><td>" + (mp != null ? Math.round(mp) : "–") + "</td><td>" + (ms != null ? H.fmtH(ms) : "–") + "</td><td>" + (mf != null ? Math.round(mf) : "–") + "</td><td>" + (mo != null ? H.NF(mo) + "%" : "–") + "</td></tr>" : "";
+  $("gH").innerHTML = graficosH(lista, d);
   $("tabla").innerHTML = t ? "<table><tr><th>Día</th><th>👣 Pasos</th><th>😴 Sueño</th><th>❤️ Pulso</th><th>🫁 SpO₂</th></tr>" + media + t + "</table>" : '<div class="nota">Aún no hay días guardados.</div>';
 }
 function lanzar(dias, quiet){ const est = $("estado"); ocupado = true; $("sync").disabled = true; est.style.color = "";
@@ -305,17 +390,55 @@ function lanzar(dias, quiet){ const est = $("estado"); ocupado = true; $("sync")
 $("sync").onclick = () => lanzar(0);
 $("s90").onclick = ev => { ev.preventDefault(); lanzar(90); };
 $("s365").onclick = ev => { ev.preventDefault(); lanzar(365); };
+$("sTodo").onclick = ev => { ev.preventDefault(); lanzar(36500); };
 $("chkPasos").onchange = ev => { localStorage.setItem(H.KP(perfil), ev.target.checked ? "1" : "0"); H.aplicarPasos(perfil); render(); };
 window.elegirPerfil = p => { perfil = p; render(); };
 let ultAuto = 0;
-function auto(){ if(ocupado || document.hidden || Date.now() - ultAuto < 600000) return;
-  const ts = +localStorage.getItem(H.KT(perfil)) || 0; if(Date.now() - ts < 900000) return;
+function auto(){ if(ocupado || document.hidden || Date.now() - ultAuto < 240000) return;
+  const ts = +localStorage.getItem(H.KT(perfil)) || 0; if(Date.now() - ts < 300000) return;
   ultAuto = Date.now(); lanzar(0, true); }
 window.addEventListener("focus", () => { render(); auto(); });
 document.addEventListener("visibilitychange", () => { if(!document.hidden) auto(); });
+setInterval(auto, 300000); // mientras la pantalla está abierta, mira Drive cada 5 minutos
 render(); H.cargarGIS().then(auto).catch(() => {});
 })();
 </script>
 <script type="module" src="nube.js" onerror="var d=document.createElement('div');d.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99998;background:#7a1f1f;color:#fff;padding:10px 14px;font:14px system-ui,sans-serif;text-align:center';d.textContent='⚠️ El archivo nube.js no se pudo descargar (revisa que esté subido a GitHub con ese nombre exacto).';document.body.appendChild(d)"></script>
+<script>
+// Cursor en los gráficos, como en Huawei Salud: una bolita que se desliza (dedo o ratón) y muestra el detalle de cada momento encima del gráfico.
+(function(){
+  var NS = "http://www.w3.org/2000/svg", arr = null;
+  function datos(svg){ if(!svg.__tip){ try{ svg.__tip = JSON.parse(svg.getAttribute("data-tip")); }catch(e){ svg.__tip = []; } } return svg.__tip; }
+  function elegir(items, vx){
+    for(var i = 0; i < items.length; i++){ var q = items[i]; if(q.x0 != null && vx >= q.x0 && vx <= q.x1) return q; }
+    var b = null, d = 1e9; items.forEach(function(q){ var k = Math.abs(q.x - vx); if(k < d){ d = k; b = q; } }); return b;
+  }
+  function poner(svg, q){
+    var vb = svg.viewBox.baseVal, l = svg.querySelector("line.cur"), k = svg.querySelector("circle.bol");
+    if(!l){ l = document.createElementNS(NS, "line"); l.setAttribute("class", "cur"); l.setAttribute("style", "stroke:#9aa3b2;opacity:.8;pointer-events:none"); l.setAttribute("stroke-width", "1"); svg.appendChild(l); }
+    if(!k){ k = document.createElementNS(NS, "circle"); k.setAttribute("class", "bol"); k.setAttribute("r", "7"); k.setAttribute("style", "fill:#aeb6c4;stroke:#fff;stroke-width:1.5;pointer-events:none"); svg.appendChild(k); }
+    l.setAttribute("x1", q.x); l.setAttribute("x2", q.x); l.setAttribute("y1", 0); l.setAttribute("y2", vb.height); k.setAttribute("cx", q.x); k.setAttribute("cy", vb.height - 8);
+    if(svg.__rd) svg.__rd.textContent = q.t;
+  }
+  function iniciar(svg){
+    if(svg.__ok) return; var items = datos(svg); if(!items.length) return; svg.__ok = 1;
+    var rd = document.createElement("div"), lin = Math.max.apply(null, items.map(function(q){ return String(q.t).split("\n").length; }));
+    rd.className = "rdG"; rd.style.minHeight = (lin * 1.4 + 0.9) + "em"; svg.parentNode.insertBefore(rd, svg); svg.__rd = rd;
+    poner(svg, items[items.length - 1]);
+  }
+  function mover(e){
+    var svg = (e.target && e.target.closest ? e.target.closest("svg.gr[data-tip]") : null) || arr; if(!svg) return;
+    var items = datos(svg); if(!items.length) return; iniciar(svg);
+    var r = svg.getBoundingClientRect(), vb = svg.viewBox.baseVal; if(!r.width) return;
+    var q = elegir(items, (e.clientX - r.left) / r.width * vb.width); if(q) poner(svg, q);
+  }
+  document.addEventListener("pointerdown", function(e){ var s = e.target && e.target.closest ? e.target.closest("svg.gr[data-tip]") : null; if(!s) return; arr = s; try{ s.setPointerCapture(e.pointerId); }catch(x){} mover(e); });
+  document.addEventListener("pointermove", mover);
+  ["pointerup", "pointercancel"].forEach(function(n){ document.addEventListener(n, function(){ arr = null; }); });
+  var pend = 0; function barrer(){ pend = 0; document.querySelectorAll("svg.gr[data-tip]").forEach(iniciar); }
+  new MutationObserver(function(){ if(!pend) pend = setTimeout(barrer, 0); }).observe(document.body, { childList: true, subtree: true });
+  barrer();
+})();
+</script>
 </body>
 </html>
