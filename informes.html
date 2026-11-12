@@ -37,16 +37,6 @@
   .tile{background:var(--panel-alt);border-radius:10px;padding:10px;}
   .tile .t{font-size:0.74rem;color:var(--muted);} .tile .v{font-size:1.15rem;font-weight:800;margin-top:2px;}
   svg.gr{width:100%;height:auto;display:block;margin-top:8px;}
-  svg.gr[data-sc]{touch-action:pan-y;cursor:crosshair;}
-  svg.gr .sc-l{stroke:var(--ink);stroke-width:1;opacity:.75;stroke-dasharray:3 2;}
-  svg.gr .sc-c{fill:var(--ink);stroke:var(--panel);stroke-width:2;}
-  .card{position:relative;}
-  .sc-tip{position:absolute;z-index:5;background:var(--panel-alt);border:1px solid var(--line);border-radius:8px;padding:5px 9px;font-size:12px;line-height:1.3;pointer-events:none;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.35);}
-  .sc-tip b{display:block;font-size:13px;}
-  .sc-tip span{color:var(--muted);display:block;}
-  .an-sel{background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:0.85rem;font-family:inherit;max-width:100%;}
-  .an-lista{list-style:none;margin:10px 0 0;padding:0;font-size:0.88rem;}
-  .an-lista li{display:flex;gap:8px;padding:6px 0;border-top:1px solid var(--line);}
   svg.gr text{fill:var(--muted);font-size:9px;}
   details.tb summary{cursor:pointer;color:var(--accent);font-weight:700;font-size:.85rem;margin-top:10px;}
   .tb table.t2 td:not(:first-child),.tb table.t2 th:not(:first-child){text-align:right;white-space:nowrap;}
@@ -206,13 +196,13 @@ function resumen(m, a){
 // ---------- Gráficos (SVG) ----------
 const COL_SUENO = ["#5b6bd6", "#8fb4ff", "#c08bf0", "#e0703f"];
 function conTip(s, items){
-  if(!items || !items.length || s.indexOf(' data-sc=') > -1) return s;
+  if(!items || !items.length) return s;
   return s.replace('<svg class="gr"', '<svg class="gr" data-tip="' + JSON.stringify(items).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;") + '"');
 }
 function barras(vals, etqs, o){
   o = o || {}; const W = 320, H = 118, pl = 2, pb = 16, pt = 10, n = vals.length, bw = (W - pl * 2) / n, hh = H - pb - pt;
   const tot = v => Array.isArray(v) ? v.reduce((s, x) => s + (x || 0), 0) : (v || 0);
-  const mx = Math.max(o.meta || 0, ...vals.map(tot), 1) * 1.08; let s = '<svg class="gr"' + (o.sc ? scAttr({k:"g",W:W,H:H,pl:pl,pb:pb,pt:pt,n:n,mx:mx,hh:hh,paso:o.sc.paso,u:o.sc.u,v:vals.map(function(v){return Array.isArray(v)?0:(v||0);})}) : "") + ' viewBox="0 0 ' + W + ' ' + H + '" role="img">';
+  const mx = Math.max(o.meta || 0, ...vals.map(tot), 1) * 1.08; let s = '<svg class="gr" viewBox="0 0 ' + W + ' ' + H + '" role="img">';
   s += '<line x1="0" y1="' + (H - pb) + '" x2="' + W + '" y2="' + (H - pb) + '" stroke="var(--line)"/>';
   const tips = [];
   vals.forEach((v, i) => {
@@ -267,7 +257,7 @@ const AVISO_SERIE = '<div class="sub" style="margin-top:6px">Las curvas del día
 function curva(vals, o){
   const W = 320, H = 130, pl = 2, pr = 28, pt = 8, pb = 16, n = vals.length, lo = o.lo, hi = o.hi;
   const X = i => pl + i / (n - 1) * (W - pl - pr), Y = v => pt + (1 - (v - lo) / ((hi - lo) || 1)) * (H - pt - pb);
-  let s = '<svg class="gr"' + scAttr({k:"c",W:W,H:H,pl:pl,pr:pr,pt:pt,pb:pb,lo:lo,hi:hi,n:n,paso:o.paso||5,u:o.u||"ppm",v:vals.map(function(v){return v>0?v:0;})}) + ' viewBox="0 0 ' + W + ' ' + H + '" role="img">', d = "", prev = -99;
+  let s = '<svg class="gr" viewBox="0 0 ' + W + ' ' + H + '" role="img">', d = "", prev = -99;
   [lo, Math.round((lo + hi) / 2), hi].forEach(t => { s += '<line x1="' + pl + '" y1="' + Y(t).toFixed(1) + '" x2="' + (W - pr) + '" y2="' + Y(t).toFixed(1) + '" stroke="var(--line)" stroke-dasharray="2 3"/><text x="' + (W - pr + 3) + '" y="' + (Y(t) + 3).toFixed(1) + '">' + Math.round(t) + '</text>'; });
   vals.forEach((v, i) => { if(!(v > 0)) return; d += (i - prev > (o.gap || 6) ? "M" : "L") + X(i).toFixed(1) + "," + Y(v).toFixed(1) + " "; prev = i; });
   s += '<path d="' + d + '" fill="none" stroke="' + (o.color || "#e0567a") + '" stroke-width="1.4" stroke-linejoin="round"/>';
@@ -279,7 +269,7 @@ function barrasSpo2(vals){
   const W = 320, H = 118, pl = 2, pr = 28, pt = 8, pb = 16, n = vals.length, xs = vals.filter(v => v > 0);
   if(!xs.length) return "";
   const lo = Math.min(92, Math.floor(Math.min(...xs)) - 1), hi = 100, bw = Math.max(2, (W - pl - pr) / n * 0.8), Y = v => pt + (1 - (v - lo) / (hi - lo)) * (H - pt - pb);
-  let s = '<svg class="gr"' + scAttr({k:"b",W:W,H:H,pl:pl,pr:pr,pt:pt,pb:pb,lo:lo,hi:hi,n:n,paso:10,u:"%",v:vals.map(function(v){return v>0?v:0;})}) + ' viewBox="0 0 ' + W + ' ' + H + '" role="img">';
+  let s = '<svg class="gr" viewBox="0 0 ' + W + ' ' + H + '" role="img">';
   [lo, Math.round((lo + hi) / 2), hi].forEach(t => { s += '<line x1="' + pl + '" y1="' + Y(t).toFixed(1) + '" x2="' + (W - pr) + '" y2="' + Y(t).toFixed(1) + '" stroke="var(--line)" stroke-dasharray="2 3"/><text x="' + (W - pr + 3) + '" y="' + (Y(t) + 3).toFixed(1) + '">' + t + '%</text>'; });
   vals.forEach((v, i) => { if(!(v > 0)) return; const x = pl + i / n * (W - pl - pr), col = v < 70 ? "#e5484d" : v < 90 ? "#f0a43a" : "#3fa34d"; s += '<rect x="' + x.toFixed(1) + '" y="' + Y(v).toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + (H - pb - Y(v)).toFixed(1) + '" fill="' + col + '"/>'; });
   [0, 6, 12, 18, 24].forEach(h => { s += '<text x="' + (pl + h / 24 * (W - pl - pr)).toFixed(1) + '" y="' + (H - 3) + '" text-anchor="' + (h === 0 ? "start" : h === 24 ? "end" : "middle") + '">' + h + ':00</text>'; });
@@ -303,7 +293,7 @@ function rangos(items, etqs, o){
 function lineaSueno(sg, se, f){
   if(!sg || !sg.length) return "";
   const W = 320, H = 100, pl = 2, pr = 2, a = Math.min(...sg.map(x => x[0])), b = Math.max(...sg.map(x => x[1])), X = m => pl + (m - a) / ((b - a) || 1) * (W - pl - pr), nivel = [66, 44, 22, 0];
-  let s = '<svg class="gr"' + scAttr({k:"s",W:W,H:H,pl:pl,pr:pr,a:a,b:b,sg:sg,fc:se&&se.fc,sp:se&&se.sp,fp:(f&&SER(suma(f,-1))||{}).fc,spp:(f&&SER(suma(f,-1))||{}).sp}) + ' viewBox="0 0 ' + W + ' ' + H + '" role="img">';
+  let s = '<svg class="gr" viewBox="0 0 ' + W + ' ' + H + '" role="img">';
   sg.forEach(x => { const w = Math.max(1, X(x[1]) - X(x[0])); s += '<rect x="' + X(x[0]).toFixed(1) + '" y="' + (4 + nivel[x[2]]) + '" width="' + w.toFixed(1) + '" height="18" rx="2" fill="' + COL_FASE[x[2]] + '"/>'; });
   s += '<text x="' + pl + '" y="' + (H - 4) + '">' + hm(a) + '</text><text x="' + (W - pr) + '" y="' + (H - 4) + '" text-anchor="end">' + hm(b) + '</text>';
   const mid = Math.round((a + b) / 2); s += '<text x="' + X(mid).toFixed(1) + '" y="' + (H - 4) + '" text-anchor="middle">' + hm(mid) + '</text>';
@@ -342,7 +332,7 @@ function tarjetaPasos(c, p, cub){
   if(modo === "dia"){
     const x = c.dias[0], se = SER(x.f);
     if(!x.pasos) return '<div class="card"><h2>👣 Pasos</h2><div class="vacio">Sin datos de pasos este día.</div></div>';
-    let g = ""; if(se && se.ph) g = barras(se.ph.map(v => v || null), se.ph.map((v, i) => String(i)), { fmt: ni, sc: { paso: 60, u: "pasos" }, tips: se.ph.map((v, i) => v > 0 ? pad2(i) + ":00 – " + pad2(i + 1) + ":00\n" + ni(v) + " pasos" : null) });
+    let g = ""; if(se && se.ph) g = barras(se.ph.map(v => v || null), se.ph.map((v, i) => String(i)), { fmt: ni, tips: se.ph.map((v, i) => v > 0 ? pad2(i) + ":00 – " + pad2(i + 1) + ":00\n" + ni(v) + " pasos" : null) });
     return '<div class="card"><h2>👣 Pasos</h2><div class="grande">' + ni(x.pasos) + '</div>' + (g ? '<div class="sub">Pasos por hora</div>' + g : "") + '</div>';
   }
   if(!c.nPasos) return '<div class="card"><h2>👣 Pasos</h2><div class="vacio">Sin datos de pasos en este periodo. Sincroniza en Huawei.</div></div>';
@@ -370,7 +360,7 @@ function tarjetaPulso(c, p, cub){
     if(se && se.fc){
       const v = se.fc, nz = v.filter(q => q > 0), ult = v.length - 1 - v.slice().reverse().findIndex(q => q > 0), rep = reposoEst(v), lo = Math.max(20, Math.min(...nz) - 10), hi = Math.max(...nz) + 10;
       s += '<div class="cab"><div><span class="grande">' + Math.min(...nz) + "–" + Math.max(...nz) + '</span> <span class="sub">ppm · rango del día</span></div><div><b>' + Math.round(prom(nz)) + ' ppm</b> <span class="sub">media · última a las ' + hm(ult * 5) + '</span></div></div>' +
-        (rep ? '<div class="sub">Reposo (estimado): ' + Math.round(rep) + ' ppm. Huawei calcula el suyo de otra forma, puede diferir.</div>' : "") + curva(v, { lo, hi, paso: 5, u: "ppm" });
+        (rep ? '<div class="sub">Reposo (estimado): ' + Math.round(rep) + ' ppm. Huawei calcula el suyo de otra forma, puede diferir.</div>' : "") + curva(v, { lo, hi });
     } else s += h ? '<div class="tiles"><div class="tile"><div class="t">Media</div><div class="v">' + Math.round(h.med) + ' ppm</div></div><div class="tile"><div class="t">Rango</div><div class="v">' + h.min + "–" + h.max + '</div></div></div>' + AVISO_SERIE : '<div class="vacio">Sin datos de pulso.</div>';
     s += '</div><div class="card"><h2>🫁 Oxígeno (SpO₂)</h2>';
     if(se && se.sp){
@@ -510,146 +500,6 @@ async function generarIA(){
 }
 
 
-
-// ---------- Deslizar el dedo (o el ratón) por las gráficas del día: bolita con el dato de cada momento ----------
-function scAttr(m){ return ' data-sc="' + esc(JSON.stringify(m)) + '"'; }
-function scrubDato(m, x){
-  const span = m.W - m.pl - (m.pr || 0);
-  if(m.k === "c"){            // curva continua (pulso)
-    const n = m.n, i0 = Math.max(0, Math.min(n - 1, Math.round((x - m.pl) / span * (n - 1))));
-    let i = -1; for(let d = 0; d < 24 && i < 0; d++){ if(m.v[i0 - d] > 0) i = i0 - d; else if(m.v[i0 + d] > 0) i = i0 + d; }
-    if(i < 0) return { x: m.pl + i0 / (n - 1) * span, l1: hm(i0 * m.paso), l2: "sin dato" };
-    const vv = m.v[i];
-    return { x: m.pl + i / (n - 1) * span, y: m.pt + (1 - (vv - m.lo) / ((m.hi - m.lo) || 1)) * (m.H - m.pt - m.pb), l1: hm(i * m.paso), l2: Math.round(vv) + " " + m.u };
-  }
-  if(m.k === "b"){            // barras finas por tramos (oxígeno)
-    const n = m.n, i = Math.max(0, Math.min(n - 1, Math.floor((x - m.pl) / span * n))), vv = m.v[i], X = m.pl + (i + 0.4) / n * span, et = hm(i * m.paso) + "–" + hm((i + 1) * m.paso);
-    if(!(vv > 0)) return { x: X, l1: et, l2: "sin dato" };
-    return { x: X, y: m.pt + (1 - (vv - m.lo) / ((m.hi - m.lo) || 1)) * (m.H - m.pt - m.pb), l1: et, l2: vv + " " + m.u };
-  }
-  if(m.k === "g"){            // barras por hora (pasos)
-    const bw = (m.W - m.pl * 2) / m.n, i = Math.max(0, Math.min(m.n - 1, Math.floor((x - m.pl) / bw))), vv = m.v[i], X = m.pl + (i + 0.5) * bw, et = hm(i * m.paso) + "–" + hm((i + 1) * m.paso);
-    return { x: X, y: vv > 0 ? m.H - m.pb - vv / m.mx * m.hh : undefined, l1: et, l2: vv > 0 ? ni(vv) + " " + m.u : "sin pasos" };
-  }
-  if(m.k === "s"){            // fases del sueño (+ pulso y oxígeno de ese momento, si hay curvas guardadas)
-    const mi = m.a + (x - m.pl) / span * (m.b - m.a), X = xx => m.pl + (xx - m.a) / ((m.b - m.a) || 1) * span, t = Math.floor(mi), dm = ((t % 1440) + 1440) % 1440;
-    const aF = t >= 0 ? m.fc : m.fp, aS = t >= 0 ? m.sp : m.spp, pF = aF && aF[Math.floor(dm / 5)], pS = aS && aS[Math.floor(dm / 10)];
-    const sg = m.sg.find(q => q[0] <= mi && mi < q[1]), extra = [pF > 0 ? "pulso " + pF + " ppm" : "", pS > 0 ? "oxígeno " + String(pS).replace(".", ",") + " %" : ""].filter(Boolean).join(" · ");
-    if(!sg) return { x: Math.max(m.pl, Math.min(m.W - (m.pr || 0), x)), l1: hm(mi), l2: "sin dato", l3: extra };
-    return { x: X(mi), l1: hm(mi) + " · " + NOM_FASE[sg[2]], l2: hm(sg[0]) + "–" + hm(sg[1]) + " · " + Math.round(sg[1] - sg[0]) + " min", l3: extra };
-  }
-  return null;
-}
-function limpiarScrub(){ document.querySelectorAll("svg.gr g.sc").forEach(g => g.remove()); document.querySelectorAll(".sc-tip").forEach(t => t.remove()); }
-function pintarScrub(svg, m, d){
-  const NS = "http://www.w3.org/2000/svg";
-  let g = svg.querySelector("g.sc");
-  if(!g){ g = document.createElementNS(NS, "g"); g.setAttribute("class", "sc"); g.innerHTML = '<line class="sc-l"/><circle class="sc-c" r="4"/>'; svg.appendChild(g); }
-  const top = m.k === "s" ? 0 : (m.pt || 0), bot = m.k === "s" ? m.H - 14 : m.H - (m.pb || 0), l = g.querySelector("line"), c = g.querySelector("circle");
-  l.setAttribute("x1", d.x); l.setAttribute("x2", d.x); l.setAttribute("y1", top); l.setAttribute("y2", bot);
-  if(d.y != null){ c.setAttribute("cx", d.x); c.setAttribute("cy", d.y); c.style.display = ""; } else c.style.display = "none";
-  const card = svg.closest(".card"); if(!card) return;
-  let tip = card.querySelector(".sc-tip");
-  if(!tip){ tip = document.createElement("div"); tip.className = "sc-tip"; card.appendChild(tip); }
-  tip.innerHTML = "<b>" + esc(d.l1) + "</b><span>" + esc(d.l2) + "</span>" + (d.l3 ? "<span>" + esc(d.l3) + "</span>" : "");
-  const rs = svg.getBoundingClientRect(), rc = card.getBoundingClientRect(), px = rs.left - rc.left + d.x / m.W * rs.width;
-  tip.style.top = Math.max(2, rs.top - rc.top - 4) + "px";
-  tip.style.left = Math.max(4, Math.min(rc.width - tip.offsetWidth - 4, px - tip.offsetWidth / 2)) + "px";
-}
-function armarScrub(){
-  document.querySelectorAll("svg.gr[data-sc]").forEach(svg => {
-    let m; try{ m = JSON.parse(svg.dataset.sc); }catch(e){ return; }
-    const mover = ev => { const r = svg.getBoundingClientRect(); if(!r.width) return; const d = scrubDato(m, (ev.clientX - r.left) / r.width * m.W); if(d) pintarScrub(svg, m, d); };
-    svg.addEventListener("pointerdown", ev => { try{ svg.setPointerCapture(ev.pointerId); }catch(e){} mover(ev); });
-    svg.addEventListener("pointermove", mover);
-  });
-}
-document.addEventListener("pointerdown", ev => { if(!(ev.target.closest && ev.target.closest("svg.gr[data-sc]"))) limpiarScrub(); });
-
-// ---------- Análisis del sueño: varias noches, sin IA (y con IA si la pides) ----------
-const RANGOS_SUENO = [["periodo", "El periodo que estoy viendo"], ["30", "Últimos 30 días"], ["90", "Últimos 90 días"], ["180", "Últimos 6 meses"], ["365", "Último año"], ["todo", "Todo lo guardado"]];
-function rangoSueno(){ let v = localStorage.getItem("informeSuenoRangoV1") || "periodo"; if(modo === "dia" && v === "periodo") v = "30"; return v; }
-function ventanaSueno(){
-  const v = rangoSueno(), r = rango(modo, ancla);
-  if(v === "periodo") return { desde: r.desde, hasta: r.hasta, v };
-  const hasta = modo === "dia" ? r.hasta : hoyISO();
-  if(v === "todo"){ const ks = Object.keys(D.hw).filter(f => D.hw[f] && D.hw[f].sueno && D.hw[f].sueno.min > 0).sort(); return { desde: ks[0] || hasta, hasta, v }; }
-  return { desde: suma(hasta, -(parseInt(v, 10) - 1)), hasta, v };
-}
-function horaTxt(m){ m = ((Math.round(m) % 1440) + 1440) % 1440; return pad2(Math.floor(m / 60)) + ":" + pad2(m % 60); }
-function analizarSueno(d1, d2){
-  const ns = listaDias(d1, d2).map(f => ({ f, s: (D.hw[f] || {}).sueno })).filter(x => x.s && x.s.min > 0);
-  if(!ns.length) return null;
-  const mean = a => a.reduce((t, x) => t + x, 0) / a.length, sd = a => { const m = mean(a); return Math.sqrt(mean(a.map(x => (x - m) * (x - m)))); };
-  const mm = h => { const q = /^(\d{1,2}):(\d{2})$/.exec(h || ""); return q ? (+q[1]) * 60 + (+q[2]) : null; };
-  const mins = ns.map(x => x.s.min), ini = ns.map(x => mm(x.s.ini)).filter(v => v != null).map(v => v < 720 ? v + 1440 : v), fin = ns.map(x => mm(x.s.fin)).filter(v => v != null);
-  const fases = ns.filter(x => x.s.deep + x.s.light + x.s.rem > 0).map(x => { const t = x.s.deep + x.s.light + x.s.rem; return { f: x.f, deep: x.s.deep / t * 100, light: x.s.light / t * 100, rem: x.s.rem / t * 100 }; });
-  const orden = ns.slice().sort((a, b) => a.s.min - b.s.min), fe = ns.filter(x => [0, 6].includes(fd(x.f).getDay())), se = ns.filter(x => ![0, 6].includes(fd(x.f).getDay()));
-  const t3 = Math.floor(ns.length / 3);
-  return { n: ns.length, media: mean(mins), peor: orden[0], mejor: orden[orden.length - 1], menos6: ns.filter(x => x.s.min < 360).length, mas10: ns.filter(x => x.s.min > 600).length,
-    ini: ini.length >= 3 ? { med: mean(ini), sd: sd(ini) } : null, fin: fin.length >= 3 ? { med: mean(fin), sd: sd(fin) } : null, nFases: fases.length,
-    deep: fases.length ? mean(fases.map(x => x.deep)) : null, light: fases.length ? mean(fases.map(x => x.light)) : null, rem: fases.length ? mean(fases.map(x => x.rem)) : null,
-    deepBajo: fases.filter(x => x.deep < 20).length, remBajo: fases.filter(x => x.rem < 10).length, awake: mean(ns.map(x => x.s.awake || 0)),
-    finde: fe.length >= 2 && se.length >= 3 ? { dif: mean(fe.map(x => x.s.min)) - mean(se.map(x => x.s.min)), nF: fe.length, nS: se.length } : null,
-    tend: ns.length >= 9 ? mean(ns.slice(-t3).map(x => x.s.min)) - mean(ns.slice(0, t3).map(x => x.s.min)) : null };
-}
-function frasesSueno(a){
-  const L = [], pc = (n, t) => n + " de " + t + (t === 1 ? " noche" : " noches");
-  L.push(a.menos6 ? ["⚠️", "Dormiste menos de 6 h en " + pc(a.menos6, a.n) + "."] : ["✅", "Ninguna noche por debajo de 6 h."]);
-  if(a.mas10) L.push(["ℹ️", "Dormiste más de 10 h en " + pc(a.mas10, a.n) + "."]);
-  if(a.fin){ const s = Math.round(a.fin.sd); L.push([s <= 30 ? "✅" : s <= 60 ? "ℹ️" : "⚠️", "Te levantas sobre las " + horaTxt(a.fin.med) + " (varía ±" + s + " min)."]); }
-  if(a.ini){ const s = Math.round(a.ini.sd); L.push([s <= 30 ? "✅" : s <= 60 ? "ℹ️" : "⚠️", "Te acuestas sobre las " + horaTxt(a.ini.med) + " (varía ±" + s + " min)" + (s > 60 ? ": horario bastante irregular." : s > 30 ? "." : ": muy regular.")]); }
-  if(a.nFases){
-    if(a.deepBajo) L.push(["⚠️", "Sueño profundo por debajo del 20 % en " + pc(a.deepBajo, a.nFases) + "."]);
-    if(a.remBajo) L.push(["ℹ️", "REM por debajo del 10 % en " + pc(a.remBajo, a.nFases) + "."]);
-    if(!a.deepBajo && !a.remBajo) L.push(["✅", "Profundo y REM dentro de lo normal en todas las noches con fases."]);
-  }
-  if(a.finde && Math.abs(a.finde.dif) >= 30) L.push(["ℹ️", "Los fines de semana duermes " + Math.round(Math.abs(a.finde.dif)) + " min " + (a.finde.dif > 0 ? "más" : "menos") + " que entre semana."]);
-  if(a.tend != null && Math.abs(a.tend) >= 20) L.push(["ℹ️", "Tendencia: las últimas noches duermes " + Math.round(Math.abs(a.tend)) + " min " + (a.tend > 0 ? "más" : "menos") + " que las primeras del periodo."]);
-  L.push(["🌙", "Mejor noche: " + fh(a.mejor.s.min) + " (" + a.mejor.f.split("-").reverse().join("/") + "). Peor: " + fh(a.peor.s.min) + " (" + a.peor.f.split("-").reverse().join("/") + ")."]);
-  return L;
-}
-function claveIASueno(w){ return "informeSuenoIAV1_" + perfil + "|" + w.v + "|" + w.hasta; }
-function tarjetaAnalisisSueno(c){
-  const w = ventanaSueno(), a = analizarSueno(w.desde, w.hasta), fdc = f => f.split("-").reverse().slice(0, 2).join("/");
-  const sel = '<select id="anRango" class="an-sel">' + RANGOS_SUENO.filter(o => !(modo === "dia" && o[0] === "periodo")).map(o => '<option value="' + o[0] + '"' + (rangoSueno() === o[0] ? " selected" : "") + ">" + o[1] + "</option>").join("") + "</select>";
-  let s = '<div class="card"><h2>🌙 Análisis del sueño</h2><div class="sub">Qué mirar: ' + sel + "</div>";
-  if(!a) return s + '<div class="vacio">No hay noches con datos entre el ' + fdc(w.desde) + " y el " + fdc(w.hasta) + ". Pulsa «Sincronizar Huawei»: la primera vez trae todo el historial.</div></div>";
-  s += '<div class="sub" style="margin-top:6px">' + pl(a.n, "noche", "noches") + " con datos · " + fdc(w.desde) + " a " + fdc(w.hasta) + "</div>";
-  s += '<div class="tiles"><div class="tile"><div class="t">Media</div><div class="v">' + fh(a.media) + '</div></div>' + (a.ini ? '<div class="tile"><div class="t">Te acuestas</div><div class="v">' + horaTxt(a.ini.med) + '</div></div>' : "") + (a.fin ? '<div class="tile"><div class="t">Te levantas</div><div class="v">' + horaTxt(a.fin.med) + '</div></div>' : "") + "</div>";
-  if(a.nFases) s += tablaFases(a.deep, a.light, a.rem, null, a.media);
-  if(a.n < 5) s += '<div class="sub" style="margin-top:8px">Hay pocas noches (' + a.n + "): las conclusiones son poco fiables. Con 2-3 semanas ya dicen algo.</div>";
-  s += '<ul class="an-lista">' + frasesSueno(a).map(x => "<li><span>" + x[0] + "</span>" + esc(x[1]) + "</li>").join("") + "</ul>";
-  const g = lj(claveIASueno(w), null);
-  s += (g && g.texto ? '<div class="ia" style="margin-top:8px">' + esc(g.texto) + '</div><div class="pie">Generada el ' + esc(g.fecha) + ". Orientación, no un diagnóstico.</div>" : "") +
-    '<div style="margin-top:10px"><button type="button" class="btn" id="btnIASueno">' + (g && g.texto ? "🔄 Volver a interpretar con IA" : "🤖 Interpretar con IA") + '</button> <span class="sub" id="estIASueno"></span></div>';
-  return s + "</div>";
-}
-let iaSuenoOcupada = false;
-async function generarIASueno(){
-  if(iaSuenoOcupada) return;
-  if(!window.IAClaves || !IAClaves.tieneGemini()) return avisar("Falta la clave de Gemini. Ponla una vez en ⚙️ Ajustes.");
-  const w = ventanaSueno(), a = analizarSueno(w.desde, w.hasta), btn = document.getElementById("btnIASueno"), est = document.getElementById("estIASueno");
-  if(!a) return avisar("No hay noches con datos para analizar.");
-  iaSuenoOcupada = true; btn.disabled = true; est.textContent = "Pensando…";
-  const R = x => Math.round(x), L = ["Noches con datos: " + a.n + " (del " + w.desde + " al " + w.hasta + ")", "Duración media: " + R(a.media) + " min; noches < 6 h: " + a.menos6 + "; noches > 10 h: " + a.mas10,
-    "Mejor noche: " + R(a.mejor.s.min) + " min; peor: " + R(a.peor.s.min) + " min"];
-  if(a.ini) L.push("Hora media de acostarse: " + horaTxt(a.ini.med) + " (desviación " + R(a.ini.sd) + " min)");
-  if(a.fin) L.push("Hora media de levantarse: " + horaTxt(a.fin.med) + " (desviación " + R(a.fin.sd) + " min)");
-  if(a.nFases) L.push("Fases medias: profundo " + R(a.deep) + " %, ligero " + R(a.light) + " %, REM " + R(a.rem) + " %; noches con profundo < 20 %: " + a.deepBajo + "; con REM < 10 %: " + a.remBajo);
-  L.push("Minutos despierto de media por noche: " + R(a.awake));
-  if(a.finde) L.push("Fines de semana vs entre semana: " + (a.finde.dif > 0 ? "+" : "") + R(a.finde.dif) + " min");
-  if(a.tend != null) L.push("Tendencia (últimas noches vs primeras): " + (a.tend > 0 ? "+" : "") + R(a.tend) + " min");
-  const prompt = "Eres un asistente de bienestar para una persona adulta que sigue su sueño con un reloj. Con las cifras agregadas de abajo escribe en español sencillo: 1) un resumen de 3 a 4 frases de cómo duerme; 2) tres hábitos concretos y realistas para mejorarlo (horarios, luz, cafeína, cenas, pantallas, siestas…); 3) si algo parece muy fuera de lo normal de forma persistente, sugiere comentarlo con su médico, sin diagnosticar. No indiques medicación ni suplementos y no inventes datos. Si hay pocas noches, dilo. Máximo 170 palabras, sin títulos.\n\nDATOS:\n" + L.join("\n");
-  try{
-    const t = await IAClaves.geminiTexto(prompt);
-    if(!t) throw new Error("La IA no devolvió texto. Prueba otra vez.");
-    localStorage.setItem(claveIASueno(w), JSON.stringify({ texto: t.slice(0, 2200), fecha: hoyISO() }));
-    iaSuenoOcupada = false; pintar();
-  }catch(e){ iaSuenoOcupada = false; btn.disabled = false; est.textContent = "⚠️ " + (e && e.message ? e.message : "No se pudo generar."); }
-}
-
-
 // ---------- Tablas resumen (día, semana, mes, año, todo) ----------
 const esBloque = () => modo === "anio" || modo === "todo";
 const sinPrev = () => resumen("dia", "1900-01-01");
@@ -700,6 +550,30 @@ function tablaFitness(c, cub){
   return tabla((esBloque() ? ["Mes"] : ["Día"]).concat(["Ejercicios", "Tiempo", "kcal"], esBloque() ? ["Días"] : []), f, c.ejN ? [["Total", c.ejN, fh(c.ejMin), ni(c.ejKcal)]] : []);
 }
 
+
+// ---------- Análisis rápido del sueño: se calcula en el móvil, sin IA ni clave, sobre todo el periodo elegido (también «Todo») ----------
+function analisisSuenoLocal(c){
+  const s = c.dias.filter(x => x.sueno); if(modo === "dia" || s.length < 3) return "";
+  const L = [], f = x => x.f.slice(8) + "/" + x.f.slice(5, 7) + "/" + x.f.slice(2, 4), mins = s.map(x => x.sueno.min), media = prom(mins), ord = s.slice().sort((a, b) => a.sueno.min - b.sueno.min), pc = (a, b) => Math.round(a / b * 100);
+  const m2 = h => { const q = String(h || "").split(":").map(Number); return q.length === 2 && isFinite(q[0]) ? q[0] * 60 + q[1] : null; };
+  L.push("• Duermes de media " + fh(media) + " (" + s.length + " noches con dato de " + c.nDias + " días).");
+  const ok = s.filter(x => x.sueno.min >= 360 && x.sueno.min <= 600).length, bajo = s.filter(x => x.sueno.min < 360).length, alto = s.filter(x => x.sueno.min > 600).length;
+  L.push("• " + ok + " de " + s.length + " noches (" + pc(ok, s.length) + " %) dentro de 6–10 h; " + bajo + " con menos de 6 h y " + alto + " con más de 10 h.");
+  L.push("• Noche más corta: " + fh(ord[0].sueno.min) + " (" + f(ord[0]) + "). Más larga: " + fh(ord[ord.length - 1].sueno.min) + " (" + f(ord[ord.length - 1]) + ").");
+  const tot = s.reduce((t, x) => t + x.sueno.min, 0), pD = pc(s.reduce((t, x) => t + x.sueno.deep, 0), tot), pL = pc(s.reduce((t, x) => t + x.sueno.light, 0), tot), pR = pc(s.reduce((t, x) => t + x.sueno.rem, 0), tot);
+  const ev = (v, a, b) => v < a ? "bajo" : v > b ? "alto" : "normal";
+  L.push("• Fases (referencia de Huawei Salud): profundo " + pD + " % (20–60: " + ev(pD, 20, 60) + "), ligero " + pL + " % (menos de 55: " + (pL > 55 ? "alto" : "normal") + "), REM " + pR + " % (10–30: " + ev(pR, 10, 30) + ").");
+  const ini = s.map(x => m2(x.sueno.ini)).filter(v => v != null).map(v => v < 1080 ? v + 1440 : v);
+  if(ini.length >= 3){ const mi = prom(ini), sd = Math.sqrt(prom(ini.map(v => (v - mi) * (v - mi))));
+    L.push("• Te duermes hacia las " + hm(mi) + ", con una variación de unos ±" + Math.round(sd) + " min entre noches (orientativo: menos de 30 min es muy regular, más de 60 min es irregular)."); }
+  const fin = s.map(x => m2(x.sueno.fin)).filter(v => v != null); if(fin.length >= 3) L.push("• Te despiertas hacia las " + hm(prom(fin)) + ".");
+  const fs = s.filter(x => [0, 6].includes(fd(x.f).getDay())), ls = s.filter(x => ![0, 6].includes(fd(x.f).getDay()));
+  if(fs.length >= 3 && ls.length >= 3){ const d = prom(fs.map(x => x.sueno.min)) - prom(ls.map(x => x.sueno.min)); if(Math.abs(d) >= 20) L.push("• Los sábados y domingos (día en que te despiertas) duermes " + Math.round(Math.abs(d)) + " min " + (d > 0 ? "más" : "menos") + " que de lunes a viernes."); }
+  if(s.length >= 20){ const n = Math.min(30, Math.floor(s.length / 2)), ult = s.slice(-n), ant = s.slice(-2 * n, -n), d = prom(ult.map(x => x.sueno.min)) - prom(ant.map(x => x.sueno.min));
+    L.push("• Tendencia: las últimas " + n + " noches duermes " + (Math.abs(d) < 10 ? "casi igual (" + fh(prom(ult.map(x => x.sueno.min))) + ")" : Math.round(Math.abs(d)) + " min " + (d > 0 ? "más" : "menos") + " que las " + n + " anteriores") + "."); }
+  const sie = c.dias.filter(x => D.hw[x.f] && D.hw[x.f].siesta).length; if(sie) L.push("• Siestas registradas aparte: " + sie + ".");
+  return '<div class="ia"><b>🔎 Análisis rápido (sin IA, sobre ' + (modo === "todo" ? "todo el historial" : "este periodo") + ')</b>\n' + esc(L.join("\n")) + '\n<span class="sub">Cálculo con tus datos; orientativo, no un diagnóstico.</span></div>';
+}
 
 // ---------- IA por métrica (análisis detallado o resumen), y análisis total ----------
 const MET = { sueno: { nom: "sueño" }, pasos: { nom: "pasos" }, pulso: { nom: "pulso" }, spo2: { nom: "oxígeno en sangre (SpO2)" }, nutri: { nom: "alimentación (kcal y macronutrientes)" }, fitness: { nom: "ejercicio" }, peso: { nom: "peso y composición corporal" } };
@@ -797,13 +671,10 @@ function pintar(){
   document.querySelectorAll("#tabsModo button").forEach(b => b.classList.toggle("on", b.dataset.modo === modo));
   const pu = tarjetaPulso(c, p, cub), cut = pu.indexOf('<div class="card"><h2>🫁'), pulsoC = cut > 0 ? pu.slice(0, cut) : pu, spo2C = cut > 0 ? pu.slice(cut) : "";
   document.getElementById("informe").innerHTML = tarjetaAvisos(c, p) + tarjetaIA(c) + tarjetaTotal() +
-    anade(tarjetaSueno(c, p, cub), null, tablaSueno(c, cub)) + tarjetaAnalisisSueno(c) + anade(tarjetaPasos(c, p, cub), "pasos", tablaPasos(c, cub)) +
+    anade(tarjetaSueno(c, p, cub), "sueno", analisisSuenoLocal(c) + tablaSueno(c, cub)) + anade(tarjetaPasos(c, p, cub), "pasos", tablaPasos(c, cub)) +
     anade(pulsoC, "pulso", tablaRango(c, cub, "fc", " ppm", false, "fc", 5)) + (spo2C ? anade(spo2C, "spo2", tablaRango(c, cub, "spo2", " %", true, "sp", 10)) : "") +
     anade(tarjetaNutri(c, p, cub), "nutri", tablaNutri(c, cub)) + anade(tarjetaPeso(c), "peso", "") + anade(tarjetaFitness(c, p, cub), "fitness", tablaFitness(c, cub)) + tarjetaAnalitica();
   const b = document.getElementById("btnIA"); if(b) b.onclick = generarIA;
-  const bs = document.getElementById("btnIASueno"); if(bs) bs.onclick = generarIASueno;
-  const ar = document.getElementById("anRango"); if(ar) ar.onchange = () => { try{ localStorage.setItem("informeSuenoRangoV1", ar.value); }catch(e){} pintar(); };
-  armarScrub();
 }
 function refrescarDatos(){ D = cargar(perfil); pintar(); }
 document.querySelectorAll("#tabsPerfil button").forEach(b => b.onclick = () => { perfil = b.dataset.perfil; try{ localStorage.setItem(CLAVE_PERFIL_ACTIVO, perfil); }catch(e){} refrescarDatos(); });
@@ -833,13 +704,13 @@ refrescarDatos();
     if(svg.__rd) svg.__rd.textContent = q.t;
   }
   function iniciar(svg){
-    if(svg.__ok || svg.hasAttribute("data-sc")) return; var items = datos(svg); if(!items.length) return; svg.__ok = 1;
+    if(svg.__ok) return; var items = datos(svg); if(!items.length) return; svg.__ok = 1;
     var rd = document.createElement("div"), lin = Math.max.apply(null, items.map(function(q){ return String(q.t).split("\n").length; }));
     rd.className = "rdG"; rd.style.minHeight = (lin * 1.4 + 0.9) + "em"; svg.parentNode.insertBefore(rd, svg); svg.__rd = rd;
     poner(svg, items[items.length - 1]);
   }
   function mover(e){
-    var svg = (e.target && e.target.closest ? e.target.closest("svg.gr[data-tip]") : null) || arr; if(!svg || svg.hasAttribute("data-sc")) return;
+    var svg = (e.target && e.target.closest ? e.target.closest("svg.gr[data-tip]") : null) || arr; if(!svg) return;
     var items = datos(svg); if(!items.length) return; iniciar(svg);
     var r = svg.getBoundingClientRect(), vb = svg.viewBox.baseVal; if(!r.width) return;
     var q = elegir(items, (e.clientX - r.left) / r.width * vb.width); if(q) poner(svg, q);
